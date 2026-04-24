@@ -1,4 +1,4 @@
-# 📋 AI-VPP 2.0 대시보드 관리 가이드 (vpp_agent_guide.md)
+# 📋 AI-VPP 2.0 대시보드 관리 가이드 (vpp-dashboard.md)
 
 이 문서는 클로드 에이전트가 `index.html` 파일을 수정하거나 데이터를 업데이트할 때 준수해야 할 표준 규칙입니다.
 
