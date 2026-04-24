@@ -1,0 +1,1978 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-VPP 2.0 통합 관제 플랫폼</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Noto+Sans+KR:wght@300;400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0e1a;--bg2:#111827;--bg3:#1a2236;--bg4:#1e2a3e;
+  --acc:#00d4a8;--acc2:#0099ff;--acc3:#f59e0b;--acc4:#ef4444;--acc5:#a78bfa;
+  --txt:#e2e8f0;--txt2:#94a3b8;--txt3:#475569;
+  --brd:rgba(255,255,255,0.08);--brd2:rgba(0,212,168,0.3);
+  --font:'Noto Sans KR',sans-serif;--mono:'IBM Plex Mono',monospace;
+  --shadow:none;
+}
+:root.light{
+  --bg:#f0f4f8;--bg2:#ffffff;--bg3:#ffffff;--bg4:#f1f5f9;
+  --acc:#009e7d;--acc2:#0077cc;--acc3:#d97706;--acc4:#dc2626;--acc5:#7c3aed;
+  --txt:#0f172a;--txt2:#475569;--txt3:#94a3b8;
+  --brd:rgba(0,0,0,0.09);--brd2:rgba(0,158,125,0.35);
+  --shadow:0 1px 4px rgba(0,0,0,0.08);
+}
+html,body{height:100%;margin:0;padding:0;background:var(--bg);color:var(--txt);font-family:var(--font);font-size:13px}
+.shell{display:flex;height:100vh;width:100%;overflow:hidden}
+.sidebar{width:200px;background:var(--bg2);border-right:1px solid var(--brd);display:flex;flex-direction:column;flex-shrink:0}
+.logo{padding:14px 14px 10px;border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:8px}
+.logo-mark{width:28px;height:28px;background:linear-gradient(135deg,var(--acc),var(--acc2));border-radius:6px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:10px;font-weight:500;color:#000}
+.logo-text{font-size:13px;font-weight:700;color:var(--txt)}
+.logo-sub{font-size:9px;color:var(--txt2)}
+.nav{flex:1;overflow-y:auto;padding:6px 0}
+.nav::-webkit-scrollbar{width:2px}
+.nav::-webkit-scrollbar-thumb{background:var(--brd2)}
+.nav-group{margin-bottom:2px}
+.nav-top{display:flex;align-items:center;gap:7px;padding:7px 10px;cursor:pointer;transition:all 0.15s;font-size:11px;font-weight:500;color:var(--txt2)}
+.nav-top:hover,.nav-top.open{color:var(--txt)}
+.nav-icon{width:14px;height:14px;flex-shrink:0}
+.nav-sub{display:none}
+.nav-sub.open{display:block}
+.nav-item{display:flex;align-items:center;padding:5px 10px 5px 28px;cursor:pointer;transition:all 0.15s;border-left:2px solid transparent;font-size:11px;color:var(--txt2)}
+.nav-item:hover{background:rgba(0,212,168,0.06);color:var(--acc)}
+.nav-item.active{background:rgba(0,212,168,0.1);border-left-color:var(--acc);color:var(--acc)}
+.sidebar-footer{padding:8px 10px;border-top:1px solid var(--brd)}
+.status-bar{display:flex;align-items:center;gap:5px;font-size:9px;color:var(--txt2)}
+.status-dot{width:5px;height:5px;border-radius:50%;background:var(--acc);animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.4}}
+.main{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.topbar{height:42px;background:var(--bg2);border-bottom:1px solid var(--brd);display:flex;align-items:center;padding:0 16px;gap:10px;flex-shrink:0}
+.breadcrumb{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--txt2)}
+.breadcrumb span{color:var(--acc)}
+.topbar-right{margin-left:auto;display:flex;align-items:center;gap:8px}
+.kpi-pill{background:var(--bg3);border:1px solid var(--brd);border-radius:16px;padding:2px 10px;font-size:10px;font-family:var(--mono);color:var(--acc)}
+.kpi-pill.warn{color:var(--acc3);border-color:rgba(245,158,11,0.3)}
+.kpi-pill.danger{color:var(--acc4);border-color:rgba(239,68,68,0.3)}
+.content{flex:1;overflow-y:auto;padding:16px;display:none;min-height:0}
+.content::-webkit-scrollbar{width:4px}
+.content::-webkit-scrollbar-thumb{background:var(--brd2);border-radius:2px}
+.content.active{display:block}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:9px;margin-bottom:12px}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:12px}
+.g2{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:12px}
+.g65{display:grid;grid-template-columns:1.6fr 1fr;gap:9px;margin-bottom:12px}
+.card{background:var(--bg3);border:1px solid var(--brd);border-radius:8px;padding:12px;margin-bottom:0;box-shadow:var(--shadow)}
+.card.mb{margin-bottom:12px}
+.card.acc{border-color:var(--brd2)}
+.ct{font-size:9px;color:var(--txt2);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:7px;font-family:var(--mono)}
+.kv{font-size:20px;font-weight:700;font-family:var(--mono);color:var(--txt);letter-spacing:-0.5px;line-height:1.1}
+.ku{font-size:10px;color:var(--txt2);margin-left:2px}
+.kd{font-size:10px;margin-top:2px}
+.kd.up{color:var(--acc)}.kd.dn{color:var(--acc4)}.kd.neu{color:var(--acc3)}
+.sh{display:flex;align-items:center;justify-content:space-between;margin-bottom:9px}
+.st{font-size:12px;font-weight:500;color:var(--txt)}
+.sa{font-size:10px;color:var(--acc);cursor:pointer;font-family:var(--mono)}
+.tbl{width:100%;border-collapse:collapse;font-size:11px}
+.tbl th{color:var(--txt2);font-weight:500;padding:5px 7px;border-bottom:1px solid var(--brd);text-align:left;font-family:var(--mono);font-size:9px;white-space:nowrap}
+.tbl td{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,0.03);color:var(--txt)}
+.tbl tr:hover td{background:rgba(0,212,168,0.04)}
+.badge{display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-family:var(--mono)}
+.ok{background:rgba(0,212,168,0.15);color:var(--acc)}
+.warn{background:rgba(245,158,11,0.15);color:var(--acc3)}
+.err{background:rgba(239,68,68,0.15);color:var(--acc4)}
+.off{background:rgba(148,163,184,0.15);color:var(--txt2)}
+.inf{background:rgba(0,153,255,0.15);color:var(--acc2)}
+.pr{display:flex;align-items:center;gap:7px;margin-bottom:6px}
+.pl{font-size:10px;color:var(--txt2);width:70px;flex-shrink:0}
+.pb{flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden}
+.pf{height:100%;border-radius:3px}
+.pv{font-family:var(--mono);font-size:9px;color:var(--txt);width:38px;text-align:right;flex-shrink:0}
+.mr{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.ml{font-size:10px;color:var(--txt2)}
+.mv{font-family:var(--mono);font-size:11px;color:var(--txt)}
+.al{display:flex;align-items:flex-start;gap:7px;padding:6px 0;border-bottom:1px solid var(--brd)}
+.ad{width:7px;height:7px;border-radius:50%;flex-shrink:0;margin-top:3px}
+.am{font-size:10px;color:var(--txt);flex:1}
+.at{font-family:var(--mono);font-size:9px;color:var(--txt2);white-space:nowrap}
+.cb{padding:5px 12px;border-radius:4px;font-size:11px;font-family:var(--font);cursor:pointer;transition:all 0.15s;border:1px solid}
+.cb.p{background:rgba(0,212,168,0.15);border-color:var(--brd2);color:var(--acc)}
+.cb.p:hover{background:rgba(0,212,168,0.25)}
+.cb.d{background:rgba(239,68,68,0.15);border-color:rgba(239,68,68,0.3);color:var(--acc4)}
+.cb.n{background:var(--bg4);border-color:var(--brd);color:var(--txt)}
+.inp{background:var(--bg4);border:1px solid var(--brd);border-radius:4px;padding:5px 9px;color:var(--txt);font-size:11px;font-family:var(--mono);width:100%;outline:none}
+.inp:focus{border-color:var(--brd2)}
+.sel{background:var(--bg4);border:1px solid var(--brd);border-radius:4px;padding:5px 9px;color:var(--txt);font-size:11px;width:100%;outline:none}
+.fg{margin-bottom:10px}
+.fl{font-size:10px;color:var(--txt2);margin-bottom:4px;display:block}
+.theme-btn{background:var(--bg4);border:1px solid var(--brd);border-radius:20px;padding:3px 12px 3px 8px;font-size:10px;font-family:var(--mono);color:var(--txt2);cursor:pointer;display:flex;align-items:center;gap:5px;transition:all 0.2s}
+.theme-btn:hover{border-color:var(--brd2);color:var(--acc)}
+.theme-icon{width:14px;height:14px;flex-shrink:0;transition:transform 0.4s}
+:root.light .theme-icon{transform:rotate(180deg)}
+/* ── Modal ── */
+.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:999;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(2px)}
+.modal{background:var(--bg2);border:1px solid var(--brd);border-radius:12px;width:520px;max-width:94vw;max-height:88vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,0.5)}
+.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 20px 14px;border-bottom:1px solid var(--brd)}
+.modal-title{font-size:14px;font-weight:500;color:var(--txt)}
+.modal-close{background:none;border:none;color:var(--txt2);font-size:18px;cursor:pointer;padding:2px 6px;border-radius:4px;line-height:1}
+.modal-close:hover{background:var(--bg4);color:var(--txt)}
+.modal-body{padding:20px}
+.modal-footer{padding:14px 20px;border-top:1px solid var(--brd);display:flex;justify-content:flex-end;gap:8px}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+.form-row.full{grid-template-columns:1fr}
+.form-item{display:flex;flex-direction:column;gap:5px}
+.form-item label{font-size:10px;color:var(--txt2);font-family:var(--mono);letter-spacing:0.3px}
+.form-divider{border:none;border-top:1px solid var(--brd);margin:16px 0}
+.form-section{font-size:11px;font-weight:500;color:var(--txt2);margin-bottom:10px;margin-top:4px;text-transform:uppercase;letter-spacing:0.5px;font-family:var(--mono)}
+.badge-sel{display:flex;gap:6px;flex-wrap:wrap}
+.badge-sel-btn{padding:3px 10px;border-radius:12px;font-size:10px;border:1px solid var(--brd);background:var(--bg4);color:var(--txt2);cursor:pointer;transition:all 0.15s;font-family:var(--mono)}
+.badge-sel-btn.selected{background:rgba(0,212,168,0.15);border-color:var(--brd2);color:var(--acc)}
+.ota-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border:1px solid var(--brd);border-radius:6px;margin-bottom:6px}
+.ota-check{width:14px;height:14px;accent-color:var(--acc);cursor:pointer}
+.ota-info{flex:1}
+.ota-name{font-size:11px;color:var(--txt);font-family:var(--mono)}
+.ota-ver{font-size:9px;color:var(--txt2);margin-top:1px}
+.ota-badge{font-size:9px;padding:1px 7px;border-radius:8px}
+.prog-wrap{margin-top:10px;display:none}
+.prog-label-row{display:flex;justify-content:space-between;font-size:10px;color:var(--txt2);margin-bottom:5px}
+.prog-track{height:6px;background:var(--bg4);border-radius:3px;overflow:hidden}
+.prog-run{height:100%;border-radius:3px;background:linear-gradient(90deg,var(--acc2),var(--acc));width:0%;transition:width 0.4s}
+:root.light .modal{background:#ffffff}
+:root.light .modal-hdr{border-bottom-color:#e2e8f0}
+:root.light .modal-footer{border-top-color:#e2e8f0}
+:root.light .modal-close:hover{background:#f1f5f9}
+:root.light .badge-sel-btn{background:#f8fafc;border-color:#cbd5e1;color:#64748b}
+:root.light .ota-item{border-color:#e2e8f0}
+:root.light .prog-track{background:#e2e8f0}
+.toggle{position:relative;display:inline-block;width:28px;height:14px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0}
+/* ── light mode overrides ── */
+:root.light body{background:var(--bg)}
+:root.light .sidebar{background:#ffffff;border-right:1px solid #e2e8f0}
+:root.light .topbar{background:#ffffff;border-bottom:1px solid #e2e8f0}
+:root.light .logo-mark{background:linear-gradient(135deg,#009e7d,#0077cc)}
+:root.light .nav-item:hover{background:rgba(0,158,125,0.07)}
+:root.light .nav-item.active{background:rgba(0,158,125,0.12);border-left-color:#009e7d}
+:root.light .kpi-pill{background:#f1f5f9;border-color:#e2e8f0}
+:root.light .kpi-pill.warn{border-color:rgba(217,119,6,0.35)}
+:root.light .kpi-pill.danger{border-color:rgba(220,38,38,0.3)}
+:root.light .inp,:root.light .sel{background:#f8fafc;border-color:#cbd5e1;color:#0f172a}
+:root.light .cb.n{background:#f1f5f9;border-color:#cbd5e1;color:#334155}
+:root.light .cb.p{background:rgba(0,158,125,0.1);border-color:rgba(0,158,125,0.4);color:#009e7d}
+:root.light .cb.d{background:rgba(220,38,38,0.08);border-color:rgba(220,38,38,0.3);color:#dc2626}
+:root.light .tbl th{border-bottom-color:#e2e8f0;color:#475569}
+:root.light .tbl td{border-bottom-color:#f1f5f9}
+:root.light .tbl tr:hover td{background:rgba(0,158,125,0.04)}
+:root.light .card.acc{border-color:rgba(0,158,125,0.4)}
+:root.light .ts{background:#e2e8f0;border-color:#cbd5e1}
+:root.light .al{border-bottom-color:#e2e8f0}
+:root.light .dr{border-bottom-color:#e2e8f0}
+:root.light .mr{border-bottom-color:#f1f5f9}
+:root.light .badge.ok{background:rgba(0,158,125,0.12);color:#007a5e}
+:root.light .badge.warn{background:rgba(217,119,6,0.12);color:#b45309}
+:root.light .badge.err{background:rgba(220,38,38,0.1);color:#b91c1c}
+:root.light .badge.off{background:rgba(100,116,139,0.12);color:#64748b}
+:root.light .badge.inf{background:rgba(0,119,204,0.1);color:#0055aa}
+:root.light .pb{background:rgba(0,0,0,0.07)}
+:root.light .db{background:#e2e8f0}
+:root.light .nav-top{color:#64748b}
+:root.light .nav-top.open,:root.light .nav-top:hover{color:#0f172a}
+:root.light .status-bar{color:#64748b}
+:root.light .status-dot{background:#009e7d}
+:root.light .sidebar-footer{border-top-color:#e2e8f0}
+:root.light .bg4-ref{background:#f1f5f9}
+:root.light .content::-webkit-scrollbar-thumb{background:rgba(0,158,125,0.3)}
+:root.light .nav::-webkit-scrollbar-thumb{background:rgba(0,158,125,0.3)}
+:root.light .theme-btn{background:#f1f5f9;border-color:#e2e8f0}
+:root.light [style*="background:var(--bg4)"]{background:#f1f5f9 !important}
+:root.light [style*="color:var(--txt2)"]{color:#64748b !important}
+:root.light [style*="color:var(--txt3)"]{color:#94a3b8 !important}
+.ts{position:absolute;inset:0;background:var(--bg4);border-radius:8px;cursor:pointer;transition:0.3s;border:1px solid var(--brd)}
+.ts:before{content:'';position:absolute;height:10px;width:10px;left:2px;top:2px;background:var(--txt2);border-radius:50%;transition:0.3s}
+.toggle input:checked+.ts{background:rgba(0,212,168,0.3);border-color:var(--brd2)}
+.toggle input:checked+.ts:before{transform:translateX(16px);background:var(--acc)}
+.cslider{width:100%;-webkit-appearance:none;height:4px;background:var(--bg4);border-radius:2px;outline:none}
+.cslider::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--acc);cursor:pointer}
+.mono{font-family:var(--mono)}
+.dr{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--brd)}
+.di{font-family:var(--mono);font-size:10px;color:var(--acc2);width:85px;flex-shrink:0}
+.db{flex:1;height:7px;background:var(--bg4);border-radius:4px;overflow:hidden;position:relative}
+.df{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--acc2),var(--acc))}
+.dt{position:absolute;top:0;width:2px;height:100%;background:var(--acc3)}
+.dp{font-family:var(--mono);font-size:10px;width:36px;text-align:right;flex-shrink:0}
+</style>
+</head>
+<body>
+<div class="shell">
+  <nav class="sidebar">
+    <div class="logo">
+      <div class="logo-mark">60Hz</div>
+      <div><div class="logo-text">AI-VPP 2.0</div><div class="logo-sub">통합 관제 플랫폼</div></div>
+    </div>
+    <div class="nav" id="nav"></div>
+    <div class="sidebar-footer">
+      <div class="status-bar"><div class="status-dot"></div>실시간 연결 · E-Max</div>
+    </div>
+  </nav>
+  <div class="main">
+    <div class="topbar">
+      <div class="breadcrumb" id="bc"><span>대시보드</span> / 통합 운영 대시보드</div>
+      <div class="topbar-right">
+        <button class="theme-btn" id="theme-toggle" onclick="toggleTheme()">
+          <svg class="theme-icon" id="theme-icon" viewBox="0 0 16 16" fill="none">
+            <circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.2"/>
+            <path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+          <span id="theme-label">라이트</span>
+        </button>
+        <div class="kpi-pill">148.7 MW</div>
+        <div class="kpi-pill warn">IMBP 위험</div>
+        <div class="kpi-pill danger">알람 7</div>
+      </div>
+    </div>
+    <div id="pages" style="flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0"></div>
+  </div>
+</div>
+
+<script>
+const NAV=[
+  {id:'dsh',label:'대시보드',sub:[
+    {id:'dsh-main',label:'통합 운영 대시보드'},
+    {id:'dsh-res',label:'자원별 상세 관제'},
+    {id:'dsh-gis',label:'GIS 기반 자원 맵'},
+    {id:'dsh-health',label:'설비 건전성 진단'},
+  ]},
+  {id:'his',label:'이력조회',sub:[
+    {id:'his-gen',label:'발전이력'},
+    {id:'his-dis',label:'총방전이력'},
+    {id:'his-alm',label:'알람이력'},
+    {id:'his-bid',label:'입찰/제어 이력'},
+    {id:'his-out',label:'출력제어 이력'},
+  ]},
+  {id:'pre',label:'예측분석',sub:[
+    {id:'pre-main',label:'예측분석'},
+    {id:'pre-cross',label:'교차분석'},
+    {id:'pre-mkt',label:'시장가/계통분석'},
+    {id:'pre-model',label:'예측모델 비교'},
+  ]},
+  {id:'bid',label:'전력입찰',sub:[
+    {id:'bid-dual',label:'이중 시장 입찰'},
+    {id:'bid-cap',label:'입찰용량관리'},
+    {id:'bid-sim',label:'정산 시뮬레이션'},
+    {id:'bid-mgmt',label:'정산/배분 관리'},
+  ]},
+  {id:'sdp',label:'준중앙급전',sub:[
+    {id:'sdp-del',label:'발전량인도'},
+    {id:'sdp-con',label:'계약정보'},
+    {id:'sdp-rev',label:'입찰수익'},
+    {id:'sdp-set',label:'수익정산'},
+  ]},
+  {id:'ctl',label:'클릭제어',sub:[
+    {id:'ctl-man',label:'수동출력제어'},
+    {id:'ctl-cfg',label:'출력제어설정'},
+    {id:'ctl-mon',label:'제어신호 모니터링'},
+  ]},
+  {id:'cfg',label:'설정',sub:[
+    {id:'cfg-usr',label:'사용자관리'},
+    {id:'cfg-gen',label:'발전기관리'},
+    {id:'cfg-eqp',label:'설비관리'},
+    {id:'cfg-rtu',label:'RTU관리'},
+    {id:'cfg-grp',label:'그룹관리'},
+    {id:'cfg-bat',label:'배치관리'},
+  ]},
+];
+
+const ICONS={
+  dsh:`<svg viewBox="0 0 14 14" fill="none"><rect x="1" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="1" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="1" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/><rect x="8" y="8" width="5" height="5" rx="1" stroke="currentColor" stroke-width="1.2"/></svg>`,
+  his:`<svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="5.5" stroke="currentColor" stroke-width="1.2"/><path d="M7 4v3.2l1.8 1.3" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  pre:`<svg viewBox="0 0 14 14" fill="none"><path d="M1 11L5 6.5l2.5 2.5L12 2" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  bid:`<svg viewBox="0 0 14 14" fill="none"><rect x="1" y="3" width="12" height="9" rx="1" stroke="currentColor" stroke-width="1.2"/><path d="M4 3V2h6v1M4 7h6M4 9.5h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  sdp:`<svg viewBox="0 0 14 14" fill="none"><path d="M2 7h10M7 2l5 5-5 5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/></svg>`,
+  ctl:`<svg viewBox="0 0 14 14" fill="none"><circle cx="4.5" cy="4.5" r="2" stroke="currentColor" stroke-width="1.2"/><circle cx="9.5" cy="9.5" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M6.5 4.5h5M2 9.5h5.5" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+  cfg:`<svg viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="2" stroke="currentColor" stroke-width="1.2"/><path d="M7 1v2M7 11v2M1 7h2M11 7h2M2.5 2.5l1.4 1.4M10.1 10.1l1.4 1.4M2.5 11.5l1.4-1.4M10.1 3.9l1.4-1.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/></svg>`,
+};
+
+let cur='dsh-main';
+const openGroups=new Set(['dsh']);
+
+function buildNav(){
+  const nav=document.getElementById('nav');
+  NAV.forEach(g=>{
+    const wrap=document.createElement('div');
+    wrap.className='nav-group';
+    const top=document.createElement('div');
+    top.className='nav-top'+(openGroups.has(g.id)?' open':'');
+    top.innerHTML=`<span class="nav-icon">${ICONS[g.id]}</span><span>${g.label}</span>`;
+    const sub=document.createElement('div');
+    sub.className='nav-sub'+(openGroups.has(g.id)?' open':'');
+    top.onclick=()=>{
+      if(openGroups.has(g.id))openGroups.delete(g.id);
+      else openGroups.add(g.id);
+      top.classList.toggle('open');
+      sub.classList.toggle('open');
+    };
+    g.sub.forEach(s=>{
+      const el=document.createElement('div');
+      el.className='nav-item'+(s.id===cur?' active':'');
+      el.id='ni-'+s.id;
+      el.textContent=s.label;
+      el.onclick=()=>activate(s.id);
+      sub.appendChild(el);
+    });
+    wrap.appendChild(top);
+    wrap.appendChild(sub);
+    nav.appendChild(wrap);
+  });
+}
+
+function activate(id){
+  cur=id;
+  document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+  const el=document.getElementById('ni-'+id);
+  if(el) el.classList.add('active');
+  renderPage(id);
+  const g=NAV.find(g=>g.sub.find(s=>s.id===id));
+  const s=g&&g.sub.find(s=>s.id===id);
+  document.getElementById('bc').innerHTML=`<span>${g?g.label:''}</span> / ${s?s.label:''}`;
+}
+
+function renderPage(id){
+  const pages=document.getElementById('pages');
+  pages.innerHTML='';
+  const d=document.createElement('div');
+  d.className='content active';
+  d.innerHTML=P[id]?P[id]():`<div style="padding:80px;text-align:center;color:var(--txt2);font-family:var(--mono)">[${id}] 준비 중</div>`;
+  pages.appendChild(d);
+  const fn=window['I_'+id];
+  if(fn) setTimeout(fn,60);
+}
+
+function mkChart(id,type,labels,datasets,extra){
+  try{
+    const el=document.getElementById(id);
+    if(!el)return;
+    if(typeof Chart==='undefined')return;
+    const existing=Chart.getChart?Chart.getChart(id):null;
+    if(existing)existing.destroy();
+    const C=getChartColors();
+    const base={responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:9},maxTicksLimit:8}},y:{grid:{color:C.grid},ticks:{color:C.tick,font:{size:9}}}}};
+    const opts=deepMerge(base,extra||{});
+    if(type==='doughnut'||type==='pie'){delete opts.scales;}
+    new Chart(el,{type,data:{labels:labels||[],datasets:datasets||[]},options:opts});
+  }catch(err){console.warn('[mkChart]',id,err&&err.message);}
+}
+function deepMerge(a,b){
+  const r={...a};
+  for(const k in b){
+    if(b[k]&&typeof b[k]==='object'&&!Array.isArray(b[k])&&a[k]&&typeof a[k]==='object')r[k]=deepMerge(a[k],b[k]);
+    else r[k]=b[k];
+  }
+  return r;
+}
+
+const P={};
+
+/* ===== 대시보드: 통합 운영 ===== */
+P['dsh-main']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">실시간 총 출력</div><div class="kv">148.7<span class="ku">MW</span></div><div class="kd up">▲ 목표 대비 99.1%</div></div>
+  <div class="card"><div class="ct">금일 누적 발전량</div><div class="kv">623.4<span class="ku">MWh</span></div><div class="kd up">▲ +3.2% 전일比</div></div>
+  <div class="card"><div class="ct">금일 예상 수익</div><div class="kv">47.2<span class="ku">백만원</span></div><div class="kd neu">~ SMP 124원/kWh</div></div>
+  <div class="card"><div class="ct">IMBP 위험 구간</div><div class="kv" style="color:var(--acc3)">2<span class="ku">구간</span></div><div class="kd dn">▼ 오차 11.4% 초과</div></div>
+</div>
+<div class="g65">
+  <div class="card mb"><div class="sh"><div class="st">실시간 발전 곡선 (예측 vs 실측)</div><div class="sa">96구간</div></div><div style="height:200px;position:relative"><canvas id="c-dmain" role="img" aria-label="예측 vs 실측 비교"></canvas></div></div>
+  <div class="card mb"><div class="sh"><div class="st">자원 구성</div></div><div style="height:120px;position:relative"><canvas id="c-donut" role="img" aria-label="에너지원 비중"></canvas></div>
+  <div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;font-size:9px;font-family:var(--mono)"><span style="color:var(--acc)">■ 태양광 62%</span><span style="color:var(--acc2)">■ 풍력 18%</span><span style="color:var(--acc3)">■ ESS 12%</span><span style="color:var(--acc5)">■ 바이오 8%</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb">
+    <div class="sh"><div class="st">자원별 가동</div></div>
+    <div class="pr"><div class="pl">태양광</div><div class="pb"><div class="pf" style="width:91%;background:var(--acc)"></div></div><div class="pv">91.4MW</div></div>
+    <div class="pr"><div class="pl">풍력</div><div class="pb"><div class="pf" style="width:73%;background:var(--acc2)"></div></div><div class="pv">26.8MW</div></div>
+    <div class="pr"><div class="pl">ESS 방전</div><div class="pb"><div class="pf" style="width:60%;background:var(--acc3)"></div></div><div class="pv">17.8MW</div></div>
+    <div class="pr"><div class="pl">바이오</div><div class="pb"><div class="pf" style="width:82%;background:var(--acc5)"></div></div><div class="pv">12.7MW</div></div>
+  </div>
+  <div class="card mb">
+    <div class="sh"><div class="st">활성 알람</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc4)"></div><div class="am">광양항태양광 인버터 #3 통신 단절</div><div class="at">14:23</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc3)"></div><div class="am">IMBP 위험: 14~15시 오차 11.4%</div><div class="at">14:15</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc3)"></div><div class="am">금능1호 ESS SoC 18% 부족</div><div class="at">14:08</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc2)"></div><div class="am">KPX 급전지시 수신 142 MW</div><div class="at">14:00</div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="sh"><div class="st">발전자원 실시간 리스트</div><div class="sa">엑셀 ↓</div></div>
+  <table class="tbl"><thead><tr><th>발전소명</th><th>유형</th><th>설치용량</th><th>현재출력</th><th>가동률</th><th>통신</th><th>상태</th></tr></thead><tbody>
+    <tr><td>광양항태양광</td><td>태양광</td><td>2,293kW</td><td>2,147kW</td><td>93.6%</td><td><span class="badge err">단절</span></td><td><span class="badge warn">주의</span></td></tr>
+    <tr><td>광양항4단계지붕</td><td>태양광</td><td>2,199kW</td><td>2,031kW</td><td>92.4%</td><td><span class="badge ok">정상</span></td><td><span class="badge ok">정상</span></td></tr>
+    <tr><td>온누리 발전소</td><td>태양광</td><td>996kW</td><td>912kW</td><td>91.6%</td><td><span class="badge ok">정상</span></td><td><span class="badge ok">정상</span></td></tr>
+    <tr><td>금능1호 (ESS)</td><td>태양광+ESS</td><td>495kW</td><td>481kW</td><td>97.2%</td><td><span class="badge ok">정상</span></td><td><span class="badge warn">SoC 18%</span></td></tr>
+    <tr><td>김주풍력 02단계</td><td>풍력</td><td>10,000kW</td><td>7,840kW</td><td>78.4%</td><td><span class="badge ok">정상</span></td><td><span class="badge ok">정상</span></td></tr>
+  </tbody></table>
+</div>`;
+window['I_dsh-main']=function(){
+  const h=Array.from({length:24},(_,i)=>i+':00');
+  const p=[0,0,0,0,0,2,18,45,82,115,134,142,148,145,138,143,150,147,132,108,74,42,18,4];
+  const a=[0,0,0,0,0,1,17,43,80,112,131,139,146,141,134,138,143,141,128,103,70,39,15,3];
+  mkChart('c-dmain','line',h,[{data:p,borderColor:'#0099ff',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:a,borderColor:'#00d4a8',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,212,168,0.07)'}],{scales:{x:{ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'MW',color:'#64748b',font:{size:9}}}}});
+  mkChart('c-donut','doughnut',['태양광','풍력','ESS','바이오'],[{data:[62,18,12,8],backgroundColor:['#00d4a8','#0099ff','#f59e0b','#a78bfa'],borderWidth:0}],{cutout:'68%'});
+};
+
+/* ===== 대시보드: 자원별 상세 ===== */
+P['dsh-res']=()=>`
+<div class="g2">
+  <div class="card mb">
+    <div class="sh"><div class="st">자원 선택</div></div>
+    <div class="fg"><label class="fl">발전소</label><select class="sel"><option>광양항태양광 (2,293kW)</option><option>김주풍력 02단계 (10,000kW)</option><option>금능1호 ESS (495kW)</option></select></div>
+    <div class="g2" style="margin-bottom:0">
+      <div style="background:var(--bg4);border-radius:6px;padding:9px"><div class="ct">현재 출력</div><div style="font-family:var(--mono);font-size:18px;color:var(--acc)">2,147<span style="font-size:10px;color:var(--txt2)">kW</span></div></div>
+      <div style="background:var(--bg4);border-radius:6px;padding:9px"><div class="ct">인버터 효율</div><div style="font-family:var(--mono);font-size:18px;color:var(--acc2)">96.8<span style="font-size:10px;color:var(--txt2)">%</span></div></div>
+      <div style="background:var(--bg4);border-radius:6px;padding:9px"><div class="ct">모듈 온도</div><div style="font-family:var(--mono);font-size:18px;color:var(--acc3)">42.3<span style="font-size:10px;color:var(--txt2)">°C</span></div></div>
+      <div style="background:var(--bg4);border-radius:6px;padding:9px"><div class="ct">일사량</div><div style="font-family:var(--mono);font-size:18px;color:var(--txt)">782<span style="font-size:10px;color:var(--txt2)">W/m²</span></div></div>
+    </div>
+    <div style="margin-top:10px">
+      <div class="mr"><div class="ml">전압 (V)</div><div class="mv mono">389.4 V</div></div>
+      <div class="mr"><div class="ml">전류 (A)</div><div class="mv mono">55.2 A</div></div>
+      <div class="mr"><div class="ml">외기 온도</div><div class="mv mono">21.3 °C</div></div>
+      <div class="mr" style="border:none"><div class="ml">통신 상태</div><div class="mv"><span class="badge ok">연결</span></div></div>
+    </div>
+  </div>
+  <div class="card mb">
+    <div class="sh"><div class="st">당일 발전량 추이</div></div>
+    <div style="height:170px;position:relative"><canvas id="c-res" role="img" aria-label="발전량 추이"></canvas></div>
+    <div class="sh" style="margin-top:10px"><div class="st">알람 이력</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc4)"></div><div class="am">인버터 #3 DISCONNECT 감지</div><div class="at">14:23</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc)"></div><div class="am">발전 정상 가동 개시</div><div class="at">06:14</div></div>
+  </div>
+</div>
+<div class="card">
+  <div class="sh"><div class="st">인버터 스트링별 상태</div></div>
+  <table class="tbl"><thead><tr><th>인버터 번호</th><th>출력(kW)</th><th>전압(V)</th><th>효율(%)</th><th>온도(°C)</th><th>상태</th></tr></thead><tbody>
+    ${[1,2,3,4,5,6].map(i=>`<tr><td class="mono">INV-0${i}</td><td class="mono">${(Math.random()*50+310).toFixed(1)}</td><td class="mono">${(Math.random()*5+387).toFixed(1)}</td><td class="mono">${(Math.random()*3+95).toFixed(1)}</td><td class="mono">${(Math.random()*5+40).toFixed(1)}</td><td>${i===3?'<span class="badge err">단절</span>':'<span class="badge ok">정상</span>'}</td></tr>`).join('')}
+  </tbody></table>
+</div>`;
+window['I_dsh-res']=function(){
+  const d=[0,0,0,0,0,0,45,280,610,980,1320,1680,2050,2100,2080,2040,1890,1620,1180,780,420,180,60,0];
+  mkChart('c-res','line',Array.from({length:24},(_,i)=>i+'h'),[{data:d,borderColor:'#00d4a8',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,212,168,0.08)'}],{});
+};
+
+/* ===== 대시보드: GIS 맵 ===== */
+P['dsh-gis']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">전체 자원수</div><div class="kv">47<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">정상 가동</div><div class="kv" style="color:var(--acc)">43<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">통신 장애</div><div class="kv" style="color:var(--acc4)">2<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">총 설치용량</div><div class="kv">150.2<span class="ku">MW</span></div></div>
+</div>
+<div class="g65">
+  <div class="card mb">
+    <div class="sh"><div class="st">전국 발전소 현황 맵</div><div style="display:flex;gap:8px;font-size:9px;font-family:var(--mono)"><span style="color:var(--acc)">● 정상</span><span style="color:var(--acc4)">● 장애</span><span style="color:var(--acc3)">● 주의</span></div></div>
+    <div style="position:relative;background:var(--bg4);border-radius:6px;overflow:hidden;height:330px">
+      <svg viewBox="0 0 460 360" width="100%" height="100%">
+        <path d="M180,40 L220,30 L260,45 L280,80 L290,120 L270,160 L250,200 L230,240 L240,280 L220,310 L200,320 L185,300 L170,260 L155,220 L140,180 L130,140 L140,100 L155,65 Z" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.5"/>
+        <ellipse cx="195" cy="340" rx="28" ry="12" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="1.2"/>
+        <circle cx="195" cy="280" r="10" fill="rgba(0,212,168,0.2)" stroke="#00d4a8" stroke-width="1.5"/><circle cx="195" cy="280" r="4" fill="#00d4a8"/>
+        <text x="210" y="284" font-size="8" fill="#94a3b8" font-family="monospace">광양항 2.3MW</text>
+        <circle cx="175" cy="265" r="8" fill="rgba(0,212,168,0.2)" stroke="#00d4a8" stroke-width="1.5"/><circle cx="175" cy="265" r="3" fill="#00d4a8"/>
+        <circle cx="210" cy="270" r="8" fill="rgba(239,68,68,0.2)" stroke="#ef4444" stroke-width="1.5"/><circle cx="210" cy="270" r="3" fill="#ef4444"/>
+        <text x="222" y="274" font-size="8" fill="#ef4444" font-family="monospace">장애</text>
+        <circle cx="255" cy="160" r="11" fill="rgba(0,153,255,0.2)" stroke="#0099ff" stroke-width="1.5"/><circle cx="255" cy="160" r="4" fill="#0099ff"/>
+        <text x="270" y="164" font-size="8" fill="#94a3b8" font-family="monospace">김주풍력 10MW</text>
+        <circle cx="195" cy="340" r="8" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="1.5"/><circle cx="195" cy="340" r="3" fill="#f59e0b"/>
+        <text x="208" y="344" font-size="8" fill="#94a3b8" font-family="monospace">금능 ESS</text>
+        ${[[220,240],[185,250],[165,285],[240,260],[200,295]].map(([x,y])=>`<circle cx="${x}" cy="${y}" r="5" fill="rgba(0,212,168,0.3)" stroke="#00d4a8" stroke-width="1"/>`).join('')}
+        <text x="10" y="348" font-size="8" fill="rgba(255,255,255,0.25)" font-family="monospace">일사량: 782 W/m²  풍속: 6.2m/s  온도: 21.3°C</text>
+      </svg>
+    </div>
+  </div>
+  <div class="card mb">
+    <div class="sh"><div class="st">지역별 현황</div></div>
+    <div class="pr"><div class="pl">전남</div><div class="pb"><div class="pf" style="width:78%;background:var(--acc)"></div></div><div class="pv">11.5MW</div></div>
+    <div class="pr"><div class="pl">경북</div><div class="pb"><div class="pf" style="width:67%;background:var(--acc2)"></div></div><div class="pv">10.0MW</div></div>
+    <div class="pr"><div class="pl">제주</div><div class="pb"><div class="pf" style="width:8%;background:var(--acc3)"></div></div><div class="pv">1.1MW</div></div>
+    <div class="sh" style="margin-top:12px"><div class="st">클러스터별 발전량</div></div>
+    <table class="tbl"><thead><tr><th>지역</th><th>개소</th><th>출력합</th><th>가동률</th></tr></thead><tbody>
+      <tr><td>전남권</td><td>9</td><td>10.8MW</td><td><span class="badge ok">92%</span></td></tr>
+      <tr><td>경북권</td><td>12</td><td>9.8MW</td><td><span class="badge ok">88%</span></td></tr>
+      <tr><td>제주권</td><td>3</td><td>1.1MW</td><td><span class="badge warn">74%</span></td></tr>
+      <tr><td>충남권</td><td>8</td><td>7.4MW</td><td><span class="badge ok">91%</span></td></tr>
+    </tbody></table>
+  </div>
+</div>`;
+
+/* ===== 대시보드: 설비 건전성 ===== */
+P['dsh-health']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">평균 Health Score</div><div class="kv" style="color:var(--acc)">82<span class="ku">/100</span></div><div class="kd up">정상 등급</div></div>
+  <div class="card"><div class="ct">점검 권고</div><div class="kv" style="color:var(--acc3)">5<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">즉시 조치</div><div class="kv" style="color:var(--acc4)">1<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">교체 임박 부품</div><div class="kv">3<span class="ku">개</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">자원별 건전성 스코어</div></div><div style="height:180px;position:relative"><canvas id="c-health" role="img" aria-label="건전성 스코어"></canvas></div></div>
+  <div class="card mb">
+    <div class="sh"><div class="st">이상 징후 탐지</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc4)"></div><div class="am"><b style="color:var(--acc4)">위험</b> 광양항 INV-03 과열 징후 (58°C)</div><div class="at">14:20</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc3)"></div><div class="am"><b style="color:var(--acc3)">주의</b> 금능1호 배터리 SoC 18% 저하</div><div class="at">14:08</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc3)"></div><div class="am">해바라기 출력 효율 3.2% 저하</div><div class="at">13:42</div></div>
+    <div class="sh" style="margin-top:10px"><div class="st">부품 교체 주기</div></div>
+    <table class="tbl"><thead><tr><th>설비</th><th>부품</th><th>잔여</th><th>상태</th></tr></thead><tbody>
+      <tr><td>광양항 INV-01</td><td>냉각팬</td><td>14일</td><td><span class="badge warn">교체 임박</span></td></tr>
+      <tr><td>김주풍력 #3</td><td>베어링</td><td>32일</td><td><span class="badge warn">점검 권고</span></td></tr>
+      <tr><td>금능1호 ESS</td><td>배터리셀</td><td>2일</td><td><span class="badge err">즉시 조치</span></td></tr>
+    </tbody></table>
+  </div>
+</div>`;
+window['I_dsh-health']=function(){
+  const lbl=['광양항','광양4단','온누리','해맞이','해바라기','김주풍력','금능1호'];
+  const s=[91,88,85,87,72,84,68];
+  mkChart('c-health','bar',lbl,[{data:s,backgroundColor:s.map(v=>v>=85?'rgba(0,212,168,0.6)':v>=75?'rgba(245,158,11,0.6)':'rgba(239,68,68,0.6)'),borderWidth:0}],{scales:{y:{min:0,max:100}}});
+};
+
+/* ===== 이력: 발전이력 ===== */
+P['his-gen']=()=>`
+<div class="g4">
+  <div class="card"><div class="ct">조회 기간 누적</div><div class="kv">4,821<span class="ku">MWh</span></div><div class="kd up">▲ +7.3%</div></div>
+  <div class="card"><div class="ct">평균 가동률</div><div class="kv">88.4<span class="ku">%</span></div></div>
+  <div class="card"><div class="ct">총 예상 수익</div><div class="kv">598.2<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">CO₂ 저감</div><div class="kv">2,185<span class="ku">tCO₂</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">조회 조건</div><div style="display:flex;gap:6px"><button class="cb p" style="font-size:10px">조회</button><button class="cb n" style="font-size:10px">Excel ↓</button></div></div>
+<div class="g3" style="margin-bottom:0">
+  <div class="fg"><label class="fl">기간</label><input class="inp" value="2026-04-01 ~ 2026-04-19"></div>
+  <div class="fg"><label class="fl">집계</label><select class="sel"><option>1시간</option><option>15분</option><option>일별</option></select></div>
+  <div class="fg"><label class="fl">자원</label><select class="sel"><option>전체</option><option>광양항태양광</option></select></div>
+</div></div>
+<div class="card mb"><div class="sh"><div class="st">발전량 추이</div></div><div style="height:160px;position:relative"><canvas id="c-hgen" role="img" aria-label="발전량 추이"></canvas></div></div>
+<div class="card"><table class="tbl"><thead><tr><th>일시</th><th>태양광(MWh)</th><th>풍력(MWh)</th><th>ESS(MWh)</th><th>합계(MWh)</th><th>SMP(원)</th><th>수익(천원)</th></tr></thead><tbody>
+  <tr><td>2026-04-19</td><td class="mono">298.4</td><td class="mono">89.2</td><td class="mono">47.3</td><td class="mono">434.9</td><td class="mono">124</td><td class="mono">53,928</td></tr>
+  <tr><td>2026-04-18</td><td class="mono">312.7</td><td class="mono">94.1</td><td class="mono">38.6</td><td class="mono">445.4</td><td class="mono">121</td><td class="mono">53,897</td></tr>
+  <tr><td>2026-04-17</td><td class="mono">287.3</td><td class="mono">81.4</td><td class="mono">52.1</td><td class="mono">420.8</td><td class="mono">126</td><td class="mono">53,021</td></tr>
+</tbody></table></div>`;
+window['I_his-gen']=function(){
+  mkChart('c-hgen','bar',Array.from({length:15},(_,i)=>`4/${i+5}`),[{data:Array.from({length:15},()=>390+Math.round(Math.random()*60)),backgroundColor:'rgba(0,212,168,0.3)',borderColor:'#00d4a8',borderWidth:1}],{});
+};
+
+/* ===== 이력: 총방전이력 ===== */
+P['his-dis']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">금월 총 방전량</div><div class="kv">842.3<span class="ku">MWh</span></div></div>
+  <div class="card"><div class="ct">평균 방전 효율(RTE)</div><div class="kv">92.4<span class="ku">%</span></div></div>
+  <div class="card"><div class="ct">피크 기여량</div><div class="kv">318.7<span class="ku">MWh</span></div></div>
+  <div class="card"><div class="ct">방전 수익</div><div class="kv">104.2<span class="ku">백만원</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">방전량 추이</div></div><div style="height:160px;position:relative"><canvas id="c-dis" role="img" aria-label="방전 추이"></canvas></div></div>
+<div class="card"><div class="sh"><div class="st">방전 이력 상세</div></div>
+<table class="tbl"><thead><tr><th>방전 시작</th><th>방전 종료</th><th>방전량(MWh)</th><th>시작SoC</th><th>종료SoC</th><th>DoD</th><th>RTE</th><th>수익</th></tr></thead><tbody>
+  <tr><td class="mono" style="font-size:9px">14:00</td><td class="mono" style="font-size:9px">14:45</td><td class="mono">17.3</td><td class="mono">82%</td><td class="mono">38%</td><td class="mono">44%</td><td class="mono">91.2%</td><td class="mono">2,146천원</td></tr>
+  <tr><td class="mono" style="font-size:9px">12:30</td><td class="mono" style="font-size:9px">13:10</td><td class="mono">11.8</td><td class="mono">75%</td><td class="mono">44%</td><td class="mono">31%</td><td class="mono">93.1%</td><td class="mono">1,463천원</td></tr>
+</tbody></table></div>`;
+window['I_his-dis']=function(){
+  mkChart('c-dis','bar',Array.from({length:15},(_,i)=>`4/${i+5}`),[{data:Array.from({length:15},()=>30+Math.round(Math.random()*40)),backgroundColor:'rgba(245,158,11,0.35)',borderColor:'#f59e0b',borderWidth:1}],{});
+};
+
+/* ===== 이력: 알람이력 ===== */
+P['his-alm']=()=>`
+<div class="g4">
+  <div class="card"><div class="ct">금일 전체</div><div class="kv">42<span class="ku">건</span></div></div>
+  <div class="card"><div class="ct">위급(Critical)</div><div class="kv" style="color:var(--acc4)">7<span class="ku">건</span></div></div>
+  <div class="card"><div class="ct">처리 완료</div><div class="kv" style="color:var(--acc)">35<span class="ku">건</span></div></div>
+  <div class="card"><div class="ct">MTTR</div><div class="kv">12.4<span class="ku">분</span></div></div>
+</div>
+<div class="g65">
+  <div class="card mb"><div class="sh"><div class="st">시간대별 알람 추이</div></div><div style="height:140px;position:relative"><canvas id="c-alm" role="img" aria-label="알람 추이"></canvas></div></div>
+  <div class="card mb">
+    <div class="pr"><div class="pl">통신 단절</div><div class="pb"><div class="pf" style="width:45%;background:var(--acc4)"></div></div><div class="pv">19건</div></div>
+    <div class="pr"><div class="pl">인버터 장애</div><div class="pb"><div class="pf" style="width:26%;background:var(--acc3)"></div></div><div class="pv">11건</div></div>
+    <div class="pr"><div class="pl">예측 오차</div><div class="pb"><div class="pf" style="width:19%;background:var(--acc2)"></div></div><div class="pv">8건</div></div>
+    <div class="pr"><div class="pl">기타</div><div class="pb"><div class="pf" style="width:10%;background:var(--txt3)"></div></div><div class="pv">4건</div></div>
+  </div>
+</div>
+<div class="card"><table class="tbl"><thead><tr><th>코드</th><th>알람명</th><th>발생</th><th>해제</th><th>지속</th><th>등급</th><th>처리</th></tr></thead><tbody>
+  <tr><td class="mono" style="font-size:9px;color:var(--acc2)">ALM-2041</td><td>RTU 통신 단절 — 광양항</td><td class="mono" style="font-size:9px">14:23</td><td class="mono" style="font-size:9px">미해제</td><td class="mono" style="font-size:9px">15m+</td><td><span class="badge err">Critical</span></td><td><span class="badge warn">조치중</span></td></tr>
+  <tr><td class="mono" style="font-size:9px;color:var(--acc2)">ALM-2040</td><td>IMBP 위험 구간 감지</td><td class="mono" style="font-size:9px">14:15</td><td class="mono" style="font-size:9px">14:18</td><td class="mono" style="font-size:9px">3m</td><td><span class="badge warn">Major</span></td><td><span class="badge ok">완료</span></td></tr>
+  <tr><td class="mono" style="font-size:9px;color:var(--acc2)">ALM-2039</td><td>금능1호 SoC 18% 이하</td><td class="mono" style="font-size:9px">14:08</td><td class="mono" style="font-size:9px">미해제</td><td class="mono" style="font-size:9px">30m+</td><td><span class="badge warn">Major</span></td><td><span class="badge warn">조치중</span></td></tr>
+</tbody></table></div>`;
+window['I_his-alm']=function(){
+  mkChart('c-alm','bar',Array.from({length:14},(_,i)=>i+':00'),[
+    {data:[0,0,0,0,0,0,1,2,0,1,0,2,1,0],backgroundColor:'rgba(239,68,68,0.6)',borderWidth:0},
+    {data:[0,0,0,0,0,1,2,3,1,2,1,3,2,1],backgroundColor:'rgba(245,158,11,0.5)',borderWidth:0},
+  ],{scales:{x:{stacked:true},y:{stacked:true}}});
+};
+
+/* ===== 이력: 입찰/제어 이력 ===== */
+P['his-bid']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">총 입찰 건수</div><div class="kv">96<span class="ku">회</span></div></div>
+  <div class="card"><div class="ct">낙찰 성공률</div><div class="kv" style="color:var(--acc)">97.9<span class="ku">%</span></div></div>
+  <div class="card"><div class="ct">제어 명령</div><div class="kv">14<span class="ku">회</span></div></div>
+  <div class="card"><div class="ct">제어 성공률</div><div class="kv" style="color:var(--acc)">92.9<span class="ku">%</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">입찰 vs 실적 비교</div></div><div style="height:160px;position:relative"><canvas id="c-hbid" role="img" aria-label="입찰 실적 비교"></canvas></div></div>
+<div class="card"><table class="tbl"><thead><tr><th>일시</th><th>구분</th><th>입찰량</th><th>실측</th><th>오차율</th><th>결과</th></tr></thead><tbody>
+  <tr><td class="mono" style="font-size:9px">14:00</td><td><span class="badge inf">DA 입찰</span></td><td class="mono">145.2MW</td><td class="mono">143.8MW</td><td class="mono">0.97%</td><td><span class="badge ok">낙찰</span></td></tr>
+  <tr><td class="mono" style="font-size:9px">13:45</td><td><span class="badge inf">RT 입찰</span></td><td class="mono">143.0MW</td><td class="mono">141.2MW</td><td class="mono">1.26%</td><td><span class="badge ok">낙찰</span></td></tr>
+  <tr><td class="mono" style="font-size:9px">13:30</td><td><span class="badge warn">제어명령</span></td><td class="mono">85%</td><td class="mono">82.3%</td><td class="mono">2.7%</td><td><span class="badge ok">성공</span></td></tr>
+</tbody></table></div>`;
+window['I_his-bid']=function(){
+  const h=Array.from({length:24},(_,i)=>i+'h');
+  const bid=[0,0,0,0,0,10,40,80,110,130,140,145,148,145,140,143,150,147,132,108,74,42,18,4];
+  const act=bid.map(v=>Math.round(v*(0.97+Math.random()*0.04)));
+  mkChart('c-hbid','line',h,[{data:bid,borderColor:'#0099ff',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:act,borderColor:'#00d4a8',borderWidth:2,pointRadius:0,tension:0.4,fill:false}],{});
+};
+
+/* ===== 이력: 출력제어 이력 ===== */
+P['his-out']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">금월 제어 건수</div><div class="kv">28<span class="ku">건</span></div></div>
+  <div class="card"><div class="ct">평균 이행률</div><div class="kv" style="color:var(--acc)">96.2<span class="ku">%</span></div></div>
+  <div class="card"><div class="ct">미생산 발전량</div><div class="kv" style="color:var(--acc3)">124.3<span class="ku">MWh</span></div></div>
+  <div class="card"><div class="ct">기회비용 손실</div><div class="kv" style="color:var(--acc4)">15.4<span class="ku">백만원</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">제어 프로파일 (정상 vs 제어 후)</div></div><div style="height:160px;position:relative"><canvas id="c-hout" role="img" aria-label="출력 제어 프로파일"></canvas></div></div>
+<div class="card"><div class="sh"><div class="st">출력제어 상세</div><button class="cb p" style="font-size:10px">확인서 PDF 발급</button></div>
+<table class="tbl"><thead><tr><th>제어 시작</th><th>제어 종료</th><th>지시 기관</th><th>유형</th><th>제어량</th><th>이행률</th><th>보상</th></tr></thead><tbody>
+  <tr><td class="mono" style="font-size:9px">14:00</td><td class="mono" style="font-size:9px">14:45</td><td>KPX</td><td>급전지시</td><td class="mono">8.2MW</td><td class="mono">98.4%</td><td><span class="badge ok">유상</span></td></tr>
+  <tr><td class="mono" style="font-size:9px">12:15</td><td class="mono" style="font-size:9px">12:45</td><td>한전</td><td>계통제약</td><td class="mono">15.0MW</td><td class="mono">94.1%</td><td><span class="badge off">무상</span></td></tr>
+</tbody></table></div>`;
+window['I_his-out']=function(){
+  const h=Array.from({length:24},(_,i)=>i+'h');
+  const norm=[0,0,0,0,0,2,18,45,82,115,134,142,148,145,138,143,150,147,132,108,74,42,18,4];
+  const ctrl=norm.map((v,i)=>(i>=12&&i<=16)?Math.round(v*0.88):v);
+  mkChart('c-hout','line',h,[{data:norm,borderColor:'rgba(255,255,255,0.25)',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:ctrl,borderColor:'#00d4a8',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,212,168,0.06)'}],{});
+};
+
+/* ===== 예측: 예측분석 ===== */
+P['pre-main']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">NMAE10 오차율</div><div class="kv" style="color:var(--acc)">6.8<span class="ku">%</span></div><div class="kd up">기준 8% 이하 ✓</div></div>
+  <div class="card"><div class="ct">예측 정확도 등급</div><div class="kv" style="color:var(--acc2)">A<span class="ku">등급</span></div></div>
+  <div class="card"><div class="ct">적용 모델</div><div class="kv" style="font-size:15px">D1_min</div></div>
+  <div class="card"><div class="ct">예측 정산금 추정</div><div class="kv">3.2<span class="ku">원/kWh</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">예측 vs 실측 (금일 24시간)</div></div><div style="height:190px;position:relative"><canvas id="c-pred" role="img" aria-label="예측 vs 실측 비교"></canvas></div></div>
+<div class="g2">
+  <div class="card"><div class="ct">오차 분포 히스토그램</div><div style="height:130px;position:relative"><canvas id="c-errd" role="img" aria-label="오차 분포"></canvas></div></div>
+  <div class="card">
+    <div class="pr"><div class="pl">00~06시</div><div class="pb"><div class="pf" style="width:15%;background:var(--acc)"></div></div><div class="pv">1.2%</div></div>
+    <div class="pr"><div class="pl">06~12시</div><div class="pb"><div class="pf" style="width:62%;background:var(--acc2)"></div></div><div class="pv">4.8%</div></div>
+    <div class="pr"><div class="pl">12~18시</div><div class="pb"><div class="pf" style="width:88%;background:var(--acc3)"></div></div><div class="pv">6.8%</div></div>
+    <div class="pr"><div class="pl">18~24시</div><div class="pb"><div class="pf" style="width:35%;background:var(--acc)"></div></div><div class="pv">2.7%</div></div>
+  </div>
+</div>`;
+window['I_pre-main']=function(){
+  const h=Array.from({length:24},(_,i)=>i+'h');
+  const p=[0,0,0,0,0,2,18,45,82,115,134,142,148,145,138,143,150,147,132,108,74,42,18,4];
+  const a=[0,0,0,0,0,1,17,43,80,112,131,139,146,141,134,138,143,141,128,103,70,39,15,3];
+  mkChart('c-pred','line',h,[{data:p,borderColor:'#0099ff',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:a,borderColor:'#00d4a8',borderWidth:2,pointRadius:0,tension:0.4,fill:false}],{});
+  mkChart('c-errd','bar',['-10','-8','-6','-4','-2','0','2','4','6','8'],[{data:[2,5,12,23,31,29,18,9,4,1],backgroundColor:'rgba(0,153,255,0.4)',borderColor:'#0099ff',borderWidth:1}],{});
+};
+
+/* ===== 예측: 교차분석 ===== */
+P['pre-cross']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">일사량↔발전 상관계수</div><div class="kv" style="color:var(--acc)">0.94</div><div class="kd up">강한 양의 상관</div></div>
+  <div class="card"><div class="ct">온도↔효율 상관계수</div><div class="kv" style="color:var(--acc3)">-0.72</div><div class="kd dn">음의 상관</div></div>
+  <div class="card"><div class="ct">풍속↔풍력 상관계수</div><div class="kv" style="color:var(--acc2)">0.88</div></div>
+  <div class="card"><div class="ct">주요 오차 원인</div><div class="kv" style="font-size:14px">일사량</div><div class="kd neu">기여도 70%</div></div>
+</div>
+<div class="g65">
+  <div class="card mb"><div class="sh"><div class="st">산점도 — 일사량 vs 발전량</div></div><div style="height:200px;position:relative"><canvas id="c-scatter" role="img" aria-label="산점도"></canvas></div></div>
+  <div class="card mb">
+    <div class="sh"><div class="st">기상 변수 기여도 (SHAP)</div></div>
+    <div class="pr"><div class="pl">일사량</div><div class="pb"><div class="pf" style="width:70%;background:var(--acc)"></div></div><div class="pv">70%</div></div>
+    <div class="pr"><div class="pl">외기 온도</div><div class="pb"><div class="pf" style="width:20%;background:var(--acc3)"></div></div><div class="pv">20%</div></div>
+    <div class="pr"><div class="pl">풍속</div><div class="pb"><div class="pf" style="width:7%;background:var(--acc2)"></div></div><div class="pv">7%</div></div>
+    <div class="pr"><div class="pl">습도</div><div class="pb"><div class="pf" style="width:3%;background:var(--txt3)"></div></div><div class="pv">3%</div></div>
+    <div class="sh" style="margin-top:10px"><div class="st">분석 설정</div></div>
+    <div class="fg"><label class="fl">X축 변수</label><select class="sel"><option>일사량 (W/m²)</option><option>외기 온도 (°C)</option></select></div>
+    <div class="fg"><label class="fl">Y축 변수</label><select class="sel"><option>발전량 (kWh)</option><option>인버터 효율 (%)</option></select></div>
+    <button class="cb p" style="width:100%;font-size:11px">분석 실행</button>
+  </div>
+</div>`;
+window['I_pre-cross']=function(){
+  const pts=Array.from({length:60},()=>({x:Math.random()*900+100,y:Math.random()*1200+100}));
+  mkChart('c-scatter','scatter',null,[{data:pts,backgroundColor:'rgba(0,212,168,0.5)',pointRadius:4}],{scales:{x:{title:{display:true,text:'일사량 (W/m²)',color:'#64748b',font:{size:9}}},y:{title:{display:true,text:'발전량 (kWh)',color:'#64748b',font:{size:9}}}}});
+};
+
+/* ===== 예측: 시장가/계통 ===== */
+P['pre-mkt']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">현재 SMP</div><div class="kv">124.3<span class="ku">원/kWh</span></div><div class="kd up">▲ 전일比 +2.1원</div></div>
+  <div class="card"><div class="ct">음(-)가격 위험</div><div class="kv" style="color:var(--acc)">12<span class="ku">%</span></div></div>
+  <div class="card"><div class="ct">계통 혼잡도</div><div class="kv" style="color:var(--acc3)">중<span class="ku">위험</span></div></div>
+  <div class="card"><div class="ct">예비력</div><div class="kv">8.2<span class="ku">GW</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">SMP 예측 (24시간)</div></div><div style="height:160px;position:relative"><canvas id="c-smp" role="img" aria-label="SMP 예측"></canvas></div></div>
+<div class="g2">
+  <div class="card mb">
+    <div class="sh"><div class="st">계통 상태</div></div>
+    <div class="mr"><div class="ml">계통 주파수</div><div class="mv mono" style="color:var(--acc)">60.02 Hz</div></div>
+    <div class="mr"><div class="ml">전압</div><div class="mv mono">154.3 kV</div></div>
+    <div class="mr"><div class="ml">지역 순부하</div><div class="mv mono">42.8 GW</div></div>
+    <div class="mr" style="border:none"><div class="ml">재생에너지 비중</div><div class="mv mono">38.4%</div></div>
+  </div>
+  <div class="card mb">
+    <div class="sh"><div class="st">ESS 충방전 스케줄 제안</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc2)"></div><div class="am">09~11시 SMP 낮음 → ESS 충전 권장</div><div class="at">예측</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc)"></div><div class="am">14~16시 SMP 피크 → 방전 수익 극대화</div><div class="at">권장</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc3)"></div><div class="am">18~19시 음가격 가능성 12% — 주의</div><div class="at">주의</div></div>
+  </div>
+</div>`;
+window['I_pre-mkt']=function(){
+  const smp=[110,108,105,103,100,98,102,115,124,131,135,128,126,129,132,135,138,132,125,118,112,108,106,104];
+  mkChart('c-smp','line',Array.from({length:24},(_,i)=>i+'h'),[{data:smp,borderColor:'#f59e0b',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(245,158,11,0.07)'}],{scales:{y:{title:{display:true,text:'원/kWh',color:'#64748b',font:{size:9}}}}});
+};
+
+/* ===== 예측: 모델 비교 ===== */
+P['pre-model']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">추천 입찰 모델</div><div class="kv" style="font-size:14px;color:var(--acc)">D1_min</div><div class="kd up">NMAE 6.8% 최우수</div></div>
+  <div class="card"><div class="ct">비교 모델 수</div><div class="kv">5<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">모델 드리프트</div><div class="kv" style="color:var(--acc)">정상</div></div>
+  <div class="card"><div class="ct">마지막 재학습</div><div class="kv" style="font-size:13px">3일 전</div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">모델별 예측 곡선 비교</div></div><div style="height:170px;position:relative"><canvas id="c-mcomp" role="img" aria-label="모델 비교"></canvas></div></div>
+<div class="card"><div class="sh"><div class="st">모델 성능 순위</div><button class="cb p" style="font-size:10px">챔피언 지정</button></div>
+<table class="tbl"><thead><tr><th>순위</th><th>모델 ID</th><th>알고리즘</th><th>NMAE</th><th>RMSE</th><th>연산시간</th><th>상태</th></tr></thead><tbody>
+  <tr><td class="mono" style="color:var(--acc)">1위</td><td class="mono" style="color:var(--acc2)">D1_min</td><td>LSTM+Ensemble</td><td class="mono" style="color:var(--acc)">6.8%</td><td class="mono">0.042</td><td class="mono">1분 12초</td><td><span class="badge ok">챔피언</span></td></tr>
+  <tr><td class="mono" style="color:var(--txt2)">2위</td><td class="mono" style="color:var(--acc2)">D3_min</td><td>XGBoost</td><td class="mono" style="color:var(--acc2)">7.4%</td><td class="mono">0.051</td><td class="mono">0분 48초</td><td><span class="badge inf">대기</span></td></tr>
+  <tr><td class="mono" style="color:var(--txt2)">3위</td><td class="mono" style="color:var(--acc2)">MWP_v2</td><td>Random Forest</td><td class="mono" style="color:var(--acc3)">8.1%</td><td class="mono">0.059</td><td class="mono">0분 32초</td><td><span class="badge inf">대기</span></td></tr>
+  <tr><td class="mono" style="color:var(--txt2)">4위</td><td class="mono" style="color:var(--acc2)">ECMWF</td><td>NWP모델</td><td class="mono" style="color:var(--acc4)">8.9%</td><td class="mono">0.067</td><td class="mono">4분 20초</td><td><span class="badge inf">대기</span></td></tr>
+  <tr><td class="mono" style="color:var(--txt2)">5위</td><td class="mono" style="color:var(--acc2)">SARIMA</td><td>통계모델</td><td class="mono" style="color:var(--acc4)">11.2%</td><td class="mono">0.089</td><td class="mono">0분 18초</td><td><span class="badge off">비활성</span></td></tr>
+</tbody></table></div>`;
+window['I_pre-model']=function(){
+  const h=Array.from({length:24},(_,i)=>i+'h');
+  const act=[0,0,0,0,0,1,17,43,80,112,131,139,146,141,134,138,143,141,128,103,70,39,15,3];
+  mkChart('c-mcomp','line',h,[
+    {data:act,borderColor:'rgba(255,255,255,0.4)',borderWidth:2,pointRadius:0,tension:0.4,fill:false},
+    {data:act.map(v=>v*(0.96+Math.random()*0.08)),borderColor:'#00d4a8',borderWidth:1.5,pointRadius:0,tension:0.4,fill:false},
+    {data:act.map(v=>v*(0.93+Math.random()*0.1)),borderColor:'#f59e0b',borderWidth:1,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},
+  ],{});
+};
+
+/* ===== 전력입찰: 이중시장 ===== */
+P['bid-dual']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">DA 낙찰 용량</div><div class="kv">145.2<span class="ku">MW</span></div><div class="kd up">낙찰가 122원</div></div>
+  <div class="card"><div class="ct">RT 입찰 상태</div><div class="kv" style="color:var(--acc2)">진행중</div><div class="kd neu">T-75분 18분 전</div></div>
+  <div class="card"><div class="ct">예상 MEP</div><div class="kv">17.7<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">IMBP 리스크</div><div class="kv" style="color:var(--acc3)">중<span class="ku">위험</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">10구간 입찰 설정 (DA)</div><div class="sa">KPX 전송</div></div>
+  <table class="tbl"><thead><tr><th>구간</th><th>용량(MW)</th><th>가격(원)</th><th>결과</th></tr></thead><tbody>
+    ${[[1,15,80,'낙찰'],[2,18,90,'낙찰'],[3,22,100,'낙찰'],[4,20,108,'낙찰'],[5,25,115,'낙찰'],[6,18,120,'낙찰'],[7,15,125,'낙찰'],[8,8,132,'유찰'],[9,5,140,'유찰'],[10,4,150,'유찰']].map(r=>`<tr><td class="mono">${r[0]}</td><td class="mono">${r[1]}</td><td class="mono">${r[2]}</td><td><span class="badge ${r[3]==='낙찰'?'ok':'off'}">${r[3]}</span></td></tr>`).join('')}
+  </tbody></table></div>
+  <div class="card mb"><div class="sh"><div class="st">정산 시뮬레이션</div></div>
+    <div class="mr"><div class="ml">에너지정산금(MEP)</div><div class="mv mono" style="color:var(--acc)">+17,725천원</div></div>
+    <div class="mr"><div class="ml">변동비보전(MWP)</div><div class="mv mono" style="color:var(--acc2)">+1,240천원</div></div>
+    <div class="mr"><div class="ml">기대이익(MAP)</div><div class="mv mono" style="color:var(--acc2)">+890천원</div></div>
+    <div class="mr"><div class="ml">용량정산금(CP)</div><div class="mv mono" style="color:var(--acc2)">+3,120천원</div></div>
+    <div class="mr"><div class="ml">IMBP 페널티</div><div class="mv mono" style="color:var(--acc4)">-480천원</div></div>
+    <div class="mr" style="border:none;padding-top:8px"><div class="ml" style="font-weight:500;color:var(--txt)">예상 순수익</div><div class="mv" style="font-size:15px;color:var(--acc)">22,495천원</div></div>
+    <div style="height:100px;position:relative;margin-top:8px"><canvas id="c-settle" role="img" aria-label="정산 차트"></canvas></div>
+  </div>
+</div>`;
+window['I_bid-dual']=function(){
+  mkChart('c-settle','bar',['MEP','MWP','MAP','CP','IMBP'],[{data:[17725,1240,890,3120,-480],backgroundColor:['rgba(0,212,168,0.5)','rgba(0,153,255,0.4)','rgba(0,153,255,0.4)','rgba(0,153,255,0.4)','rgba(239,68,68,0.5)'],borderColor:['#00d4a8','#0099ff','#0099ff','#0099ff','#ef4444'],borderWidth:1}],{scales:{y:{ticks:{callback:v=>v>0?'+'+Math.round(v/1000)+'K':Math.round(v/1000)+'K'}}}});
+};
+
+/* ===== 전력입찰: 입찰용량관리 ===== */
+P['bid-cap']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">총 설비용량</div><div class="kv">150.2<span class="ku">MW</span></div></div>
+  <div class="card"><div class="ct">가용 입찰용량</div><div class="kv" style="color:var(--acc)">145.8<span class="ku">MW</span></div></div>
+  <div class="card"><div class="ct">고장/정비 제외</div><div class="kv" style="color:var(--acc3)">4.4<span class="ku">MW</span></div></div>
+  <div class="card"><div class="ct">ESS 방전 여유</div><div class="kv">17.3<span class="ku">MW</span></div></div>
+</div>
+<div class="g65">
+  <div class="card mb"><div class="sh"><div class="st">시간대별 가용 용량 예측</div></div><div style="height:180px;position:relative"><canvas id="c-cap" role="img" aria-label="가용용량 예측"></canvas></div></div>
+  <div class="card mb">
+    <div class="fg"><label class="fl">안전 마진율 (%)</label><input class="inp" value="5.0" type="number"></div>
+    <div class="fg"><label class="fl">입찰 하한가 (원/kWh)</label><input class="inp" value="80" type="number"></div>
+    <div class="fg"><label class="fl">입찰 상한가 (원/kWh)</label><input class="inp" value="200" type="number"></div>
+    <div class="fg"><label class="fl">ESS 방전 포함</label><div style="display:flex;align-items:center;gap:8px;margin-top:4px"><label class="toggle"><input type="checkbox" checked><div class="ts"></div></label><span style="font-size:10px;color:var(--txt2)">17.3MW 포함</span></div></div>
+    <button class="cb p" style="width:100%;font-size:11px">최적 입찰량 계산</button>
+  </div>
+</div>`;
+window['I_bid-cap']=function(){
+  const h=Array.from({length:24},(_,i)=>i+'h');
+  const av=[5,5,5,5,5,10,55,100,138,148,152,150,148,146,142,145,148,145,130,108,74,42,18,8];
+  mkChart('c-cap','line',h,[{data:av,borderColor:'rgba(255,255,255,0.3)',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:av.map(v=>Math.round(v*0.95)),borderColor:'#00d4a8',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,212,168,0.07)'}],{});
+};
+
+/* ===== 전력입찰: 정산 시뮬레이션 ===== */
+P['bid-sim']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">예상 순수익</div><div class="kv">22.5<span class="ku">백만원</span></div><div class="kd up">전략A 선택 시</div></div>
+  <div class="card"><div class="ct">낙찰 기반 매출</div><div class="kv">17.7<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">인센티브 추정</div><div class="kv">5.3<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">페널티 리스크</div><div class="kv" style="color:var(--acc3)">0.48<span class="ku">백만원</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">시나리오 비교</div></div><div style="height:170px;position:relative"><canvas id="c-scenario" role="img" aria-label="시나리오 비교"></canvas></div></div>
+  <div class="card mb"><div class="sh"><div class="st">SMP 민감도 분석</div></div><div style="height:170px;position:relative"><canvas id="c-sens" role="img" aria-label="민감도 분석"></canvas></div></div>
+</div>
+<div class="card"><div class="sh"><div class="st">가상 정산 내역</div><button class="cb p" style="font-size:10px">PDF 발행</button></div>
+<table class="tbl"><thead><tr><th>정산 항목</th><th>산식</th><th>금액</th><th>비고</th></tr></thead><tbody>
+  <tr><td>DA 에너지정산금(DAES)</td><td class="mono" style="font-size:9px">145.2MW × 122원 × h</td><td class="mono" style="color:var(--acc)">+15,842천원</td><td>DA SMP</td></tr>
+  <tr><td>RT 편차정산금(RTES)</td><td class="mono" style="font-size:9px">편차 × RT SMP</td><td class="mono" style="color:var(--acc2)">+1,883천원</td><td>실시간</td></tr>
+  <tr><td>용량정산금(CP)</td><td class="mono" style="font-size:9px">가용용량 × CP단가</td><td class="mono" style="color:var(--acc2)">+3,120천원</td><td>월 정산</td></tr>
+  <tr><td>IMBP 페널티</td><td class="mono" style="font-size:9px">오차량 × 페널티단가</td><td class="mono" style="color:var(--acc4)">-480천원</td><td>차감</td></tr>
+</tbody></table></div>`;
+window['I_bid-sim']=function(){
+  mkChart('c-scenario','bar',['MEP','인센티브','CP','IMBP','순수익'],[
+    {label:'안정형',data:[15.8,1.8,3.1,-0.5,22.5],backgroundColor:'rgba(0,212,168,0.45)',borderWidth:0},
+    {label:'공격형',data:[19.4,2.4,3.1,-2.1,25.8],backgroundColor:'rgba(245,158,11,0.45)',borderWidth:0},
+  ],{scales:{y:{ticks:{callback:v=>v+'M'}}}});
+  mkChart('c-sens','line',['-20%','-10%','0%','+10%','+20%'],[{data:[18.2,20.3,22.5,24.7,26.9],borderColor:'#00d4a8',borderWidth:2,pointRadius:3,tension:0.3,fill:true,backgroundColor:'rgba(0,212,168,0.07)'}],{});
+};
+
+/* ===== 전력입찰: 정산/배분 ===== */
+P['bid-mgmt']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">이번 달 확정 정산금</div><div class="kv">284.7<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">운영 수수료 (5%)</div><div class="kv">14.2<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">사업자 배분 합계</div><div class="kv">270.5<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">정산서 발행 현황</div><div class="kv"><span style="color:var(--acc)">38</span><span style="font-size:12px;color:var(--txt2)">/42건</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">월별 정산 추이</div></div><div style="height:160px;position:relative"><canvas id="c-settle2" role="img" aria-label="정산 추이"></canvas></div></div>
+<div class="card"><div class="sh"><div class="st">사업자별 정산 명세</div><div class="sa">Excel ↓</div></div>
+<table class="tbl"><thead><tr><th>발전소명</th><th>발전량(MWh)</th><th>기여도</th><th>총배분액</th><th>지급액</th><th>정산서</th><th>지급상태</th></tr></thead><tbody>
+  <tr><td>광양항태양광</td><td class="mono">298.4</td><td class="mono">12.4%</td><td class="mono">35.3M</td><td class="mono">33.5M</td><td><span class="badge ok">발행</span></td><td><span class="badge ok">완료</span></td></tr>
+  <tr><td>광양항4단계</td><td class="mono">312.7</td><td class="mono">13.0%</td><td class="mono">37.0M</td><td class="mono">35.2M</td><td><span class="badge ok">발행</span></td><td><span class="badge ok">완료</span></td></tr>
+  <tr><td>온누리</td><td class="mono">143.2</td><td class="mono">5.9%</td><td class="mono">16.9M</td><td class="mono">16.1M</td><td><span class="badge warn">미발행</span></td><td><span class="badge warn">대기</span></td></tr>
+  <tr><td>김주풍력</td><td class="mono">421.8</td><td class="mono">17.5%</td><td class="mono">49.8M</td><td class="mono">47.3M</td><td><span class="badge ok">발행</span></td><td><span class="badge ok">완료</span></td></tr>
+</tbody></table></div>`;
+window['I_bid-mgmt']=function(){
+  mkChart('c-settle2','bar',['11월','12월','1월','2월','3월','4월'],[
+    {data:[245,268,231,289,271,285],backgroundColor:'rgba(0,212,168,0.3)',borderColor:'#00d4a8',borderWidth:1},
+    {data:[233,254,219,274,257,271],backgroundColor:'rgba(0,153,255,0.3)',borderColor:'#0099ff',borderWidth:1},
+  ],{scales:{y:{ticks:{callback:v=>v+'M'}}}});
+};
+
+/* ===== 준중앙급전: 발전량인도 ===== */
+P['sdp-del']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">급전지시값 (KPX)</div><div class="kv">142.0<span class="ku">MW</span></div><div class="kd neu">수신 14:00</div></div>
+  <div class="card"><div class="ct">현재 인도량</div><div class="kv">139.8<span class="ku">MW</span></div><div class="kd dn">▼ 오차 2.2 MW</div></div>
+  <div class="card"><div class="ct">이행률</div><div class="kv" style="color:var(--acc)">98.4<span class="ku">%</span></div><div class="kd up">허용범위 내</div></div>
+  <div class="card"><div class="ct">이행 보상금(추정)</div><div class="kv">5.4<span class="ku">백만원</span></div></div>
+</div>
+<div class="card mb">
+  <div class="sh"><div class="st">자원별 급전지시 이행 현황</div></div>
+  <div class="dr"><div class="di">광양항태양광</div><div class="db"><div class="df" style="width:91%"></div><div class="dt" style="left:95%"></div></div><div class="dp" style="color:var(--acc)">91%</div></div>
+  <div class="dr"><div class="di">광양항4단계</div><div class="db"><div class="df" style="width:98%"></div><div class="dt" style="left:95%"></div></div><div class="dp" style="color:var(--acc)">98%</div></div>
+  <div class="dr"><div class="di">김주풍력</div><div class="db"><div class="df" style="width:100%"></div><div class="dt" style="left:95%"></div></div><div class="dp" style="color:var(--acc)">100%</div></div>
+  <div class="dr"><div class="di">온누리</div><div class="db"><div class="df" style="width:94%"></div><div class="dt" style="left:95%"></div></div><div class="dp" style="color:var(--acc2)">94%</div></div>
+  <div class="dr"><div class="di">금능1호(ESS)</div><div class="db"><div class="df" style="width:72%;background:var(--acc3)"></div><div class="dt" style="left:95%"></div></div><div class="dp" style="color:var(--acc3)">72%</div></div>
+</div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">지시 vs 실측 추이</div></div><div style="height:140px;position:relative"><canvas id="c-sdp" role="img" aria-label="급전지시 이행"></canvas></div></div>
+  <div class="card mb"><div class="sh"><div class="st">제어 로그</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc2)"></div><div class="am">KPX 급전지시 142 MW 수신</div><div class="at">14:00:03</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc)"></div><div class="am">Set-point 전송 완료 (5개소)</div><div class="at">14:00:07</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc3)"></div><div class="am">금능1호 ACK 응답 지연 1.2s</div><div class="at">14:00:09</div></div>
+    <div class="al"><div class="ad" style="background:var(--acc)"></div><div class="am">이행 성공 — 오차 2.2 MW</div><div class="at">14:00:15</div></div>
+  </div>
+</div>`;
+window['I_sdp-del']=function(){
+  const lbl=Array.from({length:16},(_,i)=>i+':00');
+  mkChart('c-sdp','line',lbl,[
+    {data:Array(16).fill(142),borderColor:'#f59e0b',borderWidth:1.5,pointRadius:0,borderDash:[4,2],fill:false},
+    {data:[138,139,140,141,139,140,141,140,139,140,141,140,139,140,141,140],borderColor:'#00d4a8',borderWidth:2,pointRadius:0,fill:true,backgroundColor:'rgba(0,212,168,0.06)'},
+  ],{scales:{y:{min:130,max:150}}});
+};
+
+/* ===== 준중앙급전: 계약정보 ===== */
+P['sdp-con']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">계약 자원 수</div><div class="kv">9<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">계약 총 용량</div><div class="kv">11.5<span class="ku">MW</span></div></div>
+  <div class="card"><div class="ct">계약 만료 임박</div><div class="kv" style="color:var(--acc3)">1<span class="ku">건</span></div></div>
+  <div class="card"><div class="ct">이행 보상 단가</div><div class="kv">4.2<span class="ku">원/kWh</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">계약 조건 상세</div></div>
+    <div class="mr"><div class="ml">계약 번호</div><div class="mv mono">VPP-KPX-2026-0041</div></div>
+    <div class="mr"><div class="ml">계약 기간</div><div class="mv mono">2026.01~2026.12</div></div>
+    <div class="mr"><div class="ml">계약 용량</div><div class="mv mono">11.5 MW</div></div>
+    <div class="mr"><div class="ml">허용 오차 범위</div><div class="mv mono">±5%</div></div>
+    <div class="mr"><div class="ml">응답 속도 약정</div><div class="mv mono">5 MW/min</div></div>
+    <div class="mr"><div class="ml">이행 보상 단가</div><div class="mv mono" style="color:var(--acc)">4.2 원/kWh</div></div>
+    <div class="mr"><div class="ml">대기 보상 단가</div><div class="mv mono">1.8 원/kWh</div></div>
+    <div class="mr" style="border:none"><div class="ml">원격 제어 동의</div><div class="mv"><span class="badge ok">동의 완료</span></div></div>
+  </div>
+  <div class="card mb"><div class="sh"><div class="st">소속 자원 목록</div></div>
+    <table class="tbl"><thead><tr><th>발전소</th><th>유형</th><th>계약용량</th><th>가중치</th><th>상태</th></tr></thead><tbody>
+      <tr><td>온누리</td><td>태양광</td><td class="mono">996kW</td><td class="mono">12.4%</td><td><span class="badge ok">활성</span></td></tr>
+      <tr><td>해맞이</td><td>태양광</td><td class="mono">996kW</td><td class="mono">12.4%</td><td><span class="badge ok">활성</span></td></tr>
+      <tr><td>광양항태양광</td><td>태양광</td><td class="mono">2,293kW</td><td class="mono">28.5%</td><td><span class="badge ok">활성</span></td></tr>
+      <tr><td>광양항4단계</td><td>태양광</td><td class="mono">2,199kW</td><td class="mono">27.3%</td><td><span class="badge ok">활성</span></td></tr>
+    </tbody></table>
+  </div>
+</div>`;
+
+/* ===== 준중앙급전: 입찰수익 ===== */
+P['sdp-rev']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">금월 입찰 수익</div><div class="kv">87.4<span class="ku">백만원</span></div><div class="kd up">▲ +12.3%</div></div>
+  <div class="card"><div class="ct">이행 보상금(SMP)</div><div class="kv">52.8<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">용량정산금(CP)</div><div class="kv">24.6<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">부가정산금(AS)</div><div class="kv">10.0<span class="ku">백만원</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">월별 준중앙 수익 추이</div></div><div style="height:160px;position:relative"><canvas id="c-sdprev" role="img" aria-label="수익 추이"></canvas></div></div>
+<div class="card"><table class="tbl"><thead><tr><th>정산 항목</th><th>산식</th><th>금월</th><th>누적(YTD)</th><th>상태</th></tr></thead><tbody>
+  <tr><td>이행 보상금(SMP)</td><td class="mono" style="font-size:9px">이행량 × SMP</td><td class="mono" style="color:var(--acc)">52.8M</td><td class="mono">198.4M</td><td><span class="badge ok">확정</span></td></tr>
+  <tr><td>용량정산금(CP)</td><td class="mono" style="font-size:9px">용량 × CP단가</td><td class="mono" style="color:var(--acc2)">24.6M</td><td class="mono">92.1M</td><td><span class="badge ok">확정</span></td></tr>
+  <tr><td>부가정산금(AS)</td><td class="mono" style="font-size:9px">주파수 기여도</td><td class="mono" style="color:var(--acc2)">10.0M</td><td class="mono">38.2M</td><td><span class="badge warn">가정산</span></td></tr>
+</tbody></table></div>`;
+window['I_sdp-rev']=function(){
+  mkChart('c-sdprev','bar',['11월','12월','1월','2월','3월','4월'],[
+    {data:[44,52,48,56,51,52.8],backgroundColor:'rgba(0,212,168,0.4)',borderWidth:0},
+    {data:[22,24,23,24,24,24.6],backgroundColor:'rgba(0,153,255,0.4)',borderWidth:0},
+    {data:[8,9,8,10,9,10],backgroundColor:'rgba(167,139,250,0.4)',borderWidth:0},
+  ],{scales:{x:{stacked:true},y:{stacked:true,ticks:{callback:v=>v+'M'}}}});
+};
+
+/* ===== 준중앙급전: 수익정산 ===== */
+P['sdp-set']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">확정 정산 수량</div><div class="kv">4,821<span class="ku">MWh</span></div></div>
+  <div class="card"><div class="ct">급전지시 이행정산금</div><div class="kv" style="color:var(--acc)">52.8<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">미이행 페널티</div><div class="kv" style="color:var(--acc4)">-0.84<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">최종 확정일</div><div class="kv" style="font-size:13px">5월 15일</div></div>
+</div>
+<div class="g2">
+  <div class="card mb">
+    <div class="mr"><div class="ml">이행 성공 물량</div><div class="mv mono">4,721 MWh</div></div>
+    <div class="mr"><div class="ml">이행 보상 단가</div><div class="mv mono">4.2 원/kWh</div></div>
+    <div class="mr"><div class="ml">이행 정산금 소계</div><div class="mv mono" style="color:var(--acc)">+19,828천원</div></div>
+    <div class="mr"><div class="ml">용량 대기 보상</div><div class="mv mono" style="color:var(--acc2)">+8,712천원</div></div>
+    <div class="mr"><div class="ml">미이행 페널티</div><div class="mv mono" style="color:var(--acc4)">-840천원</div></div>
+    <div class="mr"><div class="ml">운영 수수료 (5%)</div><div class="mv mono" style="color:var(--txt2)">-1,385천원</div></div>
+    <div class="mr" style="border:none;padding-top:8px"><div class="ml" style="font-weight:500">최종 순 지급액</div><div class="mv" style="font-size:15px;color:var(--acc)">26,315천원</div></div>
+  </div>
+  <div class="card mb"><div class="ct">자원 기여도 지수</div><div style="height:180px;position:relative"><canvas id="c-contrib" role="img" aria-label="기여도 차트"></canvas></div></div>
+</div>`;
+window['I_sdp-set']=function(){
+  mkChart('c-contrib','doughnut',['광양항태양광','광양항4단계','온누리','해맞이','기타'],[{data:[28.5,27.3,12.4,12.4,19.4],backgroundColor:['#00d4a8','#0099ff','#f59e0b','#a78bfa','#64748b'],borderWidth:0}],{cutout:'60%'});
+};
+
+/* ===== 클릭제어: 수동출력제어 ===== */
+P['ctl-man']=()=>`
+<div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:6px;padding:8px 12px;margin-bottom:12px;display:flex;align-items:center;gap:8px">
+  <svg width="14" height="14" viewBox="0 0 16 16" fill="none"><path d="M8 2L14 13H2L8 2z" stroke="#ef4444" stroke-width="1.2"/><path d="M8 6v4M8 11.5v.5" stroke="#ef4444" stroke-width="1.2" stroke-linecap="round"/></svg>
+  <span style="font-size:11px;color:var(--acc4)">수동 제어는 KPX 급전지시 이행에 영향을 미칩니다. 제어 전 계통 상태를 확인하세요.</span>
+</div>
+<div class="g2">
+  <div class="card mb">
+    <div class="fg"><label class="fl">제어 대상 그룹</label><select class="sel"><option>VPP-전남권 (91.4MW)</option><option>VPP-제주권 (11.4MW)</option><option>전체</option></select></div>
+    <div class="fg"><label class="fl">개별 발전소</label><select class="sel"><option>전체 선택</option><option>광양항태양광</option><option>김주풍력</option></select></div>
+    <div class="fg">
+      <label class="fl">목표 출력 <span id="cv" style="color:var(--acc);font-family:var(--mono)">70%</span></label>
+      <input type="range" class="cslider" min="0" max="100" value="70" oninput="document.getElementById('cv').textContent=this.value+'%'">
+    </div>
+    <div class="fg"><label class="fl">유지 시간 (분)</label><input class="inp" type="number" value="30"></div>
+    <div class="fg"><label class="fl">제어 사유 (필수)</label><select class="sel"><option>계통 안정화 요청</option><option>출력제한 지시</option><option>점검</option></select></div>
+    <div style="display:flex;gap:8px;margin-top:8px"><button class="cb d" style="flex:1">제어 명령 전송</button><button class="cb n">초기화</button></div>
+  </div>
+  <div class="card mb">
+    <div class="sh"><div class="st">제어 신호 피드백</div></div>
+    <div style="background:var(--bg4);border-radius:5px;padding:9px;font-family:var(--mono);font-size:9px;line-height:1.8;margin-bottom:10px">
+      <div style="color:var(--acc)">[14:23:01] SESSION: CTL-20260419-0087</div>
+      <div style="color:var(--txt2)">TX → MODBUS WRITE FC16: 0x0041=4480</div>
+      <div style="color:var(--txt2)">→ RTU [10.233.1.31] Port 502</div>
+      <div style="color:var(--acc)">[14:23:02] ACK ✓ 응답시간: 0.31s</div>
+      <div style="color:var(--acc2)">[14:23:05] 실측: 1,605kW → TARGET ✓</div>
+    </div>
+    <div class="sh"><div class="st">최근 제어 이력</div></div>
+    <table class="tbl"><thead><tr><th>일시</th><th>대상</th><th>설정값</th><th>결과</th></tr></thead><tbody>
+      <tr><td class="mono" style="font-size:9px">14:00:07</td><td>전체</td><td class="mono">95%</td><td><span class="badge ok">성공</span></td></tr>
+      <tr><td class="mono" style="font-size:9px">13:30:12</td><td>광양항</td><td class="mono">85%</td><td><span class="badge ok">성공</span></td></tr>
+      <tr><td class="mono" style="font-size:9px">12:15:44</td><td>금능1호</td><td class="mono">100%</td><td><span class="badge warn">지연</span></td></tr>
+    </tbody></table>
+  </div>
+</div>`;
+
+/* ===== 클릭제어: 출력제어설정 ===== */
+P['ctl-cfg']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">제어 우선순위</div><div class="kv" style="font-size:14px">자동 우선</div></div>
+  <div class="card"><div class="ct">기본 유지 시간</div><div class="kv">30<span class="ku">분</span></div></div>
+  <div class="card"><div class="ct">피드백 주기</div><div class="kv">5<span class="ku">초</span></div></div>
+  <div class="card"><div class="ct">비상정지 설정</div><div class="kv"><span class="badge ok">활성</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">자원별 제어 파라미터</div></div>
+    <table class="tbl"><thead><tr><th>자원명</th><th>제어 하한</th><th>제어 상한</th><th>Ramp Rate</th><th>허용</th></tr></thead><tbody>
+      <tr><td>광양항태양광</td><td class="mono">10%</td><td class="mono">100%</td><td class="mono">5MW/min</td><td><span class="badge ok">허용</span></td></tr>
+      <tr><td>광양항4단계</td><td class="mono">10%</td><td class="mono">100%</td><td class="mono">5MW/min</td><td><span class="badge ok">허용</span></td></tr>
+      <tr><td>온누리</td><td class="mono">15%</td><td class="mono">100%</td><td class="mono">3MW/min</td><td><span class="badge ok">허용</span></td></tr>
+      <tr><td>금능1호 ESS</td><td class="mono">0%</td><td class="mono">100%</td><td class="mono">10MW/min</td><td><span class="badge ok">허용</span></td></tr>
+      <tr><td>김주풍력</td><td class="mono">20%</td><td class="mono">100%</td><td class="mono">4MW/min</td><td><span class="badge ok">허용</span></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card mb">
+    <div class="fg"><label class="fl">제어 우선순위</label><select class="sel"><option>자동 우선 (KPX/VPP)</option><option>수동 우선</option></select></div>
+    <div class="fg"><label class="fl">수동 제어 복귀 시간 (분)</label><input class="inp" value="30" type="number"></div>
+    <div class="fg"><label class="fl">피드백 확인 주기 (초)</label><input class="inp" value="5" type="number"></div>
+    <div class="fg"><label class="fl">비상 정지 온도 임계치 (°C)</label><input class="inp" value="70" type="number"></div>
+    <div class="fg"><label class="fl">통신 단절 허용 시간 (초)</label><input class="inp" value="30" type="number"></div>
+    <button class="cb p" style="width:100%;font-size:11px">설정 저장</button>
+  </div>
+</div>`;
+
+/* ===== 클릭제어: 제어신호 모니터링 ===== */
+P['ctl-mon']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">활성 세션</div><div class="kv" style="color:var(--acc)">3<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">평균 응답 지연</div><div class="kv">0.31<span class="ku">초</span></div></div>
+  <div class="card"><div class="ct">패킷 성공률</div><div class="kv" style="color:var(--acc)">99.2<span class="ku">%</span></div></div>
+  <div class="card"><div class="ct">제어 실패 (24h)</div><div class="kv" style="color:var(--acc3)">1<span class="ku">건</span></div></div>
+</div>
+<div class="card mb"><div class="sh"><div class="st">종단간 지연 추이 (최근 30분)</div></div><div style="height:140px;position:relative"><canvas id="c-latency" role="img" aria-label="지연 추이"></canvas></div></div>
+<div class="g2">
+  <div class="card mb"><div class="sh"><div class="st">활성 제어 세션</div></div>
+    <table class="tbl"><thead><tr><th>세션 ID</th><th>대상</th><th>상태</th><th>응답</th><th>목표 도달</th></tr></thead><tbody>
+      <tr><td class="mono" style="font-size:9px">CTL-0087</td><td>전체VPP</td><td><span class="badge ok">완료</span></td><td class="mono">0.31s</td><td><span class="badge ok">✓</span></td></tr>
+      <tr><td class="mono" style="font-size:9px">CTL-0086</td><td>광양항</td><td><span class="badge ok">완료</span></td><td class="mono">0.28s</td><td><span class="badge ok">✓</span></td></tr>
+      <tr><td class="mono" style="font-size:9px">CTL-0085</td><td>금능1호</td><td><span class="badge warn">지연</span></td><td class="mono">1.20s</td><td><span class="badge warn">△</span></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card mb"><div class="sh"><div class="st">채널 상태</div></div>
+    <div class="mr"><div class="ml">VPN 연결</div><div class="mv"><span class="badge ok">정상</span></div></div>
+    <div class="mr"><div class="ml">LTE 신호 세기</div><div class="mv mono">-72 dBm</div></div>
+    <div class="mr"><div class="ml">포트 502 (Modbus)</div><div class="mv"><span class="badge ok">열림</span></div></div>
+    <div class="mr"><div class="ml">MQTT 브로커</div><div class="mv"><span class="badge ok">연결</span></div></div>
+    <div class="mr" style="border:none"><div class="ml">DMZ 프록시</div><div class="mv"><span class="badge ok">정상</span></div></div>
+  </div>
+</div>`;
+window['I_ctl-mon']=function(){
+  const lat=Array.from({length:30},()=>+(0.2+Math.random()*0.35).toFixed(2));
+  lat[14]=1.2;lat[15]=1.1;
+  mkChart('c-latency','line',Array.from({length:30},(_,i)=>i+'m'),[{data:lat,borderColor:'#00d4a8',borderWidth:1.5,pointRadius:0,tension:0.3,fill:true,backgroundColor:'rgba(0,212,168,0.06)'}],{scales:{y:{min:0,max:1.5,title:{display:true,text:'초(s)',color:'#64748b',font:{size:9}}}}});
+};
+
+/* ===== 설정: 사용자관리 ===== */
+P['cfg-usr']=()=>`
+<div class="g4">
+  <div class="card"><div class="ct">전체 계정</div><div class="kv" id="usr-total">18<span class="ku">명</span></div></div>
+  <div class="card acc"><div class="ct">활성</div><div class="kv" style="color:var(--acc)" id="usr-active">14<span class="ku">명</span></div></div>
+  <div class="card"><div class="ct">잠금</div><div class="kv" style="color:var(--acc4)" id="usr-locked">2<span class="ku">명</span></div></div>
+  <div class="card"><div class="ct">MFA 적용</div><div class="kv">100<span class="ku">%</span></div></div>
+</div>
+<div class="card">
+  <div class="sh">
+    <div class="st">계정 목록</div>
+    <div style="display:flex;gap:6px">
+      <input class="inp" placeholder="검색..." style="width:140px;font-size:10px" oninput="usrSearch(this.value)">
+      <button class="cb p" style="font-size:10px" onclick="openModal('modal-usr-add')">계정 추가</button>
+    </div>
+  </div>
+  <table class="tbl"><thead><tr><th>성명</th><th>소속</th><th>역할</th><th>제어 등급</th><th>MFA</th><th>최근 접속</th><th>상태</th><th>관리</th></tr></thead>
+  <tbody id="usr-tbody">
+    <tr><td>김운영</td><td>60Hertz</td><td>슈퍼관리자</td><td class="mono">Lv.3</td><td style="text-align:center;color:var(--acc)">✓</td><td class="mono" style="font-size:9px">14:21</td><td><span class="badge ok">활성</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="openEditUsr('김운영')">편집</button></td></tr>
+    <tr><td>이제어</td><td>동서발전</td><td>운영관리자</td><td class="mono">Lv.2</td><td style="text-align:center;color:var(--acc)">✓</td><td class="mono" style="font-size:9px">13:45</td><td><span class="badge ok">활성</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="openEditUsr('이제어')">편집</button></td></tr>
+    <tr><td>박기술</td><td>GIST</td><td>자원보유자</td><td class="mono">Lv.0</td><td style="text-align:center;color:var(--acc)">✓</td><td class="mono" style="font-size:9px">12:30</td><td><span class="badge ok">활성</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="openEditUsr('박기술')">편집</button></td></tr>
+    <tr><td>정외부</td><td>에기연</td><td>시스템연계</td><td class="mono">Lv.0</td><td style="text-align:center;color:var(--acc)">✓</td><td class="mono" style="font-size:9px">어제</td><td><span class="badge err">잠금</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="openEditUsr('정외부')">편집</button></td></tr>
+  </tbody></table>
+</div>
+
+<!-- 계정 추가 모달 -->
+<div class="modal-backdrop" id="modal-usr-add" style="display:none" onclick="closeModalBg(event,'modal-usr-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">신규 계정 추가</span>
+      <button class="modal-close" onclick="closeModal('modal-usr-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">기본 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>성명 *</label><input class="inp" placeholder="홍길동" id="usr-name"></div>
+        <div class="form-item"><label>소속 *</label><input class="inp" placeholder="60Hertz" id="usr-org"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>이메일 *</label><input class="inp" placeholder="user@60hz.kr" id="usr-email" type="email"></div>
+        <div class="form-item"><label>연락처</label><input class="inp" placeholder="010-0000-0000" id="usr-phone"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">권한 설정</div>
+      <div class="form-row">
+        <div class="form-item"><label>역할 *</label>
+          <select class="sel" id="usr-role">
+            <option>슈퍼관리자</option><option selected>운영관리자</option><option>자원보유자</option><option>시스템연계</option>
+          </select>
+        </div>
+        <div class="form-item"><label>제어 등급 *</label>
+          <select class="sel" id="usr-level">
+            <option>Lv.0 — 조회만</option><option>Lv.1 — 설정변경</option><option selected>Lv.2 — 수동제어</option><option>Lv.3 — 비상정지</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>접근 가능 자원 범위</label>
+          <select class="sel" id="usr-scope">
+            <option>전체 자원</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
+          </select>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">보안</div>
+      <div class="form-row">
+        <div class="form-item"><label>초기 비밀번호</label><input class="inp" type="password" placeholder="8자 이상" id="usr-pw"></div>
+        <div class="form-item"><label>비밀번호 확인</label><input class="inp" type="password" placeholder="재입력" id="usr-pw2"></div>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:4px">
+        <label class="toggle"><input type="checkbox" checked id="usr-mfa"><div class="ts"></div></label>
+        <span style="font-size:11px;color:var(--txt2)">MFA(2차 인증) 필수 적용</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-usr-add')">취소</button>
+      <button class="cb p" onclick="saveUsr()">계정 생성</button>
+    </div>
+  </div>
+</div>
+
+<!-- 계정 편집 모달 -->
+<div class="modal-backdrop" id="modal-usr-edit" style="display:none" onclick="closeModalBg(event,'modal-usr-edit')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="usr-edit-title">계정 편집</span>
+      <button class="modal-close" onclick="closeModal('modal-usr-edit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">계정 상태 변경</div>
+      <div class="form-row">
+        <div class="form-item"><label>계정 상태</label>
+          <select class="sel" id="usr-edit-status"><option>활성</option><option>잠금</option><option>만료</option></select>
+        </div>
+        <div class="form-item"><label>제어 등급</label>
+          <select class="sel"><option>Lv.0</option><option>Lv.1</option><option selected>Lv.2</option><option>Lv.3</option></select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>비밀번호 초기화</label>
+          <div style="display:flex;gap:8px"><input class="inp" type="password" placeholder="새 비밀번호 (변경 시에만 입력)"><button class="cb n" style="white-space:nowrap;font-size:10px">초기화</button></div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb d" style="margin-right:auto;font-size:10px" onclick="closeModal('modal-usr-edit')">계정 삭제</button>
+      <button class="cb n" onclick="closeModal('modal-usr-edit')">취소</button>
+      <button class="cb p" onclick="toast('계정이 수정되었습니다.');closeModal('modal-usr-edit')">저장</button>
+    </div>
+  </div>
+</div>`;
+
+window['I_cfg-usr']=function(){
+  function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  window.usrSearch=function(v){
+    const rows=document.querySelectorAll('#usr-tbody tr');
+    rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
+  };
+  window.openEditUsr=function(name){
+    document.getElementById('usr-edit-title').textContent='계정 편집 — '+name;
+    openModal('modal-usr-edit');
+  };
+  function updateUsrKPI(){
+    const tot=document.querySelectorAll('#usr-tbody tr').length;
+    const act=document.querySelectorAll('#usr-tbody .badge.ok').length;
+    const lock=document.querySelectorAll('#usr-tbody .badge.err').length;
+    const t=document.getElementById('usr-total');
+    const a=document.getElementById('usr-active');
+    const l=document.getElementById('usr-locked');
+    if(t) t.innerHTML=tot+'<span class="ku">명</span>';
+    if(a) a.innerHTML=act+'<span class="ku">명</span>';
+    if(l) l.innerHTML=lock+'<span class="ku">명</span>';
+  }
+  function resetUsrForm(){
+    ['usr-name','usr-org','usr-email','usr-phone','usr-pw','usr-pw2'].forEach(id=>{
+      const el=document.getElementById(id); if(el) el.value='';
+    });
+    const mfa=document.getElementById('usr-mfa'); if(mfa) mfa.checked=true;
+    const role=document.getElementById('usr-role'); if(role) role.selectedIndex=1;
+    const lvl=document.getElementById('usr-level'); if(lvl) lvl.selectedIndex=2;
+    const sc=document.getElementById('usr-scope'); if(sc) sc.selectedIndex=0;
+  }
+  window.saveUsr=function(){
+    const nameEl=document.getElementById('usr-name');
+    const orgEl=document.getElementById('usr-org');
+    const pwEl=document.getElementById('usr-pw');
+    const pw2El=document.getElementById('usr-pw2');
+    const roleEl=document.getElementById('usr-role');
+    const levelEl=document.getElementById('usr-level');
+    if(!nameEl||!orgEl||!roleEl||!levelEl){toast('폼을 불러올 수 없습니다.','err');return;}
+    const name=nameEl.value.trim();
+    const org=orgEl.value.trim();
+    const pw=pwEl?pwEl.value:'';
+    const pw2=pw2El?pw2El.value:'';
+    if(!name||!org){toast('성명과 소속은 필수 입력입니다.','warn');return;}
+    if(pw&&pw!==pw2){toast('비밀번호가 일치하지 않습니다.','warn');return;}
+    const tbody=document.getElementById('usr-tbody');
+    if(!tbody){toast('목록을 찾을 수 없습니다.','err');return;}
+    const role=roleEl.value;
+    const level=(levelEl.value||'').split(' ')[0]||'Lv.0';
+    const safeName=escHtml(name);
+    const tr=document.createElement('tr');
+    tr.innerHTML='<td>'+safeName+'</td>'
+      +'<td>'+escHtml(org)+'</td>'
+      +'<td>'+escHtml(role)+'</td>'
+      +'<td class="mono">'+escHtml(level)+'</td>'
+      +'<td style="text-align:center;color:var(--acc)">✓</td>'
+      +'<td class="mono" style="font-size:9px">방금</td>'
+      +'<td><span class="badge ok">활성</span></td>'
+      +'<td><button class="cb n" style="font-size:9px;padding:2px 6px">편집</button></td>';
+    const editBtn=tr.querySelector('button');
+    if(editBtn) editBtn.onclick=function(){openEditUsr(name);};
+    tbody.appendChild(tr);
+    updateUsrKPI();
+    resetUsrForm();
+    closeModal('modal-usr-add');
+    toast('계정이 생성되었습니다. ('+name+')');
+  };
+};
+
+/* ===== 설정: 발전기관리 ===== */
+P['cfg-gen']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">등록 발전소</div><div class="kv" id="gen-total">47<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">총 설치용량</div><div class="kv">150.2<span class="ku">MW</span></div></div>
+  <div class="card"><div class="ct">준중앙 등록</div><div class="kv">9<span class="ku">개소</span></div></div>
+  <div class="card"><div class="ct">입찰 참여 중</div><div class="kv" style="color:var(--acc)">43<span class="ku">개소</span></div></div>
+</div>
+<div class="card">
+  <div class="sh"><div class="st">발전기 목록</div><div style="display:flex;gap:6px">
+    <select class="sel" style="width:auto;font-size:10px" onchange="genFilter(this.value)"><option value="">전체</option><option>태양광</option><option>풍력</option><option>ESS</option></select>
+    <button class="cb p" style="font-size:10px" onclick="openModal('modal-gen-add')">발전소 등록</button>
+  </div></div>
+  <table class="tbl"><thead><tr><th>발전소명</th><th>유형</th><th>지역</th><th>설치용량</th><th>COD</th><th>REC가중치</th><th>제어</th><th>상태</th></tr></thead>
+  <tbody id="gen-tbody">
+    <tr><td>광양항태양광</td><td>태양광</td><td>전남</td><td class="mono">2,293kW</td><td class="mono">2021-03</td><td class="mono">1.2</td><td><span class="badge ok">가능</span></td><td><span class="badge ok">활성</span></td></tr>
+    <tr><td>광양항4단계</td><td>태양광</td><td>전남</td><td class="mono">2,199kW</td><td class="mono">2022-07</td><td class="mono">1.2</td><td><span class="badge ok">가능</span></td><td><span class="badge ok">활성</span></td></tr>
+    <tr><td>온누리</td><td>태양광</td><td>전남</td><td class="mono">996kW</td><td class="mono">2020-11</td><td class="mono">1.0</td><td><span class="badge ok">가능</span></td><td><span class="badge ok">활성</span></td></tr>
+    <tr><td>금능1호</td><td>태양광+ESS</td><td>제주</td><td class="mono">495kW</td><td class="mono">2023-04</td><td class="mono">1.5</td><td><span class="badge ok">가능</span></td><td><span class="badge ok">활성</span></td></tr>
+    <tr><td>김주풍력</td><td>풍력</td><td>경북</td><td class="mono">10,000kW</td><td class="mono">2024-01</td><td class="mono">1.0</td><td><span class="badge ok">가능</span></td><td><span class="badge ok">활성</span></td></tr>
+    <tr><td>해바라기</td><td>태양광</td><td>전남</td><td class="mono">996kW</td><td class="mono">2021-08</td><td class="mono">1.0</td><td><span class="badge ok">가능</span></td><td><span class="badge warn">주의</span></td></tr>
+  </tbody></table>
+</div>
+
+<!-- 발전소 등록 모달 -->
+<div class="modal-backdrop" id="modal-gen-add" style="display:none" onclick="closeModalBg(event,'modal-gen-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">발전소 신규 등록</span>
+      <button class="modal-close" onclick="closeModal('modal-gen-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">기본 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>발전소명 *</label><input class="inp" placeholder="예: 신안해상태양광" id="gen-name"></div>
+        <div class="form-item"><label>발전소 유형 *</label>
+          <select class="sel" id="gen-type"><option>태양광</option><option>풍력</option><option>ESS</option><option>태양광+ESS</option><option>바이오</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>지역 *</label>
+          <select class="sel" id="gen-region"><option>전남</option><option>전북</option><option>경남</option><option>경북</option><option>충남</option><option>제주</option><option>강원</option></select>
+        </div>
+        <div class="form-item"><label>상세 주소</label><input class="inp" placeholder="전남 신안군 압해읍..." id="gen-addr"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>위도</label><input class="inp" placeholder="34.8452" id="gen-lat" type="number"></div>
+        <div class="form-item"><label>경도</label><input class="inp" placeholder="126.3214" id="gen-lng" type="number"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">설비 사양</div>
+      <div class="form-row">
+        <div class="form-item"><label>설치용량 (kW) *</label><input class="inp" placeholder="1000" id="gen-cap" type="number"></div>
+        <div class="form-item"><label>상업운전일 (COD) *</label><input class="inp" type="month" id="gen-cod"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>REC 가중치</label>
+          <select class="sel" id="gen-rec"><option value="1.0">1.0 (일반)</option><option value="1.2">1.2 (건축물)</option><option value="1.5">1.5 (ESS연계)</option><option value="2.0">2.0 (수상)</option></select>
+        </div>
+        <div class="form-item"><label>사업자 정산 요율 (%)</label><input class="inp" value="5.0" type="number" id="gen-rate"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">제어 설정</div>
+      <div class="form-row">
+        <div class="form-item"><label>원격 출력 제어</label>
+          <select class="sel" id="gen-ctrl"><option>가능</option><option>불가</option></select>
+        </div>
+        <div class="form-item"><label>소속 그룹</label>
+          <select class="sel" id="gen-grp"><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option><option>미배정</option></select>
+        </div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>현장 담당자 연락처</label><input class="inp" placeholder="010-0000-0000" id="gen-contact"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-gen-add')">취소</button>
+      <button class="cb p" onclick="saveGen()">등록 완료</button>
+    </div>
+  </div>
+</div>`;
+
+window['I_cfg-gen']=function(){
+  window.genFilter=function(v){
+    document.querySelectorAll('#gen-tbody tr').forEach(r=>{
+      r.style.display=(!v||r.cells[1].textContent.includes(v))?'':'none';
+    });
+  };
+  window.saveGen=function(){
+    const name=document.getElementById('gen-name').value.trim();
+    const cap=document.getElementById('gen-cap').value;
+    const cod=document.getElementById('gen-cod').value;
+    if(!name||!cap||!cod){toast('발전소명, 용량, 운전일은 필수 입력입니다.','warn');return;}
+    const type=document.getElementById('gen-type').value;
+    const region=document.getElementById('gen-region').value;
+    const rec=document.getElementById('gen-rec').value;
+    const tbody=document.getElementById('gen-tbody');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td>${name}</td><td>${type}</td><td>${region}</td><td class="mono">${Number(cap).toLocaleString()}kW</td><td class="mono">${cod}</td><td class="mono">${rec}</td><td><span class="badge ok">가능</span></td><td><span class="badge ok">활성</span></td>`;
+    tbody.appendChild(tr);
+    closeModal('modal-gen-add');
+    toast('발전소가 등록되었습니다. (' + name + ')');
+  };
+};
+
+/* ===== 설정: 설비관리 ===== */
+P['cfg-eqp']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">등록 설비</div><div class="kv" id="eqp-total">284<span class="ku">대</span></div></div>
+  <div class="card"><div class="ct">인버터</div><div class="kv">241<span class="ku">대</span></div></div>
+  <div class="card"><div class="ct">ESS(PCS)</div><div class="kv">8<span class="ku">대</span></div></div>
+  <div class="card"><div class="ct">점검 필요</div><div class="kv" style="color:var(--acc3)">12<span class="ku">대</span></div></div>
+</div>
+<div class="card">
+  <div class="sh"><div class="st">설비 목록</div><button class="cb p" style="font-size:10px" onclick="openModal('modal-eqp-add')">설비 등록</button></div>
+  <table class="tbl"><thead><tr><th>설비 S/N</th><th>유형</th><th>제조사/모델</th><th>상위 발전소</th><th>프로토콜</th><th>FW 버전</th><th>운전 상태</th></tr></thead>
+  <tbody id="eqp-tbody">
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">INV-GY-001</td><td>인버터</td><td>SMA/Sunny Tripower</td><td>광양항태양광</td><td class="mono" style="font-size:9px">Modbus/TCP</td><td class="mono">3.12.1</td><td><span class="badge ok">가동</span></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">INV-GY-003</td><td>인버터</td><td>SMA/Sunny Tripower</td><td>광양항태양광</td><td class="mono" style="font-size:9px">Modbus/TCP</td><td class="mono">3.11.2</td><td><span class="badge err">단절</span></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">PCS-GN-001</td><td>PCS(ESS)</td><td>삼성SDI/E5</td><td>금능1호</td><td class="mono" style="font-size:9px">DNP3.0</td><td class="mono">2.4.0</td><td><span class="badge ok">가동</span></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">INV-KJ-001</td><td>인버터</td><td>두산/WinDS</td><td>김주풍력</td><td class="mono" style="font-size:9px">IEC61400</td><td class="mono">5.2.1</td><td><span class="badge ok">가동</span></td></tr>
+  </tbody></table>
+</div>
+
+<!-- 설비 등록 모달 -->
+<div class="modal-backdrop" id="modal-eqp-add" style="display:none" onclick="closeModalBg(event,'modal-eqp-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">설비 신규 등록</span>
+      <button class="modal-close" onclick="closeModal('modal-eqp-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">설비 기본 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>설비 유형 *</label>
+          <select class="sel" id="eqp-type"><option>인버터</option><option>PCS(ESS)</option><option>기상관측장비</option><option>RTU</option><option>계량기</option></select>
+        </div>
+        <div class="form-item"><label>제조사 *</label><input class="inp" placeholder="SMA, 삼성SDI, 두산..." id="eqp-maker"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>모델명 *</label><input class="inp" placeholder="Sunny Tripower 25000TL" id="eqp-model"></div>
+        <div class="form-item"><label>시리얼 번호 (S/N) *</label><input class="inp" placeholder="INV-GY-005" id="eqp-sn"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>상위 발전소 *</label>
+          <select class="sel" id="eqp-plant">
+            <option>광양항태양광</option><option>광양항4단계</option><option>온누리</option><option>금능1호</option><option>김주풍력</option>
+          </select>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">통신 설정</div>
+      <div class="form-row">
+        <div class="form-item"><label>통신 프로토콜 *</label>
+          <select class="sel" id="eqp-prot"><option>Modbus/TCP</option><option>DNP3.0</option><option>IEC 61850</option><option>IEC 61400</option><option>MQTT</option></select>
+        </div>
+        <div class="form-item"><label>IP 주소</label><input class="inp" placeholder="10.233.1.35" id="eqp-ip"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>포트 번호</label><input class="inp" placeholder="502" id="eqp-port" type="number"></div>
+        <div class="form-item"><label>데이터 수집 주기 (초)</label><input class="inp" value="60" type="number" id="eqp-interval"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">설비 사양</div>
+      <div class="form-row">
+        <div class="form-item"><label>정격 출력 (kW)</label><input class="inp" placeholder="25" type="number" id="eqp-rated"></div>
+        <div class="form-item"><label>FW 버전</label><input class="inp" placeholder="3.12.1" id="eqp-fw"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-eqp-add')">취소</button>
+      <button class="cb p" onclick="saveEqp()">등록 완료</button>
+    </div>
+  </div>
+</div>`;
+
+window['I_cfg-eqp']=function(){
+  window.saveEqp=function(){
+    const sn=document.getElementById('eqp-sn').value.trim();
+    const maker=document.getElementById('eqp-maker').value.trim();
+    const model=document.getElementById('eqp-model').value.trim();
+    if(!sn||!maker||!model){toast('유형, 제조사, 모델명, S/N은 필수입니다.','warn');return;}
+    const type=document.getElementById('eqp-type').value;
+    const plant=document.getElementById('eqp-plant').value;
+    const prot=document.getElementById('eqp-prot').value;
+    const fw=document.getElementById('eqp-fw').value||'-';
+    const tbody=document.getElementById('eqp-tbody');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono" style="font-size:9px;color:var(--acc2)">${sn}</td><td>${type}</td><td>${maker}/${model}</td><td>${plant}</td><td class="mono" style="font-size:9px">${prot}</td><td class="mono">${fw}</td><td><span class="badge ok">가동</span></td>`;
+    tbody.appendChild(tr);
+    closeModal('modal-eqp-add');
+    toast('설비가 등록되었습니다. (' + sn + ')');
+  };
+};
+
+/* ===== 설정: RTU관리 ===== */
+P['cfg-rtu']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">등록 RTU</div><div class="kv" id="rtu-total">47<span class="ku">대</span></div></div>
+  <div class="card"><div class="ct">통신 정상</div><div class="kv" style="color:var(--acc)" id="rtu-ok">44<span class="ku">대</span></div></div>
+  <div class="card"><div class="ct">통신 장애</div><div class="kv" style="color:var(--acc4)" id="rtu-err">2<span class="ku">대</span></div></div>
+  <div class="card"><div class="ct">FW 업데이트 필요</div><div class="kv" style="color:var(--acc3)">5<span class="ku">대</span></div></div>
+</div>
+<div class="card mb">
+  <div class="sh"><div class="st">RTU 목록</div><div style="display:flex;gap:6px">
+    <button class="cb p" style="font-size:10px" onclick="openModal('modal-rtu-add')">RTU 등록</button>
+    <button class="cb n" style="font-size:10px" onclick="openModal('modal-rtu-ota')">OTA 업데이트</button>
+  </div></div>
+  <table class="tbl"><thead><tr><th>RTU ID</th><th>연결 발전소</th><th>IP 주소</th><th>상위 프로토콜</th><th>폴링(초)</th><th>VPN</th><th>CPU</th><th>상태</th></tr></thead>
+  <tbody id="rtu-tbody">
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">RTU-GY-01</td><td>광양항태양광</td><td class="mono" style="font-size:9px">10.233.1.31</td><td class="mono" style="font-size:9px">MQTT</td><td class="mono">60</td><td><span class="badge ok">연결</span></td><td class="mono">23%</td><td><span class="badge ok">정상</span></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">RTU-GY-02</td><td>광양항4단계</td><td class="mono" style="font-size:9px">10.233.1.32</td><td class="mono" style="font-size:9px">MQTT</td><td class="mono">60</td><td><span class="badge ok">연결</span></td><td class="mono">18%</td><td><span class="badge ok">정상</span></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">RTU-GN-01</td><td>금능1호(제주)</td><td class="mono" style="font-size:9px">10.240.3.51</td><td class="mono" style="font-size:9px">DNP3.0</td><td class="mono">30</td><td><span class="badge ok">연결</span></td><td class="mono">42%</td><td><span class="badge ok">정상</span></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">RTU-KJ-01</td><td>김주풍력</td><td class="mono" style="font-size:9px">10.233.3.21</td><td class="mono" style="font-size:9px">MQTT</td><td class="mono">30</td><td><span class="badge err">단절</span></td><td class="mono">—</td><td><span class="badge err">장애</span></td></tr>
+  </tbody></table>
+</div>
+
+<!-- RTU 등록 모달 -->
+<div class="modal-backdrop" id="modal-rtu-add" style="display:none" onclick="closeModalBg(event,'modal-rtu-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">RTU 신규 등록</span>
+      <button class="modal-close" onclick="closeModal('modal-rtu-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">RTU 식별 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>RTU ID *</label><input class="inp" placeholder="RTU-XX-01" id="rtu-id"></div>
+        <div class="form-item"><label>제조사</label><input class="inp" placeholder="인코어드, LS일렉트릭..." id="rtu-maker"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>연결 발전소 *</label>
+          <select class="sel" id="rtu-plant">
+            <option>광양항태양광</option><option>광양항4단계</option><option>온누리</option><option>금능1호</option><option>김주풍력</option><option>신규발전소</option>
+          </select>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">네트워크 설정</div>
+      <div class="form-row">
+        <div class="form-item"><label>고정 IP 주소 *</label><input class="inp" placeholder="10.233.1.35" id="rtu-ip"></div>
+        <div class="form-item"><label>서브넷 마스크</label><input class="inp" value="255.255.255.0" id="rtu-mask"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>상위 통신 프로토콜 *</label>
+          <select class="sel" id="rtu-uprot"><option>MQTT</option><option>DNP3.0</option><option>Modbus/TCP</option><option>HTTP(REST)</option></select>
+        </div>
+        <div class="form-item"><label>하위 통신 프로토콜</label>
+          <select class="sel" id="rtu-dprot"><option>Modbus RTU (RS485)</option><option>Modbus/TCP</option><option>LoRa</option><option>Zigbee</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>폴링 주기 (초) *</label><input class="inp" value="60" type="number" id="rtu-poll"></div>
+        <div class="form-item"><label>VPN 그룹 ID</label><input class="inp" placeholder="VPN-GRP-001" id="rtu-vpn"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">보안 인증</div>
+      <div class="form-row">
+        <div class="form-item"><label>API Key</label><input class="inp" placeholder="자동 생성" id="rtu-key" readonly></div>
+        <div class="form-item" style="justify-content:flex-end;padding-top:18px">
+          <button class="cb n" style="font-size:10px" onclick="document.getElementById('rtu-key').value='RTU-'+Math.random().toString(36).substr(2,16).toUpperCase()">키 생성</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-rtu-add')">취소</button>
+      <button class="cb p" onclick="saveRtu()">등록 완료</button>
+    </div>
+  </div>
+</div>
+
+<!-- OTA 업데이트 모달 -->
+<div class="modal-backdrop" id="modal-rtu-ota" style="display:none" onclick="closeModalBg(event,'modal-rtu-ota')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">OTA 펌웨어 업데이트</span>
+      <button class="modal-close" onclick="closeModal('modal-rtu-ota')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.3);border-radius:6px;padding:9px 12px;margin-bottom:14px;font-size:11px;color:var(--acc3)">
+        ⚠ OTA 업데이트 중 RTU 통신이 일시 중단됩니다. 업데이트 전 현장 상황을 확인하세요.
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>배포 FW 버전</label><input class="inp" value="v2.5.0" id="ota-ver"></div>
+        <div class="form-item"><label>업데이트 서버</label><input class="inp" value="ota.60hz.kr" id="ota-server"></div>
+      </div>
+      <div class="form-section" style="margin-top:8px">업데이트 대상 RTU 선택</div>
+      <div id="ota-list">
+        <div class="ota-item"><input type="checkbox" class="ota-check" checked id="ota-r1"><div class="ota-info"><div class="ota-name">RTU-GY-01 — 광양항태양광</div><div class="ota-ver">현재: v2.4.1 → v2.5.0</div></div><span class="badge inf ota-badge">업데이트 가능</span></div>
+        <div class="ota-item"><input type="checkbox" class="ota-check" id="ota-r2"><div class="ota-info"><div class="ota-name">RTU-GY-02 — 광양항4단계</div><div class="ota-ver">현재: v2.5.0 (최신)</div></div><span class="badge ok ota-badge">최신</span></div>
+        <div class="ota-item"><input type="checkbox" class="ota-check" checked id="ota-r3"><div class="ota-info"><div class="ota-name">RTU-GN-01 — 금능1호(제주)</div><div class="ota-ver">현재: v2.3.2 → v2.5.0</div></div><span class="badge warn ota-badge">구버전</span></div>
+        <div class="ota-item" style="opacity:0.5"><input type="checkbox" class="ota-check" disabled><div class="ota-info"><div class="ota-name">RTU-KJ-01 — 김주풍력</div><div class="ota-ver">통신 단절 — 업데이트 불가</div></div><span class="badge err ota-badge">장애</span></div>
+      </div>
+      <div class="prog-wrap" id="ota-progress">
+        <div class="prog-label-row"><span id="ota-status-txt">업데이트 준비 중...</span><span id="ota-pct-txt">0%</span></div>
+        <div class="prog-track"><div class="prog-run" id="ota-bar"></div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-rtu-ota')">닫기</button>
+      <button class="cb p" id="ota-start-btn" onclick="startOta()">업데이트 시작</button>
+    </div>
+  </div>
+</div>`;
+
+window['I_cfg-rtu']=function(){
+  window.saveRtu=function(){
+    const id=document.getElementById('rtu-id').value.trim();
+    const ip=document.getElementById('rtu-ip').value.trim();
+    const plant=document.getElementById('rtu-plant').value;
+    if(!id||!ip){toast('RTU ID와 IP 주소는 필수입니다.','warn');return;}
+    const prot=document.getElementById('rtu-uprot').value;
+    const poll=document.getElementById('rtu-poll').value;
+    const tbody=document.getElementById('rtu-tbody');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono" style="font-size:9px;color:var(--acc2)">${id}</td><td>${plant}</td><td class="mono" style="font-size:9px">${ip}</td><td class="mono" style="font-size:9px">${prot}</td><td class="mono">${poll}</td><td><span class="badge ok">연결</span></td><td class="mono">—</td><td><span class="badge inf">초기화중</span></td>`;
+    tbody.appendChild(tr);
+    closeModal('modal-rtu-add');
+    toast('RTU가 등록되었습니다. (' + id + ')');
+  };
+  window.startOta=function(){
+    const checked=[...document.querySelectorAll('.ota-check:checked:not(:disabled)')];
+    if(checked.length===0){toast('업데이트할 RTU를 선택하세요.','warn');return;}
+    const btn=document.getElementById('ota-start-btn');
+    btn.disabled=true;btn.textContent='업데이트 중...';
+    const prog=document.getElementById('ota-progress');
+    prog.style.display='block';
+    const bar=document.getElementById('ota-bar');
+    const st=document.getElementById('ota-status-txt');
+    const pt=document.getElementById('ota-pct-txt');
+    const steps=['펌웨어 파일 검증 중...','RTU 연결 확인 중...','패키지 전송 중...','설치 및 재부팅 중...','통신 복구 확인 중...','완료'];
+    let pct=0;
+    const iv=setInterval(()=>{
+      pct+=Math.random()*18+5;
+      if(pct>=100){pct=100;clearInterval(iv);btn.textContent='완료';toast('OTA 업데이트가 완료되었습니다. ('+checked.length+'대)');}
+      bar.style.width=Math.min(pct,100)+'%';
+      pt.textContent=Math.round(Math.min(pct,100))+'%';
+      st.textContent=steps[Math.min(Math.floor(pct/20),5)];
+    },500);
+  };
+};
+
+/* ===== 설정: 그룹관리 ===== */
+P['cfg-grp']=()=>`
+<div class="g4">
+  <div class="card acc"><div class="ct">전체 그룹</div><div class="kv" id="grp-total">8<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">집합자원(입찰용)</div><div class="kv">3<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">지역별 그룹</div><div class="kv">4<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">일시정지 그룹</div><div class="kv" style="color:var(--acc3)">1<span class="ku">개</span></div></div>
+</div>
+<div class="g2">
+  <div class="card mb">
+    <div class="sh"><div class="st">그룹 목록</div>
+      <button class="cb p" style="font-size:10px" onclick="openModal('modal-grp-add')">그룹 생성</button>
+    </div>
+    <table class="tbl"><thead><tr><th>그룹명</th><th>유형</th><th>발전소 수</th><th>총 용량</th><th>상태</th></tr></thead>
+    <tbody id="grp-tbody">
+      <tr onclick="grpSelect('VPP-전남권','집합자원(입찰)','DA + RT','11.5 MW','허용','김운영',event)" style="cursor:pointer"><td>VPP-전남권</td><td>집합자원</td><td>9개소</td><td class="mono">11.5MW</td><td><span class="badge ok">운영중</span></td></tr>
+      <tr onclick="grpSelect('VPP-제주권','집합자원(입찰)','DA + RT','1.1 MW','허용','이제어',event)" style="cursor:pointer"><td>VPP-제주권</td><td>집합자원</td><td>3개소</td><td class="mono">1.1MW</td><td><span class="badge warn">일시정지</span></td></tr>
+      <tr onclick="grpSelect('VPP-경북권','집합자원(입찰)','DA + RT','10.2 MW','허용','김운영',event)" style="cursor:pointer"><td>VPP-경북권</td><td>집합자원</td><td>12개소</td><td class="mono">10.2MW</td><td><span class="badge ok">운영중</span></td></tr>
+      <tr onclick="grpSelect('지역-전남','지역별','—','11.5 MW','허용','이제어',event)" style="cursor:pointer"><td>지역-전남</td><td>지역별</td><td>9개소</td><td class="mono">11.5MW</td><td><span class="badge ok">운영중</span></td></tr>
+    </tbody></table>
+  </div>
+  <div class="card mb" id="grp-detail-card">
+    <div class="sh"><div class="st" id="grp-detail-title">그룹 상세 — VPP-전남권</div></div>
+    <div class="mr"><div class="ml">그룹 유형</div><div class="mv mono" id="grp-d-type">집합자원(입찰)</div></div>
+    <div class="mr"><div class="ml">입찰 시장</div><div class="mv mono" id="grp-d-mkt">DA + RT</div></div>
+    <div class="mr"><div class="ml">총 용량</div><div class="mv mono" id="grp-d-cap">11.5 MW</div></div>
+    <div class="mr"><div class="ml">일괄 제어</div><div class="mv"><span class="badge ok" id="grp-d-ctrl">허용</span></div></div>
+    <div class="mr" style="border:none"><div class="ml">담당 운영자</div><div class="mv mono" id="grp-d-mgr">김운영</div></div>
+    <div class="sh" style="margin-top:10px"><div class="st">소속 자원 가중치</div></div>
+    <div class="pr"><div class="pl" style="width:80px">광양항태양광</div><div class="pb"><div class="pf" style="width:56%;background:var(--acc)"></div></div><div class="pv">28.5%</div></div>
+    <div class="pr"><div class="pl" style="width:80px">광양항4단계</div><div class="pb"><div class="pf" style="width:54%;background:var(--acc2)"></div></div><div class="pv">27.3%</div></div>
+    <div class="pr"><div class="pl" style="width:80px">온누리</div><div class="pb"><div class="pf" style="width:24%;background:var(--acc3)"></div></div><div class="pv">12.4%</div></div>
+  </div>
+</div>
+
+<!-- 그룹 생성 모달 -->
+<div class="modal-backdrop" id="modal-grp-add" style="display:none" onclick="closeModalBg(event,'modal-grp-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">신규 그룹 생성</span>
+      <button class="modal-close" onclick="closeModal('modal-grp-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">그룹 기본 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>그룹명 *</label><input class="inp" placeholder="VPP-충남권" id="grp-name"></div>
+        <div class="form-item"><label>그룹 유형 *</label>
+          <select class="sel" id="grp-type"><option value="집합자원(입찰)">집합자원 (입찰용)</option><option value="지역별">지역별 관리</option><option value="관리업체별">관리업체별</option></select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>담당 운영자</label>
+          <select class="sel" id="grp-mgr"><option>김운영</option><option>이제어</option><option>박기술</option></select>
+        </div>
+        <div class="form-item"><label>일괄 제어 허용</label>
+          <div style="display:flex;align-items:center;gap:8px;margin-top:8px"><label class="toggle"><input type="checkbox" id="grp-ctrl" checked><div class="ts"></div></label><span style="font-size:11px;color:var(--txt2)">그룹 단위 제어 허용</span></div>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">소속 발전소 선택 (다중 선택 가능)</div>
+      <div class="badge-sel" id="grp-plant-sel"></div>
+      <hr class="form-divider">
+      <div class="form-section">입찰 설정 (집합자원 유형 시)</div>
+      <div class="form-row">
+        <div class="form-item"><label>참여 시장</label>
+          <select class="sel" id="grp-mkt"><option>DA + RT (이중시장)</option><option>DA 전용</option><option>RT 전용</option></select>
+        </div>
+        <div class="form-item"><label>최소 입찰 단위 (kW)</label><input class="inp" value="100" type="number" id="grp-min-bid"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-grp-add')">취소</button>
+      <button class="cb p" onclick="saveGrp()">그룹 생성</button>
+    </div>
+  </div>
+</div>`;
+
+window['I_cfg-grp']=function(){
+  function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  const plants=['광양항태양광','광양항4단계','온누리','해맞이','해바라기','금능1호','김주풍력','무들발전소','희정발전소'];
+  const sel=document.getElementById('grp-plant-sel');
+  if(sel){
+    sel.innerHTML='';
+    plants.forEach(function(n){
+      const btn=document.createElement('button');
+      btn.type='button';
+      btn.className='badge-sel-btn';
+      btn.textContent=n;
+      btn.onclick=function(){this.classList.toggle('selected');};
+      sel.appendChild(btn);
+    });
+  }
+  function highlightRow(row){
+    document.querySelectorAll('#grp-tbody tr').forEach(r=>r.style.background='');
+    if(row) row.style.background='rgba(0,212,168,0.06)';
+  }
+  window.grpSelect=function(name,type,mkt,cap,ctrl,mgr,ev){
+    const titleEl=document.getElementById('grp-detail-title');
+    if(titleEl) titleEl.textContent='그룹 상세 — '+name;
+    const ids={'grp-d-type':type,'grp-d-mkt':mkt,'grp-d-cap':cap,'grp-d-ctrl':ctrl,'grp-d-mgr':mgr};
+    Object.keys(ids).forEach(id=>{const el=document.getElementById(id); if(el) el.textContent=ids[id];});
+    const e=ev||window.event;
+    highlightRow(e&&e.currentTarget);
+  };
+  function updateGrpKPI(){
+    const t=document.getElementById('grp-total');
+    if(t) t.innerHTML=document.querySelectorAll('#grp-tbody tr').length+'<span class="ku">개</span>';
+  }
+  function resetGrpForm(){
+    const nm=document.getElementById('grp-name'); if(nm) nm.value='';
+    document.querySelectorAll('#grp-plant-sel .badge-sel-btn').forEach(b=>b.classList.remove('selected'));
+    const tp=document.getElementById('grp-type'); if(tp) tp.selectedIndex=0;
+    const mg=document.getElementById('grp-mgr'); if(mg) mg.selectedIndex=0;
+    const mk=document.getElementById('grp-mkt'); if(mk) mk.selectedIndex=0;
+    const mb=document.getElementById('grp-min-bid'); if(mb) mb.value=100;
+    const ct=document.getElementById('grp-ctrl'); if(ct) ct.checked=true;
+  }
+  window.saveGrp=function(){
+    const nameEl=document.getElementById('grp-name');
+    const typeEl=document.getElementById('grp-type');
+    if(!nameEl||!typeEl){toast('폼을 불러올 수 없습니다.','err');return;}
+    const name=nameEl.value.trim();
+    if(!name){toast('그룹명은 필수입니다.','warn');return;}
+    const type=typeEl.value;
+    const selBtns=[...document.querySelectorAll('#grp-plant-sel .badge-sel-btn.selected')];
+    if(selBtns.length===0){toast('소속 발전소를 1개 이상 선택하세요.','warn');return;}
+    const tbody=document.getElementById('grp-tbody');
+    if(!tbody){toast('목록을 찾을 수 없습니다.','err');return;}
+    const mgrEl=document.getElementById('grp-mgr');
+    const mktEl=document.getElementById('grp-mkt');
+    const ctrlEl=document.getElementById('grp-ctrl');
+    const mgr=mgrEl?mgrEl.value:'—';
+    const mktFull=mktEl?mktEl.value:'DA + RT';
+    const mkt=mktFull.split(' (')[0];
+    const ctrlLabel=(ctrlEl&&ctrlEl.checked)?'허용':'불가';
+    const typeLabel=type.replace('(입찰)','').trim();
+    const tr=document.createElement('tr');
+    tr.style.cursor='pointer';
+    tr.onclick=function(ev){grpSelect(name,type,mkt,'—',ctrlLabel,mgr,ev);};
+    tr.innerHTML='<td>'+escHtml(name)+'</td>'
+      +'<td>'+escHtml(typeLabel)+'</td>'
+      +'<td>'+selBtns.length+'개소</td>'
+      +'<td class="mono">—</td>'
+      +'<td><span class="badge ok">운영중</span></td>';
+    tbody.appendChild(tr);
+    updateGrpKPI();
+    resetGrpForm();
+    closeModal('modal-grp-add');
+    toast('그룹이 생성되었습니다. ('+name+', '+selBtns.length+'개소)');
+  };
+};
+
+/* ===== 설정: 배치관리 ===== */
+P['cfg-bat']=()=>`
+<div class="g4">
+  <div class="card"><div class="ct">전체 배치</div><div class="kv" id="bat-total">24<span class="ku">개</span></div></div>
+  <div class="card acc"><div class="ct">실행중</div><div class="kv" style="color:var(--acc)" id="bat-running">8<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">실패 (24h)</div><div class="kv" style="color:var(--acc4)">1<span class="ku">개</span></div></div>
+  <div class="card"><div class="ct">평균 실행시간</div><div class="kv">2.4<span class="ku">분</span></div></div>
+</div>
+<div class="card">
+  <div class="sh"><div class="st">배치 작업 목록</div><div style="display:flex;gap:6px">
+    <button class="cb p" style="font-size:10px" onclick="openModal('modal-bat-run')">즉시 실행</button>
+    <button class="cb n" style="font-size:10px" onclick="openModal('modal-bat-add')">작업 추가</button>
+  </div></div>
+  <table class="tbl"><thead><tr><th>작업 ID</th><th>작업명</th><th>실행 주기 (Cron)</th><th>우선순위</th><th>마지막 실행</th><th>소요시간</th><th>상태</th><th>제어</th></tr></thead>
+  <tbody id="bat-tbody">
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">RT_PRED_01</td><td>실시간 발전 예측</td><td class="mono" style="font-size:9px;color:var(--txt2)">*/15 * * * *</td><td class="mono" style="text-align:center">1</td><td class="mono" style="font-size:9px">14:15:00</td><td class="mono">1분 42초</td><td><span class="badge ok">실행중</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('RT_PRED_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">DA_PRED_01</td><td>하루전 입찰 예측</td><td class="mono" style="font-size:9px;color:var(--txt2)">0 9 * * *</td><td class="mono" style="text-align:center">1</td><td class="mono" style="font-size:9px">09:00:02</td><td class="mono">4분 11초</td><td><span class="badge ok">성공</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('DA_PRED_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">COLLECT_01</td><td>RTU 데이터 수집</td><td class="mono" style="font-size:9px;color:var(--txt2)">*/1 * * * *</td><td class="mono" style="text-align:center">1</td><td class="mono" style="font-size:9px">14:22:58</td><td class="mono">0분 12초</td><td><span class="badge ok">실행중</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('COLLECT_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">SETTLE_01</td><td>정산금 계산</td><td class="mono" style="font-size:9px;color:var(--txt2)">0 */4 * * *</td><td class="mono" style="text-align:center">2</td><td class="mono" style="font-size:9px">12:00:05</td><td class="mono">2분 33초</td><td><span class="badge ok">성공</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('SETTLE_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">HEALTH_01</td><td>설비 건전성 진단</td><td class="mono" style="font-size:9px;color:var(--txt2)">*/30 * * * *</td><td class="mono" style="text-align:center">3</td><td class="mono" style="font-size:9px">14:00:01</td><td class="mono">3분 20초</td><td><span class="badge ok">성공</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('HEALTH_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">MET_SYNC_01</td><td>기상 데이터 동기화</td><td class="mono" style="font-size:9px;color:var(--txt2)">*/5 * * * *</td><td class="mono" style="text-align:center">2</td><td class="mono" style="font-size:9px">14:20:00</td><td class="mono">0분 45초</td><td><span class="badge ok">실행중</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('MET_SYNC_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">ALARM_01</td><td>알람 배치 처리</td><td class="mono" style="font-size:9px;color:var(--txt2)">*/1 * * * *</td><td class="mono" style="text-align:center">1</td><td class="mono" style="font-size:9px">14:22:59</td><td class="mono">0분 08초</td><td><span class="badge ok">실행중</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('ALARM_01',this)">▶</button></td></tr>
+    <tr><td class="mono" style="font-size:9px;color:var(--acc2)">REPORT_01</td><td>일일 정산 리포트</td><td class="mono" style="font-size:9px;color:var(--txt2)">0 23 * * *</td><td class="mono" style="text-align:center">3</td><td class="mono" style="font-size:9px">어제 23:00</td><td class="mono">6분 12초</td><td><span class="badge err">실패</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('REPORT_01',this)">▶</button></td></tr>
+  </tbody></table>
+</div>
+
+<!-- 즉시 실행 모달 -->
+<div class="modal-backdrop" id="modal-bat-run" style="display:none" onclick="closeModalBg(event,'modal-bat-run')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">배치 즉시 실행</span>
+      <button class="modal-close" onclick="closeModal('modal-bat-run')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">실행할 작업 선택</div>
+      <div id="bat-run-list"></div>
+      <div class="prog-wrap" id="bat-prog">
+        <div class="prog-label-row"><span id="bat-run-st">준비 중...</span><span id="bat-run-pct">0%</span></div>
+        <div class="prog-track"><div class="prog-run" id="bat-run-bar"></div></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" style="margin-right:auto;font-size:10px" onclick="document.querySelectorAll('.bat-run-chk').forEach(c=>c.checked=true)">전체 선택</button>
+      <button class="cb n" onclick="closeModal('modal-bat-run')">닫기</button>
+      <button class="cb p" id="bat-run-btn" onclick="runBatch()">즉시 실행</button>
+    </div>
+  </div>
+</div>
+
+<!-- 작업 추가 모달 -->
+<div class="modal-backdrop" id="modal-bat-add" style="display:none" onclick="closeModalBg(event,'modal-bat-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">배치 작업 추가</span>
+      <button class="modal-close" onclick="closeModal('modal-bat-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">작업 기본 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>작업 ID *</label><input class="inp" placeholder="MY_JOB_01" id="bat-id"></div>
+        <div class="form-item"><label>작업명 *</label><input class="inp" placeholder="예: 월간 발전 통계" id="bat-name"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>실행 모듈 경로 *</label><input class="inp" placeholder="/app/jobs/my_job.py" id="bat-path"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">스케줄 설정</div>
+      <div class="form-row">
+        <div class="form-item"><label>실행 주기 (Cron 표현식) *</label><input class="inp" placeholder="0 * * * *" id="bat-cron"></div>
+        <div class="form-item"><label>우선순위</label>
+          <select class="sel" id="bat-pri"><option value="1">1 — 최고</option><option value="2" selected>2 — 일반</option><option value="3">3 — 낮음</option></select>
+        </div>
+      </div>
+      <div style="background:var(--bg4);border-radius:5px;padding:8px 10px;margin-top:4px;font-size:10px;color:var(--txt2)">
+        <b style="color:var(--txt)">Cron 예시</b> &nbsp;
+        <span style="color:var(--acc2)">*/15 * * * *</span> = 15분마다 &nbsp;
+        <span style="color:var(--acc2)">0 9 * * *</span> = 매일 9시 &nbsp;
+        <span style="color:var(--acc2)">0 0 1 * *</span> = 매월 1일
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">실패 처리 정책</div>
+      <div class="form-row">
+        <div class="form-item"><label>최대 재시도 횟수</label><input class="inp" value="3" type="number" id="bat-retry"></div>
+        <div class="form-item"><label>재시도 간격 (초)</label><input class="inp" value="60" type="number" id="bat-retry-gap"></div>
+      </div>
+      <div class="form-row full">
+        <div class="form-item"><label>실패 시 알림 이메일</label><input class="inp" placeholder="ops@60hz.kr" id="bat-alert"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-bat-add')">취소</button>
+      <button class="cb p" onclick="saveBat()">작업 추가</button>
+    </div>
+  </div>
+</div>`;
+
+window['I_cfg-bat']=function(){
+  // 즉시실행 모달 배치 목록 동적 생성 (중첩 백틱 방지)
+  var batJobs=[
+    ['RT_PRED_01','실시간 발전 예측','ok'],
+    ['DA_PRED_01','하루전 입찰 예측','ok'],
+    ['COLLECT_01','RTU 데이터 수집','ok'],
+    ['SETTLE_01','정산금 계산','ok'],
+    ['HEALTH_01','설비 건전성 진단','ok'],
+    ['MET_SYNC_01','기상 데이터 동기화','ok'],
+    ['ALARM_01','알람 배치 처리','ok'],
+    ['REPORT_01','일일 정산 리포트','err']
+  ];
+  var list=document.getElementById('bat-run-list');
+  if(list){
+    list.innerHTML='';
+    batJobs.forEach(function(row){
+      var jid=row[0], jname=row[1], jst=row[2];
+      var div=document.createElement('div');
+      div.className='ota-item';
+      div.innerHTML='<input type="checkbox" class="ota-check bat-run-chk" data-id="'+jid+'">'
+        +'<div class="ota-info"><div class="ota-name">'+jid+'</div><div class="ota-ver">'+jname+'</div></div>'
+        +'<span class="badge '+(jst==='ok'?'ok':'err')+' ota-badge">'+(jst==='ok'?'정상':'실패')+'</span>';
+      list.appendChild(div);
+    });
+  }
+  window.runSingle=function(id,btn){
+    const orig=btn.textContent;
+    btn.textContent='●';btn.style.color='var(--acc)';btn.disabled=true;
+    toast(id + ' 즉시 실행 요청됨');
+    setTimeout(()=>{btn.textContent=orig;btn.style.color='';btn.disabled=false;},2000);
+  };
+  window.runBatch=function(){
+    const chk=[...document.querySelectorAll('.bat-run-chk:checked')];
+    if(chk.length===0){toast('실행할 작업을 선택하세요.','warn');return;}
+    const btn=document.getElementById('bat-run-btn');
+    btn.disabled=true;btn.textContent='실행 중...';
+    const prog=document.getElementById('bat-prog');
+    prog.style.display='block';
+    const bar=document.getElementById('bat-run-bar');
+    const st=document.getElementById('bat-run-st');
+    const pt=document.getElementById('bat-run-pct');
+    let pct=0;let idx=0;
+    const ids=chk.map(c=>c.getAttribute('data-id'));
+    const iv=setInterval(()=>{
+      pct+=100/ids.length*(0.4+Math.random()*0.3);
+      if(pct>=100){pct=100;clearInterval(iv);btn.textContent='완료';toast(ids.length+'개 작업 즉시 실행 완료');}
+      const cur=Math.min(Math.floor(pct/100*ids.length),ids.length-1);
+      bar.style.width=Math.min(pct,100)+'%';
+      pt.textContent=Math.round(Math.min(pct,100))+'%';
+      st.textContent=ids[cur]+' 실행 중...';
+    },400);
+  };
+  window.saveBat=function(){
+    const id=document.getElementById('bat-id').value.trim();
+    const name=document.getElementById('bat-name').value.trim();
+    const cron=document.getElementById('bat-cron').value.trim();
+    if(!id||!name||!cron){toast('작업 ID, 작업명, Cron 표현식은 필수입니다.','warn');return;}
+    const pri=document.getElementById('bat-pri').value;
+    const tbody=document.getElementById('bat-tbody');
+    const now=new Date();
+    const hm=now.getHours().toString().padStart(2,'0')+':'+now.getMinutes().toString().padStart(2,'0');
+    const tr=document.createElement('tr');
+    tr.innerHTML=`<td class="mono" style="font-size:9px;color:var(--acc2)">${id}</td><td>${name}</td><td class="mono" style="font-size:9px;color:var(--txt2)">${cron}</td><td class="mono" style="text-align:center">${pri}</td><td class="mono" style="font-size:9px">미실행</td><td class="mono">—</td><td><span class="badge inf">등록됨</span></td><td><button class="cb n" style="font-size:9px;padding:2px 6px" onclick="runSingle('${id}',this)">▶</button></td>`;
+    tbody.appendChild(tr);
+    closeModal('modal-bat-add');
+    toast('배치 작업이 추가되었습니다. (' + id + ')');
+  };
+};
+
+/* ── 공통 모달/토스트 헬퍼 ── */
+function openModal(id){
+  const el=document.getElementById(id);
+  if(el){el.style.display='flex';document.body.style.overflow='hidden';}
+}
+function closeModal(id){
+  const el=document.getElementById(id);
+  if(el){el.style.display='none';document.body.style.overflow='';}
+}
+function closeModalBg(e,id){
+  if(e.target===document.getElementById(id))closeModal(id);
+}
+function toast(msg,type='ok'){
+  const t=document.createElement('div');
+  const col=type==='warn'?'var(--acc3)':type==='err'?'var(--acc4)':'var(--acc)';
+  t.style.cssText=`position:fixed;bottom:28px;left:50%;transform:translateX(-50%);background:var(--bg2);border:1px solid ${col};color:var(--txt);padding:10px 20px;border-radius:8px;font-size:12px;z-index:9999;box-shadow:0 8px 24px rgba(0,0,0,0.4);display:flex;align-items:center;gap:8px;animation:fadeUp 0.25s ease`;
+  t.innerHTML=`<span style="color:${col};font-size:14px">${type==='warn'?'⚠':type==='err'?'✕':'✓'}</span>${msg}`;
+  if(!document.getElementById('toast-style')){const s=document.createElement('style');s.id='toast-style';s.textContent='@keyframes fadeUp{from{opacity:0;transform:translateX(-50%) translateY(12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}';document.head.appendChild(s);}
+  document.body.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},2800);
+}
+
+function toggleTheme(){
+  const root=document.documentElement;
+  const isLight=root.classList.toggle('light');
+  document.getElementById('theme-label').textContent=isLight?'다크':'라이트';
+  const icon=document.getElementById('theme-icon');
+  if(isLight){
+    icon.innerHTML='<path d="M12.5 8A4.5 4.5 0 0 1 6 2.5a.5.5 0 0 0-.6-.6A6 6 0 1 0 14.1 8.6a.5.5 0 0 0-.6-.6A4.5 4.5 0 0 1 12.5 8z" fill="currentColor"/>';
+  } else {
+    icon.innerHTML='<circle cx="8" cy="8" r="3.5" stroke="currentColor" stroke-width="1.2"/><path d="M8 1v1.5M8 13.5V15M1 8h1.5M13.5 8H15M3.05 3.05l1.06 1.06M11.89 11.89l1.06 1.06M3.05 12.95l1.06-1.06M11.89 4.11l1.06-1.06" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>';
+  }
+  reRenderCharts();
+}
+
+function getChartColors(){
+  const light=document.documentElement.classList.contains('light');
+  return {
+    grid:light?'rgba(0,0,0,0.06)':'rgba(255,255,255,0.05)',
+    tick:light?'#64748b':'#64748b',
+    acc:light?'#009e7d':'#00d4a8',
+    acc2:light?'#0077cc':'#0099ff',
+    acc3:light?'#d97706':'#f59e0b',
+    acc4:light?'#dc2626':'#ef4444',
+    accBg:light?'rgba(0,158,125,0.1)':'rgba(0,212,168,0.07)',
+  };
+}
+
+function reRenderCharts(){
+  const light=document.documentElement.classList.contains('light');
+  document.querySelectorAll('[style]').forEach(el=>{
+    const s=el.getAttribute('style');
+    if(light){
+      el.setAttribute('style',s
+        .replace(/background:var\(--bg4\)/g,'background:#f1f5f9')
+        .replace(/background:rgba\(255,255,255,0\.08\)/g,'background:rgba(0,0,0,0.07)')
+        .replace(/color:var\(--txt2\)/g,'color:#64748b')
+        .replace(/color:var\(--txt3\)/g,'color:#94a3b8')
+        .replace(/stroke:rgba\(255,255,255/g,'stroke:rgba(0,0,0')
+        .replace(/fill:rgba\(255,255,255/g,'fill:rgba(0,0,0')
+      );
+    } else {
+      el.setAttribute('style',s
+        .replace(/background:#f1f5f9/g,'background:var(--bg4)')
+        .replace(/background:rgba\(0,0,0,0\.07\)/g,'background:rgba(255,255,255,0.08)')
+        .replace(/color:#64748b/g,'color:var(--txt2)')
+        .replace(/color:#94a3b8/g,'color:var(--txt3)')
+        .replace(/stroke:rgba\(0,0,0/g,'stroke:rgba(255,255,255')
+        .replace(/fill:rgba\(0,0,0/g,'fill:rgba(255,255,255')
+      );
+    }
+  });
+  const fn=window['I_'+cur];
+  if(fn) setTimeout(fn,30);
+}
+
+buildNav();
+renderPage('dsh-main');
+</script>
+</body>
+</html>
