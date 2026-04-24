@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(python3 -c ' *)",
+      "Bash(node -e ' *)",
+      "Bash(cd /tmp)",
+      "Bash(npm init *)",
+      "Bash(npm install *)"
+    ]
+  }
+}

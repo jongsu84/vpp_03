@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI-VPP 통합 관제 대시보드</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --panel: #111827;
+    --border: #1e2d45;
+    --accent: #00d4ff;
+    --accent2: #7c3aed;
+    --green: #10b981;
+    --yellow: #f59e0b;
+    --red: #ef4444;
+    --text: #e2e8f0;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', sans-serif;
+    font-size: 13px;
+    overflow-x: hidden;
+  }
+
+  /* TOP NAV */
+  .topbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    background: #0d1526;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .topbar .logo {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 16px; font-weight: 700; color: var(--accent);
+    letter-spacing: 1px;
+  }
+  .topbar .logo span { color: #fff; }
+  .topbar .logo .badge {
+    background: var(--accent2); color: #fff;
+    font-size: 10px; padding: 2px 7px; border-radius: 20px; font-weight: 600;
+  }
+  .topnav { display: flex; gap: 4px; }
+  .topnav button {
+    background: transparent; border: none; color: var(--muted);
+    padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 12px;
+    transition: all .2s;
+  }
+  .topnav button:hover, .topnav button.active {
+    background: rgba(0,212,255,.12); color: var(--accent);
+  }
+  .topbar-right { display: flex; align-items: center; gap: 14px; color: var(--muted); font-size: 12px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--green);
+    box-shadow: 0 0 6px var(--green); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+  /* LAYOUT */
+  .main { padding: 16px; }
+  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 12px; margin-bottom: 12px; }
+  .grid-3 { display: grid; grid-template-columns: 2fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+  .grid-3b { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+
+  /* PANEL */
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .panel-title {
+    font-size: 11px; font-weight: 600; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .8px;
+    margin-bottom: 12px; display: flex; align-items: center; gap: 6px;
+  }
+  .panel-title .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+
+  /* KPI CARDS */
+  .kpi { display: flex; flex-direction: column; justify-content: space-between; }
+  .kpi .val { font-size: 26px; font-weight: 700; letter-spacing: -1px; }
+  .kpi .unit { font-size: 11px; color: var(--muted); margin-left: 2px; }
+  .kpi .label { color: var(--muted); font-size: 11px; margin-bottom: 6px; }
+  .kpi .change { font-size: 11px; margin-top: 6px; }
+  .kpi .change.up { color: var(--green); }
+  .kpi .change.down { color: var(--red); }
+  .kpi-icon { font-size: 22px; margin-bottom: 6px; }
+  .kpi-bar { height: 3px; border-radius: 2px; background: var(--border); margin-top: 10px; }
+  .kpi-bar-fill { height: 100%; border-radius: 2px; }
+
+  /* RESOURCE TABLE */
+  .res-table { width: 100%; border-collapse: collapse; }
+  .res-table th { color: var(--muted); font-size: 10px; text-transform: uppercase;
+    padding: 6px 8px; border-bottom: 1px solid var(--border); text-align: left; }
+  .res-table td { padding: 7px 8px; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 12px; }
+  .res-table tr:last-child td { border-bottom: none; }
+  .res-table tr:hover td { background: rgba(255,255,255,.03); }
+  .status-badge {
+    display: inline-block; padding: 2px 8px; border-radius: 20px; font-size: 10px; font-weight: 600;
+  }
+  .s-ok { background: rgba(16,185,129,.15); color: var(--green); }
+  .s-warn { background: rgba(245,158,11,.15); color: var(--yellow); }
+  .s-err { background: rgba(239,68,68,.15); color: var(--red); }
+
+  /* HEALTH BARS */
+  .health-row { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .health-label { width: 100px; font-size: 11px; color: var(--muted); flex-shrink: 0; }
+  .health-bar-bg { flex: 1; height: 6px; background: var(--border); border-radius: 3px; }
+  .health-bar-fg { height: 100%; border-radius: 3px; transition: width .5s; }
+  .health-score { width: 36px; text-align: right; font-size: 11px; font-weight: 600; }
+
+  /* ALARM */
+  .alarm-item {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 8px 10px; border-radius: 6px; margin-bottom: 6px;
+    border-left: 3px solid transparent;
+  }
+  .alarm-item.crit { background: rgba(239,68,68,.07); border-color: var(--red); }
+  .alarm-item.warn { background: rgba(245,158,11,.07); border-color: var(--yellow); }
+  .alarm-item.info { background: rgba(0,212,255,.07); border-color: var(--accent); }
+  .alarm-icon { font-size: 14px; margin-top: 1px; }
+  .alarm-msg { font-size: 12px; }
+  .alarm-time { font-size: 10px; color: var(--muted); margin-top: 2px; }
+
+  /* ESS */
+  .ess-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+  .ess-card { background: rgba(255,255,255,.03); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+  .ess-name { font-size: 11px; color: var(--muted); margin-bottom: 8px; }
+  .ess-soc { font-size: 22px; font-weight: 700; }
+  .soc-bar { margin-top: 8px; height: 8px; background: var(--border); border-radius: 4px; }
+  .soc-fill { height: 100%; border-radius: 4px; }
+
+  /* BIDDING */
+  .bid-row { display: flex; justify-content: space-between; align-items: center;
+    padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.05); }
+  .bid-row:last-child { border-bottom: none; }
+  .bid-label { color: var(--muted); font-size: 11px; }
+  .bid-val { font-size: 13px; font-weight: 600; }
+
+  /* DONUT */
+  .donut-wrap { position: relative; display: flex; justify-content: center; }
+  .donut-center {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+    text-align: center; pointer-events: none;
+  }
+  .donut-center .big { font-size: 20px; font-weight: 700; }
+  .donut-center .small { font-size: 10px; color: var(--muted); }
+
+  /* LEGEND */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 10px; justify-content: center; }
+  .legend-item { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--muted); }
+  .legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+
+  /* GIS MAP */
+  .map-container {
+    width: 100%; height: 200px; background: #0d1a2e;
+    border-radius: 8px; position: relative; overflow: hidden;
+  }
+  .map-container svg { width: 100%; height: 100%; }
+
+  /* CHART */
+  .chart-wrap { position: relative; height: 160px; }
+
+  /* DISPATCH */
+  .dispatch-row { display: flex; align-items: center; gap: 10px; padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,.05); }
+  .dispatch-row:last-child { border-bottom: none; }
+  .dispatch-name { flex: 1; font-size: 12px; }
+  .dispatch-mw { font-size: 13px; font-weight: 700; min-width: 60px; text-align: right; }
+  .mini-prog { flex: 1.5; height: 4px; background: var(--border); border-radius: 2px; }
+  .mini-prog-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+  /* PREDICTION TABLE */
+  .pred-table { width: 100%; }
+  .pred-table td { padding: 6px 8px; font-size: 12px; border-bottom: 1px solid rgba(255,255,255,.04); }
+  .pred-table td:last-child { text-align: right; }
+  .mape-good { color: var(--green); }
+  .mape-ok { color: var(--yellow); }
+  .mape-bad { color: var(--red); }
+
+  /* SCROLLABLE */
+  .scrollable { max-height: 220px; overflow-y: auto; }
+  .scrollable::-webkit-scrollbar { width: 4px; }
+  .scrollable::-webkit-scrollbar-thumb { background: var(--border); border-radius: 2px; }
+
+  .tag { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; }
+  .tag-blue { background: rgba(0,212,255,.15); color: var(--accent); }
+  .tag-purple { background: rgba(124,58,237,.2); color: #a78bfa; }
+
+  /* CLOCK */
+  #clock { font-family: monospace; font-size: 12px; }
+
+  .col-span-2 { grid-column: span 2; }
+  .row-2 { grid-row: span 2; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="logo">
+    <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+      <polygon points="14,2 26,8 26,20 14,26 2,20 2,8" fill="none" stroke="#00d4ff" stroke-width="1.5"/>
+      <polygon points="14,7 21,11 21,17 14,21 7,17 7,11" fill="#00d4ff" opacity=".18"/>
+      <line x1="14" y1="2" x2="14" y2="26" stroke="#00d4ff" stroke-width=".5" opacity=".4"/>
+      <line x1="2" y1="8" x2="26" y2="20" stroke="#00d4ff" stroke-width=".5" opacity=".4"/>
+      <line x1="26" y1="8" x2="2" y2="20" stroke="#00d4ff" stroke-width=".5" opacity=".4"/>
+    </svg>
+    AI-VPP <span>통합 관제</span> <span class="badge">150MW</span>
+  </div>
+  <div class="topnav">
+    <button class="active">대시보드</button>
+    <button>예측분석</button>
+    <button>전력입찰</button>
+    <button>준중앙급전</button>
+    <button>이력조회</button>
+    <button>클릭제어</button>
+    <button>시스템설정</button>
+  </div>
+  <div class="topbar-right">
+    <div class="status-dot"></div>
+    <span>시스템 정상</span>
+    <span>|</span>
+    <span id="clock">--:--:--</span>
+    <span>|</span>
+    <span>관리자 <strong>한종수</strong></span>
+  </div>
+</div>
+
+<div class="main">
+
+  <!-- ROW 1: KPI CARDS -->
+  <div class="grid-4">
+    <div class="panel kpi">
+      <div class="kpi-icon">⚡</div>
+      <div class="label">금일 누적발전량</div>
+      <div><span class="val" id="kpi-gen">324,891</span><span class="unit">kWh</span></div>
+      <div class="change up">▲ 12.4% 전일 대비</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:67%;background:var(--accent)"></div></div>
+    </div>
+    <div class="panel kpi">
+      <div class="kpi-icon">🤖</div>
+      <div class="label">AI 예측발전량 (금일)</div>
+      <div><span class="val" id="kpi-pred">341,200</span><span class="unit">kWh</span></div>
+      <div class="change down">MAPE 4.8% — 우수</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:82%;background:#7c3aed"></div></div>
+    </div>
+    <div class="panel kpi">
+      <div class="kpi-icon">💰</div>
+      <div class="label">금일 예상수익</div>
+      <div><span class="val" id="kpi-rev">4,821</span><span class="unit">만원</span></div>
+      <div class="change up">▲ 8.2% 전일 대비</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:74%;background:var(--green)"></div></div>
+    </div>
+    <div class="panel kpi">
+      <div class="kpi-icon">🌿</div>
+      <div class="label">CO₂ 저감량 (금일)</div>
+      <div><span class="val">153.2</span><span class="unit">tCO₂</span></div>
+      <div class="change up">총 자원 542개소 가동 중</div>
+      <div class="kpi-bar"><div class="kpi-bar-fill" style="width:55%;background:var(--green)"></div></div>
+    </div>
+  </div>
+
+  <!-- ROW 2: CHART + MAP + DONUT -->
+  <div class="grid-3">
+    <!-- 발전량 시계열 차트 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div>실시간 발전량 추이 (금일 기준)</div>
+      <div class="chart-wrap">
+        <canvas id="genChart"></canvas>
+      </div>
+    </div>
+
+    <!-- GIS MAP -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--green)"></div>전국 자원 GIS 맵</div>
+      <div class="map-container">
+        <svg viewBox="0 0 300 200" xmlns="http://www.w3.org/2000/svg">
+          <!-- 한국 지도 윤곽 (간략화) -->
+          <defs>
+            <radialGradient id="mapGrad" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#1a2744"/>
+              <stop offset="100%" stop-color="#0a0e1a"/>
+            </radialGradient>
+          </defs>
+          <rect width="300" height="200" fill="url(#mapGrad)"/>
+          <!-- Grid lines -->
+          <g stroke="#1e2d45" stroke-width=".5">
+            <line x1="0" y1="50" x2="300" y2="50"/><line x1="0" y1="100" x2="300" y2="100"/>
+            <line x1="0" y1="150" x2="300" y2="150"/>
+            <line x1="75" y1="0" x2="75" y2="200"/><line x1="150" y1="0" x2="150" y2="200"/>
+            <line x1="225" y1="0" x2="225" y2="200"/>
+          </g>
+          <!-- Korea outline (simplified) -->
+          <path d="M120,20 L145,18 L165,28 L178,45 L182,70 L175,95 L185,115 L180,140 L165,158 L150,165 L132,160 L118,145 L110,125 L105,100 L108,75 L115,50 Z" fill="none" stroke="#1e3a5f" stroke-width="2"/>
+          <!-- Resource markers -->
+          <circle cx="155" cy="65" r="6" fill="#10b981" opacity=".8"><animate attributeName="r" values="6;9;6" dur="2s" repeatCount="indefinite"/></circle>
+          <circle cx="155" cy="65" r="6" fill="none" stroke="#10b981" stroke-width="1" opacity=".4"/>
+          <circle cx="170" cy="90" r="5" fill="#00d4ff" opacity=".8"/>
+          <circle cx="140" cy="100" r="4" fill="#f59e0b" opacity=".8"/>
+          <circle cx="160" cy="120" r="7" fill="#10b981" opacity=".8"><animate attributeName="r" values="7;10;7" dur="2.5s" repeatCount="indefinite"/></circle>
+          <circle cx="130" cy="55" r="4" fill="#00d4ff" opacity=".8"/>
+          <circle cx="145" cy="140" r="5" fill="#10b981" opacity=".8"/>
+          <circle cx="175" cy="70" r="3" fill="#ef4444" opacity=".9"/>
+          <circle cx="125" cy="80" r="4" fill="#10b981" opacity=".8"/>
+          <circle cx="168" cy="108" r="5" fill="#10b981" opacity=".8"/>
+          <circle cx="150" cy="75" r="3" fill="#00d4ff" opacity=".8"/>
+          <!-- Labels -->
+          <text x="158" y="62" fill="#fff" font-size="7" opacity=".7">서울</text>
+          <text x="163" y="87" fill="#fff" font-size="6" opacity=".6">충남</text>
+          <text x="162" y="117" fill="#fff" font-size="6" opacity=".6">경북</text>
+          <text x="149" y="138" fill="#fff" font-size="6" opacity=".6">경남</text>
+          <!-- Legend -->
+          <circle cx="15" cy="175" r="4" fill="#10b981"/>
+          <text x="22" y="178" fill="#64748b" font-size="8">정상</text>
+          <circle cx="55" cy="175" r="4" fill="#00d4ff"/>
+          <text x="62" y="178" fill="#64748b" font-size="8">ESS</text>
+          <circle cx="90" cy="175" r="4" fill="#ef4444"/>
+          <text x="97" y="178" fill="#64748b" font-size="8">장애</text>
+          <circle cx="125" cy="175" r="4" fill="#f59e0b"/>
+          <text x="132" y="178" fill="#64748b" font-size="8">주의</text>
+          <!-- Total count -->
+          <text x="240" y="180" fill="#00d4ff" font-size="9" font-weight="bold">542개소</text>
+        </svg>
+      </div>
+    </div>
+
+    <!-- 에너지원 구성비 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:#f59e0b"></div>에너지원 구성비</div>
+      <div class="donut-wrap">
+        <canvas id="donutChart" height="130" width="130"></canvas>
+        <div class="donut-center">
+          <div class="big">150</div>
+          <div class="small">MW</div>
+        </div>
+      </div>
+      <div class="legend">
+        <div class="legend-item"><div class="legend-dot" style="background:#00d4ff"></div>태양광 42%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#10b981"></div>풍력 28%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#f59e0b"></div>바이오 15%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#7c3aed"></div>ESS 10%</div>
+        <div class="legend-item"><div class="legend-dot" style="background:#ec4899"></div>V2G 5%</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 3: RESOURCE TABLE + ALARM + ESS -->
+  <div class="grid-3">
+    <!-- 발전자원 실시간 리스트 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot"></div>발전자원 실시간 현황</div>
+      <div class="scrollable">
+        <table class="res-table">
+          <thead>
+            <tr>
+              <th>발전소명</th>
+              <th>유형</th>
+              <th>설비(kW)</th>
+              <th>현재출력</th>
+              <th>상태</th>
+              <th>통신</th>
+            </tr>
+          </thead>
+          <tbody id="resourceTable">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- 알람 현황 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--red)"></div>알람 현황 <span class="tag tag-blue" style="margin-left:auto">7건</span></div>
+      <div class="scrollable" id="alarmList">
+      </div>
+    </div>
+
+    <!-- ESS 상태 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--accent2)"></div>ESS 실시간 상태</div>
+      <div class="ess-grid">
+        <div class="ess-card">
+          <div class="ess-name">ESS #1 (그리드위즈)</div>
+          <div class="ess-soc" style="color:var(--green)">82%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">충전 중 · 48.2MW</div>
+          <div class="soc-bar"><div class="soc-fill" style="width:82%;background:var(--green)"></div></div>
+        </div>
+        <div class="ess-card">
+          <div class="ess-name">ESS #2 (동서발전)</div>
+          <div class="ess-soc" style="color:var(--yellow)">41%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">방전 중 · -22.1MW</div>
+          <div class="soc-bar"><div class="soc-fill" style="width:41%;background:var(--yellow)"></div></div>
+        </div>
+        <div class="ess-card">
+          <div class="ess-name">V2G 집합자원</div>
+          <div class="ess-soc" style="color:var(--accent)">65%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">대기 · 0MW</div>
+          <div class="soc-bar"><div class="soc-fill" style="width:65%;background:var(--accent)"></div></div>
+        </div>
+        <div class="ess-card">
+          <div class="ess-name">ESS #3 (예비)</div>
+          <div class="ess-soc" style="color:var(--muted)">95%</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:3px">대기 · 0MW</div>
+          <div class="soc-bar"><div class="soc-fill" style="width:95%;background:var(--muted)"></div></div>
+        </div>
+      </div>
+      <div style="margin-top:12px;padding:10px;background:rgba(0,212,255,.06);border-radius:6px;border:1px solid rgba(0,212,255,.15)">
+        <div style="font-size:11px;color:var(--muted);margin-bottom:4px">누적 방전량 (금월)</div>
+        <div style="font-size:18px;font-weight:700;color:var(--accent)">12,840 <span style="font-size:11px;color:var(--muted)">MWh</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 4: PREDICTION + BIDDING + DISPATCH + HEALTH -->
+  <div class="grid-4">
+    <!-- 예측 정확도 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:#7c3aed"></div>예측 모델 정확도 (NMAE10)</div>
+      <table class="pred-table" style="width:100%">
+        <tr style="border-bottom:1px solid var(--border)">
+          <td style="color:var(--muted);font-size:10px;padding:4px 8px">모델</td>
+          <td style="color:var(--muted);font-size:10px;padding:4px 8px">MAPE</td>
+          <td style="color:var(--muted);font-size:10px;padding:4px 8px;text-align:right">상태</td>
+        </tr>
+        <tr><td>D1_minimal</td><td class="mape-good">3.2%</td><td style="text-align:right"><span class="tag tag-blue">적용중</span></td></tr>
+        <tr><td>D3_minimal</td><td class="mape-good">4.8%</td><td style="text-align:right"><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted)">대기</span></td></tr>
+        <tr><td>MWP</td><td class="mape-ok">6.1%</td><td style="text-align:right"><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted)">대기</span></td></tr>
+        <tr><td>ECMWF</td><td class="mape-ok">7.4%</td><td style="text-align:right"><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted)">대기</span></td></tr>
+        <tr><td>인코어드</td><td class="mape-bad">11.2%</td><td style="text-align:right"><span class="tag" style="background:rgba(255,255,255,.07);color:var(--muted)">비교</span></td></tr>
+      </table>
+      <div style="margin-top:10px;font-size:10px;color:var(--muted)">최종 업데이트: 14:15 · 15분 주기</div>
+    </div>
+
+    <!-- 전력입찰 현황 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--green)"></div>전력입찰 현황</div>
+      <div class="bid-row">
+        <span class="bid-label">하루전입찰 (DA)</span>
+        <span class="bid-val" style="color:var(--green)">낙찰 ✓</span>
+      </div>
+      <div class="bid-row">
+        <span class="bid-label">낙찰용량</span>
+        <span class="bid-val">142.8 MW</span>
+      </div>
+      <div class="bid-row">
+        <span class="bid-label">실시간 변경입찰</span>
+        <span class="bid-val" style="color:var(--accent)">진행중</span>
+      </div>
+      <div class="bid-row">
+        <span class="bid-label">현재 SMP</span>
+        <span class="bid-val" style="color:var(--yellow)">98.4 원/kWh</span>
+      </div>
+      <div class="bid-row">
+        <span class="bid-label">예상 MEP 정산금</span>
+        <span class="bid-val">₩ 3,210만</span>
+      </div>
+      <div class="bid-row">
+        <span class="bid-label">CP 용량정산금</span>
+        <span class="bid-val">₩ 890만</span>
+      </div>
+      <div class="bid-row">
+        <span class="bid-label">임밸런스(IBP)</span>
+        <span class="bid-val" style="color:var(--red)">-₩ 42만</span>
+      </div>
+    </div>
+
+    <!-- 준중앙급전 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>준중앙급전 현황 (KPX)</div>
+      <div style="display:flex;gap:10px;margin-bottom:12px">
+        <div style="flex:1;background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--muted)">급전지시</div>
+          <div style="font-size:18px;font-weight:700;color:var(--yellow)">85.0</div>
+          <div style="font-size:10px;color:var(--muted)">MW</div>
+        </div>
+        <div style="flex:1;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.2);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:10px;color:var(--muted)">실제출력</div>
+          <div style="font-size:18px;font-weight:700;color:var(--green)">83.7</div>
+          <div style="font-size:10px;color:var(--muted)">MW</div>
+        </div>
+      </div>
+      <div class="panel-title" style="margin-bottom:6px"><div class="dot"></div>자원별 이행 현황</div>
+      <div id="dispatchList"></div>
+    </div>
+
+    <!-- 설비 건전성 -->
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--green)"></div>설비 건전성 (Health Score)</div>
+      <div id="healthBars"></div>
+      <div style="margin-top:10px;padding:8px;background:rgba(16,185,129,.08);border-radius:6px;border:1px solid rgba(16,185,129,.15);display:flex;justify-content:space-between;align-items:center">
+        <span style="font-size:11px;color:var(--muted)">종합 건전성 지수</span>
+        <span style="font-size:20px;font-weight:700;color:var(--green)">91 <span style="font-size:11px">/ 100</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ROW 5: SMP CHART + PREDICTION CHART -->
+  <div class="grid-2">
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:var(--yellow)"></div>SMP 실시간 추이 (원/kWh) + 발전량 대조</div>
+      <div class="chart-wrap" style="height:150px">
+        <canvas id="smpChart"></canvas>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-title"><div class="dot" style="background:#7c3aed"></div>AI 예측 vs 실계측 (Ppred / Pmeas)</div>
+      <div class="chart-wrap" style="height:150px">
+        <canvas id="predChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main -->
+
+<script>
+// ========== CLOCK ==========
+function updateClock() {
+  const now = new Date();
+  document.getElementById('clock').textContent =
+    now.toLocaleTimeString('ko-KR', {hour12:false});
+}
+updateClock();
+setInterval(updateClock, 1000);
+
+// ========== RESOURCE TABLE ==========
+const resources = [
+  {name:'[경북] 김주풍력 01단계', type:'풍력', cap:30000, out:22400, status:'ok', comm:'OK'},
+  {name:'[전남] 영암태양광 A', type:'태양광', cap:20000, out:18200, status:'ok', comm:'OK'},
+  {name:'[충남] 당진ESS #1', type:'ESS', cap:15000, out:-8500, status:'ok', comm:'OK'},
+  {name:'[경남] 함양바이오', type:'바이오', cap:12000, out:11800, status:'ok', comm:'OK'},
+  {name:'[강원] 평창풍력', type:'풍력', cap:18000, out:9200, status:'warn', comm:'WARN'},
+  {name:'[전북] 군산태양광', type:'태양광', cap:8000, out:7650, status:'ok', comm:'OK'},
+  {name:'[제주] 한림V2G', type:'V2G', cap:5000, out:0, status:'ok', comm:'OK'},
+  {name:'[경기] 화성태양광', type:'태양광', cap:10000, out:9800, status:'ok', comm:'OK'},
+  {name:'[경북] 포항RTU#3', type:'태양광', cap:6000, out:0, status:'err', comm:'ERR'},
+  {name:'[충북] 청주ESS', type:'ESS', cap:12000, out:5400, status:'ok', comm:'OK'},
+  {name:'[인천] 영흥태양광', type:'태양광', cap:9000, out:8400, status:'ok', comm:'OK'},
+  {name:'[전남] 해남풍력', type:'풍력', cap:25000, out:20100, status:'ok', comm:'OK'},
+];
+const tbody = document.getElementById('resourceTable');
+resources.forEach(r => {
+  const row = document.createElement('tr');
+  const pct = r.cap > 0 ? Math.abs(r.out)/r.cap*100 : 0;
+  const statusHTML = r.status === 'ok' ? '<span class="status-badge s-ok">정상</span>'
+    : r.status === 'warn' ? '<span class="status-badge s-warn">주의</span>'
+    : '<span class="status-badge s-err">장애</span>';
+  const commColor = r.comm === 'OK' ? 'var(--green)' : r.comm === 'WARN' ? 'var(--yellow)' : 'var(--red)';
+  const outVal = r.type === 'ESS' && r.out < 0 ? `<span style="color:var(--accent)">${r.out.toLocaleString()}</span>` : r.out.toLocaleString();
+  row.innerHTML = `
+    <td>${r.name}</td>
+    <td><span class="tag tag-blue" style="font-size:9px">${r.type}</span></td>
+    <td>${(r.cap/1000).toFixed(1)} MW</td>
+    <td style="font-weight:600">${outVal} kW</td>
+    <td>${statusHTML}</td>
+    <td style="color:${commColor};font-size:11px;font-weight:600">${r.comm}</td>
+  `;
+  tbody.appendChild(row);
+});
+
+// ========== ALARMS ==========
+const alarms = [
+  {level:'crit', icon:'🔴', msg:'[경북] 포항RTU#3 통신 단절 (DISCONNECT)', time:'14:18:22'},
+  {level:'warn', icon:'🟡', msg:'[강원] 평창풍력 인버터 출력 저하 감지', time:'14:05:11'},
+  {level:'warn', icon:'🟡', msg:'AI 예측 오차 임계 초과 (MAPE > 8%)', time:'13:52:08'},
+  {level:'info', icon:'🔵', msg:'[충남] 당진ESS #1 방전 → 충전 모드 전환', time:'13:40:00'},
+  {level:'info', icon:'🔵', msg:'실시간 입찰 자동 전송 완료 (14:00 슬롯)', time:'13:38:45'},
+  {level:'warn', icon:'🟡', msg:'[제주] 한림V2G SOC 임계치 근접 (20%)', time:'13:30:17'},
+  {level:'crit', icon:'🔴', msg:'KPX 급전지시 이행률 98.5% (임계 99%)', time:'12:55:03'},
+];
+const alarmList = document.getElementById('alarmList');
+alarms.forEach(a => {
+  const div = document.createElement('div');
+  div.className = `alarm-item ${a.level}`;
+  div.innerHTML = `
+    <div class="alarm-icon">${a.icon}</div>
+    <div>
+      <div class="alarm-msg">${a.msg}</div>
+      <div class="alarm-time">${a.time}</div>
+    </div>
+  `;
+  alarmList.appendChild(div);
+});
+
+// ========== DISPATCH ==========
+const dispatches = [
+  {name:'태양광 집합', mw:32.1, max:42},
+  {name:'풍력 집합', mw:24.5, max:30},
+  {name:'바이오 집합', mw:18.0, max:20},
+  {name:'ESS 집합', mw:9.1, max:15},
+];
+const dispList = document.getElementById('dispatchList');
+dispatches.forEach(d => {
+  const pct = (d.mw/d.max*100).toFixed(0);
+  const div = document.createElement('div');
+  div.className = 'dispatch-row';
+  div.innerHTML = `
+    <div class="dispatch-name">${d.name}</div>
+    <div class="mini-prog"><div class="mini-prog-fill" style="width:${pct}%"></div></div>
+    <div class="dispatch-mw" style="color:var(--accent)">${d.mw} MW</div>
+  `;
+  dispList.appendChild(div);
+});
+
+// ========== HEALTH BARS ==========
+const healthItems = [
+  {label:'태양광 인버터', score:94, color:'#10b981'},
+  {label:'풍력 발전기', score:88, color:'#00d4ff'},
+  {label:'ESS 배터리', score:76, color:'#f59e0b'},
+  {label:'RTU/통신', score:91, color:'#10b981'},
+  {label:'V2G 설비', score:85, color:'#7c3aed'},
+];
+const hbDiv = document.getElementById('healthBars');
+healthItems.forEach(h => {
+  const color = h.score >= 90 ? '#10b981' : h.score >= 75 ? '#f59e0b' : '#ef4444';
+  hbDiv.innerHTML += `
+    <div class="health-row">
+      <div class="health-label">${h.label}</div>
+      <div class="health-bar-bg"><div class="health-bar-fg" style="width:${h.score}%;background:${color}"></div></div>
+      <div class="health-score" style="color:${color}">${h.score}</div>
+    </div>
+  `;
+});
+
+// ========== CHARTS ==========
+const hours = Array.from({length:15}, (_,i) => `${String(i).padStart(2,'0')}:00`);
+
+// 발전량 추이
+const ctx1 = document.getElementById('genChart').getContext('2d');
+new Chart(ctx1, {
+  type: 'bar',
+  data: {
+    labels: hours,
+    datasets: [
+      {
+        type: 'line',
+        label: '예측발전량',
+        data: [0,0,0,0,0,800,5200,12000,18500,22000,24800,26500,27200,26800,25000],
+        borderColor: '#7c3aed',
+        borderWidth: 2,
+        pointRadius: 2,
+        fill: false,
+        tension: 0.4,
+        yAxisID: 'y',
+      },
+      {
+        label: '실계측',
+        data: [0,0,0,0,0,750,5100,11800,18200,21500,24200,25900,26800,26200,24500],
+        backgroundColor: 'rgba(0,212,255,0.3)',
+        borderColor: '#00d4ff',
+        borderWidth: 1,
+        yAxisID: 'y',
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#64748b', font: {size:10} } } },
+    scales: {
+      x: { ticks: { color: '#64748b', font:{size:9} }, grid: { color: '#1e2d45' } },
+      y: { ticks: { color: '#64748b', font:{size:9} }, grid: { color: '#1e2d45' } }
+    }
+  }
+});
+
+// 에너지원 도넛
+const ctx2 = document.getElementById('donutChart').getContext('2d');
+new Chart(ctx2, {
+  type: 'doughnut',
+  data: {
+    labels: ['태양광','풍력','바이오','ESS','V2G'],
+    datasets: [{
+      data: [42,28,15,10,5],
+      backgroundColor: ['#00d4ff','#10b981','#f59e0b','#7c3aed','#ec4899'],
+      borderWidth: 0,
+      hoverOffset: 4,
+    }]
+  },
+  options: {
+    responsive: false, cutout: '65%',
+    plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.parsed}%` } } }
+  }
+});
+
+// SMP 차트
+const ctx3 = document.getElementById('smpChart').getContext('2d');
+new Chart(ctx3, {
+  type: 'line',
+  data: {
+    labels: hours,
+    datasets: [
+      {
+        label: 'SMP (원/kWh)',
+        data: [75,72,68,65,64,70,88,95,102,105,108,104,100,98,97],
+        borderColor: '#f59e0b',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: false,
+        yAxisID: 'y1',
+        pointRadius: 2,
+      },
+      {
+        label: '발전량(MWh)',
+        data: [0,0,0,0,0,2,18,45,72,88,98,103,107,105,98],
+        backgroundColor: 'rgba(16,185,129,0.15)',
+        borderColor: '#10b981',
+        borderWidth: 1.5,
+        tension: 0.4,
+        fill: true,
+        yAxisID: 'y2',
+        pointRadius: 0,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#64748b', font:{size:10} } } },
+    scales: {
+      x: { ticks: { color: '#64748b', font:{size:9} }, grid: { color: '#1e2d45' } },
+      y1: { type:'linear', position:'left', ticks: { color:'#f59e0b', font:{size:9} }, grid: { color:'#1e2d45' } },
+      y2: { type:'linear', position:'right', ticks: { color:'#10b981', font:{size:9} }, grid: { display:false } },
+    }
+  }
+});
+
+// 예측 vs 실계측
+const ctx4 = document.getElementById('predChart').getContext('2d');
+new Chart(ctx4, {
+  type: 'line',
+  data: {
+    labels: hours,
+    datasets: [
+      {
+        label: 'Ppred (예측)',
+        data: [0,0,0,0,0,800,5200,12000,18500,22000,24800,26500,27200,26800,25000],
+        borderColor: '#7c3aed',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: false,
+        pointRadius: 2,
+        borderDash: [4,3],
+      },
+      {
+        label: 'Pmeas (실계측)',
+        data: [0,0,0,0,0,750,5100,11800,18200,21500,24200,25900,26800,26200,24500],
+        borderColor: '#00d4ff',
+        borderWidth: 2,
+        tension: 0.4,
+        fill: {target:'0', above:'rgba(0,212,255,0.06)', below:'rgba(124,58,237,0.06)'},
+        pointRadius: 2,
+      }
+    ]
+  },
+  options: {
+    responsive: true, maintainAspectRatio: false,
+    plugins: { legend: { labels: { color: '#64748b', font:{size:10} } } },
+    scales: {
+      x: { ticks: { color: '#64748b', font:{size:9} }, grid: { color: '#1e2d45' } },
+      y: { ticks: { color: '#64748b', font:{size:9} }, grid: { color: '#1e2d45' } }
+    }
+  }
+});
+
+// ========== LIVE KPI SIMULATION ==========
+function randFluc(val, pct) {
+  return Math.round(val * (1 + (Math.random() - 0.5) * pct));
+}
+setInterval(() => {
+  document.getElementById('kpi-gen').textContent = randFluc(324891, 0.01).toLocaleString();
+  document.getElementById('kpi-pred').textContent = randFluc(341200, 0.005).toLocaleString();
+  document.getElementById('kpi-rev').textContent = randFluc(4821, 0.008).toLocaleString();
+}, 3000);
+</script>
+</body>
+</html>

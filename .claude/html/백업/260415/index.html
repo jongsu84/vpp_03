@@ -1,0 +1,1409 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EWP VPP 2.0 통합 플랫폼</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{
+  --bg:#080d18;--bg2:#0c1120;--bg3:#111827;--bg4:#141e2d;
+  --bd:#1c2a40;--bd2:#243347;
+  --c1:#00d4e0;--c2:#3b82f6;--c3:#8b5cf6;--c4:#10b981;--c5:#f59e0b;--c6:#ef4444;--c7:#f97316;
+  --tx:#dde6f0;--tx2:#8899aa;--tx3:#566780;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{font-family:"Malgun Gothic","맑은 고딕",Segoe UI,sans-serif;background:var(--bg);color:var(--tx);display:flex;font-size:12.5px}
+
+/* SIDEBAR */
+#sb{width:214px;min-width:214px;background:var(--bg2);border-right:1px solid var(--bd);display:flex;flex-direction:column;overflow-y:auto;overflow-x:hidden}
+#sb::-webkit-scrollbar{width:3px}
+#sb::-webkit-scrollbar-thumb{background:var(--bd2)}
+.logo{padding:14px 14px 12px;border-bottom:1px solid var(--bd);display:flex;align-items:center;gap:9px;flex-shrink:0}
+.logo-box{width:30px;height:30px;background:linear-gradient(135deg,var(--c1),var(--c2));border-radius:7px;display:grid;place-items:center;font-weight:900;font-size:15px;color:#fff;flex-shrink:0}
+.logo-t{font-size:13px;font-weight:700;line-height:1.3}
+.logo-s{font-size:9.5px;color:var(--tx3)}
+.sg{padding:6px 0 2px}
+.sg-lbl{padding:7px 13px 3px;font-size:9.5px;font-weight:700;color:var(--tx3);letter-spacing:.09em;text-transform:uppercase}
+.ni{display:flex;align-items:center;gap:7px;padding:6px 13px;cursor:pointer;border-left:2px solid transparent;color:var(--tx2);font-size:12px;transition:.12s;white-space:nowrap}
+.ni:hover{background:rgba(0,212,224,.05);color:var(--tx)}
+.ni.on{background:rgba(0,212,224,.09);color:var(--c1);border-left-color:var(--c1);font-weight:600}
+.ni .ic{font-size:13px;width:16px;text-align:center;flex-shrink:0}
+
+/* MAIN */
+#mn{flex:1;display:flex;flex-direction:column;min-width:0;overflow:hidden}
+.tb{height:46px;background:var(--bg2);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 18px;gap:12px;flex-shrink:0}
+.tb-ttl{font-size:13.5px;font-weight:700;flex:1;color:var(--tx)}
+.tb-fn{font-size:10px;color:var(--tx3)}
+.bx{display:inline-flex;align-items:center;gap:3px;padding:3px 8px;border-radius:4px;font-size:10.5px;font-weight:600}
+.g{background:rgba(16,185,129,.14);color:#34d399}
+.r{background:rgba(239,68,68,.14);color:#f87171}
+.b{background:rgba(59,130,246,.14);color:#60a5fa}
+.o{background:rgba(245,158,11,.14);color:#fbbf24}
+.c{background:rgba(0,212,224,.14);color:var(--c1)}
+.p{background:rgba(139,92,246,.14);color:#a78bfa}
+.gr{background:rgba(100,116,139,.14);color:#94a3b8}
+.tb-btn{padding:4px 10px;border-radius:4px;border:1px solid var(--bd2);background:transparent;color:var(--tx2);font-size:10.5px;cursor:pointer;flex-shrink:0}
+.tb-btn:hover{background:rgba(255,255,255,.04);color:var(--tx)}
+
+#ct{flex:1;overflow-y:auto;padding:14px}
+#ct::-webkit-scrollbar{width:4px}
+#ct::-webkit-scrollbar-thumb{background:var(--bd2);border-radius:2px}
+
+/* CARDS */
+.ks{display:grid;gap:9px;margin-bottom:12px}
+.ks5{grid-template-columns:repeat(5,1fr)}
+.ks4{grid-template-columns:repeat(4,1fr)}
+.ks3{grid-template-columns:repeat(3,1fr)}
+.ks2{grid-template-columns:1fr 1fr}
+.kc{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:11px 13px}
+.kl{font-size:10px;color:var(--tx3);margin-bottom:3px}
+.kv{font-size:19px;font-weight:700;line-height:1}
+.ku{font-size:10.5px;color:var(--tx3);margin-left:2px}
+.kt{font-size:10px;margin-top:3px}
+.kt.up{color:var(--c4)}
+.kt.dn{color:var(--c6)}
+.kt.na{color:var(--tx3)}
+
+/* LAYOUT */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:11px;margin-bottom:11px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:11px;margin-bottom:11px}
+.gm{display:grid;grid-template-columns:1fr 320px;gap:11px}
+.col{display:flex;flex-direction:column;gap:11px}
+
+.cd{background:var(--bg3);border:1px solid var(--bd);border-radius:8px;padding:13px}
+.cd-t{font-size:11.5px;font-weight:600;color:var(--tx2);margin-bottom:11px;display:flex;align-items:center;gap:5px}
+.dot{width:5px;height:5px;border-radius:50%;background:var(--c1);flex-shrink:0}
+
+/* TABLE */
+.t{width:100%;border-collapse:collapse;font-size:11.5px}
+.t th{padding:5px 8px;text-align:left;color:var(--tx3);border-bottom:1px solid var(--bd);font-weight:600;font-size:10px;white-space:nowrap}
+.t td{padding:6px 8px;border-bottom:1px solid rgba(28,42,64,.6);vertical-align:middle}
+.t tr:last-child td{border-bottom:none}
+.t tr:hover td{background:rgba(255,255,255,.015)}
+.tc th,.tc td{text-align:center}
+.tr th:first-child,.tr td:first-child{text-align:left}
+
+.sd{display:inline-block;width:6px;height:6px;border-radius:50%;margin-right:4px;flex-shrink:0}
+.ok{background:#22c55e;box-shadow:0 0 4px #22c55e88}
+.wn{background:#f97316;box-shadow:0 0 4px #f9731688}
+.er{background:#ef4444;box-shadow:0 0 4px #ef444488}
+.of{background:#475569}
+.bl{background:#3b82f6;box-shadow:0 0 4px #3b82f688}
+
+/* ALERTS */
+.al{display:flex;flex-direction:column;gap:5px}
+.ai{padding:7px 9px;border-radius:5px;font-size:11.5px}
+.a-cr{background:rgba(239,68,68,.07);border-left:3px solid var(--c6)}
+.a-wn{background:rgba(249,115,22,.07);border-left:3px solid var(--c7)}
+.a-in{background:rgba(59,130,246,.07);border-left:3px solid var(--c2)}
+.a-ok{background:rgba(16,185,129,.07);border-left:3px solid var(--c4)}
+.a-lbl{color:var(--tx);line-height:1.4}
+.a-tm{font-size:9.5px;color:var(--tx3);margin-top:2px}
+
+/* RES BADGES */
+.rb{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:12px}
+.rbc{background:var(--bg4);border:1px solid var(--bd);border-radius:8px;padding:9px 11px}
+.rbc-ic{font-size:17px;margin-bottom:2px}
+.rbc-nm{font-size:9.5px;color:var(--tx3)}
+.rbc-vl{font-size:15px;font-weight:700;margin:1px 0}
+.rbc-cp{font-size:9.5px;color:var(--tx3)}
+
+/* TABS */
+.tabs{display:flex;gap:3px;margin-bottom:10px}
+.tab{padding:4px 11px;border-radius:4px;border:none;font-size:11px;cursor:pointer;background:transparent;color:var(--tx3)}
+.tab.on{background:rgba(0,212,224,.13);color:var(--c1);font-weight:600}
+
+/* CHARTS */
+.cw{position:relative;width:100%}
+
+/* VIEWS */
+.vw{display:none}
+.vw.on{display:block}
+
+/* CTRL */
+.ctrl-sl{width:100%;accent-color:var(--c1);margin:6px 0}
+.btn{padding:6px 12px;border-radius:5px;border:none;cursor:pointer;font-size:11.5px;font-weight:600}
+.btn-p{background:linear-gradient(135deg,var(--c1),var(--c2));color:#fff}
+.btn-d{background:rgba(239,68,68,.18);color:var(--c6);border:1px solid rgba(239,68,68,.3)}
+.btn-n{background:rgba(100,116,139,.14);color:var(--tx2);border:1px solid var(--bd2)}
+.btn-g{background:rgba(16,185,129,.14);color:var(--c4);border:1px solid rgba(16,185,129,.3)}
+
+/* PROG */
+.pg-row{display:flex;align-items:center;gap:7px;margin-bottom:5px}
+.pg-lbl{width:85px;font-size:10.5px;color:var(--tx2);white-space:nowrap}
+.pg-bg{flex:1;height:5px;background:rgba(255,255,255,.05);border-radius:3px;overflow:hidden}
+.pg-fill{height:100%;border-radius:3px}
+
+/* COLORS */
+.nc{color:var(--c1);font-weight:600}
+.nb{color:var(--c2);font-weight:600}
+.ng{color:var(--c4);font-weight:600}
+.nr{color:var(--c6);font-weight:600}
+.no{color:var(--c7);font-weight:600}
+.np{color:var(--c3);font-weight:600}
+.ny{color:var(--c5);font-weight:600}
+
+/* RISK BOX */
+.rb-box{padding:8px 10px;border-radius:5px;font-size:11.5px;display:flex;justify-content:space-between;align-items:center;margin-bottom:5px}
+.rb-s{background:rgba(16,185,129,.07);border-left:3px solid var(--c4)}
+.rb-l{background:rgba(245,158,11,.07);border-left:3px solid var(--c5)}
+.rb-m{background:rgba(249,115,22,.07);border-left:3px solid var(--c7)}
+.rb-h{background:rgba(239,68,68,.09);border-left:3px solid var(--c6)}
+
+/* SWITCH */
+.sw{display:flex;align-items:center;gap:7px;font-size:11.5px}
+.sw-btn{width:34px;height:17px;border-radius:9px;cursor:pointer;position:relative;border:none;transition:.2s}
+.sw-on{background:var(--c1)}
+.sw-off{background:#334155}
+.sw-btn::after{content:"";position:absolute;top:2px;left:2px;width:13px;height:13px;border-radius:50%;background:#fff;transition:.2s}
+.sw-on::after{left:19px}
+
+/* MODEL CARD */
+.mc{background:var(--bg4);border:1px solid var(--bd);border-radius:8px;padding:11px 13px}
+.mc-rnk{font-size:22px;font-weight:800}
+.mc-nm{font-size:12px;font-weight:600;margin:2px 0}
+.mc-sub{font-size:10.5px;color:var(--tx3)}
+
+/* INFO ROW */
+.ir{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(28,42,64,.4);font-size:11.5px}
+.ir:last-child{border-bottom:none}
+.ir-lbl{color:var(--tx3)}
+
+.smp-row{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.smp-i{display:flex;flex-direction:column}
+.smp-l{font-size:9.5px;color:var(--tx3)}
+.smp-v{font-size:14px;font-weight:700}
+</style>
+</head>
+<body>
+
+<nav id="sb">
+  <div class="logo">
+    <div class="logo-box">V</div>
+    <div><div class="logo-t">EWP VPP 2.0</div><div class="logo-s">동서발전 가상발전소 플랫폼</div></div>
+  </div>
+  <div class="sg">
+    <div class="sg-lbl">대시보드</div>
+    <div class="ni on" onclick="sw('main',this)"><span class="ic">📊</span>통합 운영 대시보드</div>
+    <div class="ni" onclick="sw('resource',this)"><span class="ic">⚡</span>자원별 상세 관제</div>
+    <div class="ni" onclick="sw('gis',this)"><span class="ic">🗺️</span>GIS 기반 자원 맵</div>
+    <div class="ni" onclick="sw('health',this)"><span class="ic">🔧</span>설비 건전성 진단</div>
+  </div>
+  <div class="sg">
+    <div class="sg-lbl">시장참여</div>
+    <div class="ni" onclick="sw('mkt_bid',this)"><span class="ic">📋</span>이중 시장 입찰</div>
+    <div class="ni" onclick="sw('price_bid',this)"><span class="ic">💰</span>10구간 가격입찰</div>
+    <div class="ni" onclick="sw('post_bid',this)"><span class="ic">🔄</span>사후 입찰 지원</div>
+    <div class="ni" onclick="sw('dispatch',this)"><span class="ic">📡</span>급전 지시 이행 관리</div>
+  </div>
+  <div class="sg">
+    <div class="sg-lbl">AI 분석</div>
+    <div class="ni" onclick="sw('fc15',this)"><span class="ic">🤖</span>15분 적응형 예측</div>
+    <div class="ni" onclick="sw('pa',this)"><span class="ic">📈</span>예측-실측 대조</div>
+    <div class="ni" onclick="sw('opt',this)"><span class="ic">⚙️</span>최적 급전 제안</div>
+    <div class="ni" onclick="sw('mdl',this)"><span class="ic">🔬</span>예측 모델 비교</div>
+  </div>
+  <div class="sg">
+    <div class="sg-lbl">정산 금융</div>
+    <div class="ni" onclick="sw('settle',this)"><span class="ic">💹</span>이중 정산 시뮬레이션</div>
+    <div class="ni" onclick="sw('penalty',this)"><span class="ic">⚠️</span>임밸런스 페널티 관리</div>
+    <div class="ni" onclick="sw('cp',this)"><span class="ic">🏦</span>실효용량 CP 정산</div>
+    <div class="ni" onclick="sw('profit',this)"><span class="ic">📄</span>수익 배분 및 정산서</div>
+    <div class="ni" onclick="sw('perf',this)"><span class="ic">📉</span>누적 성과 분석</div>
+  </div>
+  <div class="sg">
+    <div class="sg-lbl">통합 제어</div>
+    <div class="ni" onclick="sw('rctrl',this)"><span class="ic">🎛️</span>원격 출력 제어</div>
+    <div class="ni" onclick="sw('cctrl',this)"><span class="ic">🖱️</span>클릭 제어</div>
+    <div class="ni" onclick="sw('cmon',this)"><span class="ic">📶</span>제어 신호 모니터링</div>
+  </div>
+  <div class="sg">
+    <div class="sg-lbl">시스템 설정</div>
+    <div class="ni" onclick="sw('rgrp',this)"><span class="ic">🗂️</span>자원 및 그룹 관리</div>
+    <div class="ni" onclick="sw('rtu',this)"><span class="ic">🌐</span>RTU 및 통신 관리</div>
+    <div class="ni" onclick="sw('bat',this)"><span class="ic">🔐</span>배치 및 권한 관리</div>
+  </div>
+</nav>
+<div id="mn">
+  <div class="tb">
+    <div class="tb-ttl" id="ttl">통합 운영 대시보드</div>
+    <span class="bx g">● 시스템 정상</span>
+    <span class="bx b">SMP 139.4원/kWh</span>
+    <span class="bx o">● DA입찰 완료</span>
+    <span class="tb-fn" id="clk">—</span>
+    <button class="tb-btn">↻ 자동갱신</button>
+    <button class="tb-btn">⬇ 내보내기</button>
+  </div>
+  <div id="ct">
+
+<!-- ═══════════ 1. 통합 운영 대시보드 ═══════════ -->
+<div id="v-main" class="vw on">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">총 현재 출력</div><div><span class="kv nc" id="kv-out">87.4</span><span class="ku">MW</span></div><div class="kt up">▲ 설비 대비 60.8%</div></div>
+    <div class="kc"><div class="kl">금일 누적 발전량</div><div><span class="kv">624.8</span><span class="ku">MWh</span></div><div class="kt up">▲ 어제 대비 +8.3%</div></div>
+    <div class="kc"><div class="kl">실시간 SMP</div><div><span class="kv ny">139.4</span><span class="ku">원/kWh</span></div><div class="kt up">▲ 전시간 +2.1</div></div>
+    <div class="kc"><div class="kl">금일 예상 수익</div><div><span class="kv ng">8,712</span><span class="ku">천원</span></div><div class="kt up">▲ 목표 대비 +12%</div></div>
+    <div class="kc"><div class="kl">예측 정확도</div><div><span class="kv nb">93.2</span><span class="ku">%</span></div><div class="kt up">▲ 전일 +1.4%p</div></div>
+  </div>
+  <div class="rb">
+    <div class="rbc"><div class="rbc-ic">☀️</div><div class="rbc-nm">태양광 (PV)</div><div class="rbc-vl ny">52.1<span style="font-size:10px;font-weight:400;color:var(--tx3)"> MW</span></div><div class="rbc-cp">설비 80MW · 32개소</div></div>
+    <div class="rbc"><div class="rbc-ic">💨</div><div class="rbc-nm">풍력 (Wind)</div><div class="rbc-vl nb">18.7<span style="font-size:10px;font-weight:400;color:var(--tx3)"> MW</span></div><div class="rbc-cp">설비 30MW · 6개소</div></div>
+    <div class="rbc"><div class="rbc-ic">🔋</div><div class="rbc-nm">ESS</div><div class="rbc-vl np">9.4<span style="font-size:10px;font-weight:400;color:var(--tx3)"> MW</span></div><div class="rbc-cp">설비 20MW · SOC 68%</div></div>
+    <div class="rbc"><div class="rbc-ic">🌿</div><div class="rbc-nm">바이오</div><div class="rbc-vl ng">7.2<span style="font-size:10px;font-weight:400;color:var(--tx3)"> MW</span></div><div class="rbc-cp">설비 10MW · 4개소</div></div>
+    <div class="rbc"><div class="rbc-ic">🚗</div><div class="rbc-nm">V2G</div><div class="rbc-vl no">0.0<span style="font-size:10px;font-weight:400;color:var(--tx3)"> MW</span></div><div class="rbc-cp">설비 3MW · 대기</div></div>
+  </div>
+  <div class="gm">
+    <div class="col">
+      <div class="cd">
+        <div class="cd-t"><span class="dot"></span>자원별 실시간 출력 (24h 통합)</div>
+        <div class="tabs"><button class="tab on">통합</button><button class="tab">PV</button><button class="tab">풍력</button><button class="tab">ESS</button><button class="tab">바이오</button></div>
+        <div class="cw" style="height:195px"><canvas id="ch-pwr"></canvas></div>
+      </div>
+      <div class="cd">
+        <div class="cd-t"><span class="dot" style="background:var(--c2)"></span>예측 vs 실측 비교 (금일 · NMAE 기준)</div>
+        <div style="display:flex;gap:14px;margin-bottom:8px;font-size:10.5px">
+          <span style="color:var(--c1)">─ 실측</span><span style="color:var(--c2)">─ 예측1차</span><span style="color:var(--c3)">─ 예측2차</span><span style="color:rgba(255,255,255,.5)">─ 오차율</span>
+          <span style="margin-left:auto;color:var(--tx3)">현재 NMAE 6.8%</span>
+        </div>
+        <div class="cw" style="height:175px"><canvas id="ch-fc"></canvas></div>
+      </div>
+    </div>
+    <div class="col">
+      <div class="cd">
+        <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>시장 현황 (실시간)</div>
+        <div class="smp-row" style="margin-bottom:9px">
+          <div class="smp-i"><span class="smp-l">하루전 SMP</span><span class="smp-v ny">141.2<span style="font-size:9px;color:var(--tx3)"> 원</span></span></div>
+          <div class="smp-i"><span class="smp-l">실시간 SMP</span><span class="smp-v nc">139.4<span style="font-size:9px;color:var(--tx3)"> 원</span></span></div>
+          <div class="smp-i"><span class="smp-l">입찰 상태</span><span class="bx g" style="font-size:10px">1차 성공</span></div>
+        </div>
+        <div class="ir"><span class="ir-lbl">RT 변경 입찰 횟수</span><span class="nc">72 / 96회</span></div>
+        <div class="ir"><span class="ir-lbl">금일 예상 MEP 정산</span><span class="ng">4,320천원</span></div>
+        <div class="ir"><span class="ir-lbl">임밸런스 리스크</span><span class="no">보통 (오차 7.2%)</span></div>
+      </div>
+      <div class="cd" style="flex:1">
+        <div class="cd-t" style="justify-content:space-between"><span><span class="dot" style="background:var(--c6)"></span>주요 알림</span><span style="font-size:10px;color:var(--tx3)">3건 미확인</span></div>
+        <div class="al">
+          <div class="ai a-cr"><div class="a-lbl">⛔ 수망1호 인버터 통신 단절 (3분)</div><div class="a-tm">14:29 · 설비 건전성</div></div>
+          <div class="ai a-wn"><div class="a-lbl">⚠️ ESS 제주1 SOC 임계치 도달 (92%)</div><div class="a-tm">14:18 · 자원 관제</div></div>
+          <div class="ai a-wn"><div class="a-lbl">⚠️ 오차율 10.2% — 사후 입찰 검토 필요</div><div class="a-tm">13:45 · 시장 참여</div></div>
+          <div class="ai a-in"><div class="a-lbl">ℹ️ KPX 출력제어 명령 수신 (−5MW)</div><div class="a-tm">13:30 · 통합 제어</div></div>
+          <div class="ai a-ok"><div class="a-lbl">✅ DA 2차 입찰 전송 완료</div><div class="a-tm">10:00 · 시장 참여</div></div>
+        </div>
+      </div>
+      <div class="cd">
+        <div class="cd-t"><span class="dot" style="background:var(--c4)"></span>자원 상태 요약</div>
+        <table class="t">
+          <thead><tr><th>자원명</th><th>출력</th><th>가동률</th><th>상태</th></tr></thead>
+          <tbody>
+            <tr><td>제주 태양광 A</td><td class="nc">12.4 MW</td><td>82%</td><td><span class="sd ok"></span>정상</td></tr>
+            <tr><td>제주 풍력 1</td><td class="nc">8.7 MW</td><td>71%</td><td><span class="sd ok"></span>정상</td></tr>
+            <tr><td>ESS 제주1</td><td class="nc">9.4 MW</td><td>—</td><td><span class="sd wn"></span>SOC↑</td></tr>
+            <tr><td>수망1호</td><td class="nr">—</td><td>0%</td><td><span class="sd er"></span>통신오류</td></tr>
+            <tr><td>바이오 협재</td><td class="nc">7.2 MW</td><td>96%</td><td><span class="sd ok"></span>정상</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 2. 자원별 상세 관제 ═══════════ -->
+<div id="v-resource" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">총 관리 자원</div><div><span class="kv">47</span><span class="ku">개소</span></div></div>
+    <div class="kc"><div class="kl">정상 가동</div><div><span class="kv ng">44</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">경고</div><div><span class="kv no">2</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">통신 오류</div><div><span class="kv nr">1</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">ESS 평균 SOC</div><div><span class="kv np">68</span><span class="ku">%</span></div></div>
+  </div>
+  <div class="cd" style="margin-bottom:11px">
+    <div class="cd-t"><span class="dot"></span>자원별 실시간 상세 현황</div>
+    <table class="t">
+      <thead><tr><th>구분</th><th>자원명</th><th>설치용량</th><th>현재출력</th><th>이용률</th><th>SOC</th><th>KPX통신</th><th>인버터</th><th>금일발전량</th><th>금일수익</th><th>상태</th></tr></thead>
+      <tbody>
+        <tr><td>☀️ PV</td><td>제주 태양광 A</td><td>15.0 MW</td><td class="nc">12.4 MW</td><td>83%</td><td>—</td><td><span class="bx b">KPX</span></td><td>정상</td><td>74.4 MWh</td><td class="ng">1,037천</td><td><span class="sd ok"></span>정상</td></tr>
+        <tr><td>☀️ PV</td><td>제주 태양광 B</td><td>10.0 MW</td><td class="nc">8.1 MW</td><td>81%</td><td>—</td><td><span class="bx b">KPX</span></td><td>정상</td><td>48.6 MWh</td><td class="ng">678천</td><td><span class="sd ok"></span>정상</td></tr>
+        <tr><td>💨 Wind</td><td>제주 풍력 1</td><td>12.0 MW</td><td class="nc">8.7 MW</td><td>73%</td><td>—</td><td><span class="bx b">KPX</span></td><td>정상</td><td>52.2 MWh</td><td class="ng">729천</td><td><span class="sd ok"></span>정상</td></tr>
+        <tr><td>💨 Wind</td><td>제주 풍력 2</td><td>18.0 MW</td><td class="nc">10.0 MW</td><td>56%</td><td>—</td><td><span class="bx b">KPX</span></td><td>정상</td><td>60.0 MWh</td><td class="ng">838천</td><td><span class="sd ok"></span>정상</td></tr>
+        <tr><td>🔋 ESS</td><td>ESS 제주1</td><td>10.0 MW</td><td class="nc">9.4 MW</td><td>94%</td><td class="no">92%</td><td><span class="bx b">KPX</span></td><td>정상</td><td>—</td><td>—</td><td><span class="sd wn"></span>SOC↑</td></tr>
+        <tr><td>🔋 ESS</td><td>ESS 제주2</td><td>10.0 MW</td><td class="nc">0.0 MW</td><td>—</td><td class="ng">45%</td><td><span class="bx b">KPX</span></td><td>대기</td><td>—</td><td>—</td><td><span class="sd of"></span>대기</td></tr>
+        <tr><td>🌿 Bio</td><td>바이오 협재</td><td>7.5 MW</td><td class="nc">7.2 MW</td><td>96%</td><td>—</td><td><span class="bx b">KPX</span></td><td>정상</td><td>43.2 MWh</td><td class="ng">603천</td><td><span class="sd ok"></span>정상</td></tr>
+        <tr><td>☀️ PV</td><td>수망1호</td><td>3.0 MW</td><td class="nr">—</td><td>0%</td><td>—</td><td><span class="bx r">N/A</span></td><td>오류</td><td>—</td><td class="nr">—</td><td><span class="sd er"></span>통신단절</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c3)"></span>ESS 충·방전 현황 (24h)</div>
+      <div class="cw" style="height:175px"><canvas id="ch-ess"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>자원별 출력 비율</div>
+      <div class="cw" style="height:175px"><canvas id="ch-pie"></canvas></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 3. GIS 기반 자원 맵 ═══════════ -->
+<div id="v-gis" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">표시 자원</div><div><span class="kv">47</span><span class="ku">개소</span></div></div>
+    <div class="kc"><div class="kl">오차 위험군</div><div><span class="kv no">3</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">평균 일사량</div><div><span class="kv ny">812</span><span class="ku">W/m²</span></div></div>
+    <div class="kc"><div class="kl">평균 풍속</div><div><span class="kv nb">6.4</span><span class="ku">m/s</span></div></div>
+    <div class="kc"><div class="kl">기상 업데이트</div><div><span class="kv">14:30</span></div><div class="kt na">초단기 예보</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd" style="grid-column:1/-1">
+      <div class="cd-t" style="justify-content:space-between">
+        <span><span class="dot"></span>제주 시범사업 구역 자원 지도</span>
+        <div style="display:flex;gap:5px">
+          <button class="tb-btn">전국</button>
+          <button class="tb-btn" style="background:rgba(0,212,224,.1);color:var(--c1);border-color:var(--c1)">제주</button>
+          <button class="tb-btn">오차 레이어</button>
+          <button class="tb-btn">기상 레이어</button>
+        </div>
+      </div>
+      <div style="background:var(--bg4);border:1px solid var(--bd);border-radius:7px;height:380px;position:relative;overflow:hidden">
+        <svg width="100%" height="100%" viewBox="0 0 820 380" preserveAspectRatio="xMidYMid meet">
+          <rect width="820" height="380" fill="#0c1525"/>
+          <g stroke="#1a2535" stroke-width="0.5" opacity="0.4">
+            <line x1="0" y1="76" x2="820" y2="76"/><line x1="0" y1="152" x2="820" y2="152"/>
+            <line x1="0" y1="228" x2="820" y2="228"/><line x1="0" y1="304" x2="820" y2="304"/>
+            <line x1="164" y1="0" x2="164" y2="380"/><line x1="328" y1="0" x2="328" y2="380"/>
+            <line x1="492" y1="0" x2="492" y2="380"/><line x1="656" y1="0" x2="656" y2="380"/>
+          </g>
+          <ellipse cx="410" cy="195" rx="295" ry="135" fill="#142030" stroke="#1c3550" stroke-width="1.5"/>
+          <text x="410" y="200" text-anchor="middle" fill="#1e3a5f" font-size="32" font-weight="900" opacity="0.15">JEJU</text>
+          <!-- PV -->
+          <circle cx="295" cy="165" r="11" fill="#f59e0b" opacity="0.85"/><text x="295" y="170" text-anchor="middle" fill="white" font-size="9">PV</text>
+          <circle cx="345" cy="185" r="9" fill="#f59e0b" opacity="0.8"/><text x="345" y="190" text-anchor="middle" fill="white" font-size="8">PV</text>
+          <circle cx="430" cy="172" r="13" fill="#f59e0b" opacity="0.9"/><text x="430" y="177" text-anchor="middle" fill="white" font-size="9">PV</text>
+          <circle cx="490" cy="158" r="9" fill="#f59e0b" opacity="0.75"/><text x="490" y="163" text-anchor="middle" fill="white" font-size="8">PV</text>
+          <circle cx="380" cy="215" r="8" fill="#f59e0b" opacity="0.7"/><text x="380" y="220" text-anchor="middle" fill="white" font-size="8">PV</text>
+          <!-- ERR PV -->
+          <circle cx="260" cy="200" r="10" fill="#ef4444" opacity="0.9"/><text x="260" y="205" text-anchor="middle" fill="white" font-size="9">⚠</text>
+          <!-- Wind -->
+          <circle cx="195" cy="178" r="11" fill="#3b82f6" opacity="0.85"/><text x="195" y="183" text-anchor="middle" fill="white" font-size="8">💨</text>
+          <circle cx="560" cy="168" r="13" fill="#3b82f6" opacity="0.85"/><text x="560" y="173" text-anchor="middle" fill="white" font-size="8">💨</text>
+          <!-- ESS -->
+          <circle cx="390" cy="225" r="11" fill="#8b5cf6" opacity="0.85"/><text x="390" y="230" text-anchor="middle" fill="white" font-size="8">🔋</text>
+          <circle cx="460" cy="210" r="9" fill="#8b5cf6" opacity="0.75"/><text x="460" y="215" text-anchor="middle" fill="white" font-size="8">🔋</text>
+          <!-- Bio -->
+          <circle cx="325" cy="235" r="10" fill="#10b981" opacity="0.85"/><text x="325" y="240" text-anchor="middle" fill="white" font-size="8">🌿</text>
+          <!-- Legend -->
+          <rect x="18" y="300" width="190" height="68" rx="6" fill="#111827" stroke="#1c2a40"/>
+          <circle cx="34" cy="316" r="6" fill="#f59e0b"/><text x="46" y="320" fill="#8899aa" font-size="10">태양광 (PV)</text>
+          <circle cx="34" cy="334" r="6" fill="#3b82f6"/><text x="46" y="338" fill="#8899aa" font-size="10">풍력 (Wind)</text>
+          <circle cx="34" cy="352" r="6" fill="#8b5cf6"/><text x="46" y="356" fill="#8899aa" font-size="10">ESS</text>
+          <circle cx="116" cy="316" r="6" fill="#10b981"/><text x="128" y="320" fill="#8899aa" font-size="10">바이오</text>
+          <circle cx="116" cy="334" r="6" fill="#ef4444"/><text x="128" y="338" fill="#8899aa" font-size="10">통신오류</text>
+          <text x="660" y="372" fill="#3d5068" font-size="10">─── 10 km ───</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 4. 설비 건전성 진단 ═══════════ -->
+<div id="v-health" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">총 관리 설비</div><div><span class="kv">407</span><span class="ku">개소</span></div></div>
+    <div class="kc"><div class="kl">이상탐지</div><div><span class="kv nr">12</span><span class="ku">건</span></div><div class="kt dn">▼ AI 자동 탐지</div></div>
+    <div class="kc"><div class="kl">통신 단절</div><div><span class="kv nr">1</span><span class="ku">건</span></div></div>
+    <div class="kc"><div class="kl">정상 인버터</div><div><span class="kv ng">98.8</span><span class="ku">%</span></div></div>
+    <div class="kc"><div class="kl">점검 예약</div><div><span class="kv no">3</span><span class="ku">건</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c6)"></span>AI 이상탐지 결과 (전일 기준)</div>
+      <table class="t">
+        <thead><tr><th>발전기명</th><th>일사량</th><th>발전시간</th><th>인버터</th><th>발전량</th><th>지역기상</th><th>총점</th><th>등급</th></tr></thead>
+        <tbody>
+          <tr><td>수망1호</td><td class="nr">●</td><td class="nr">●</td><td class="nr">●</td><td class="nr">●</td><td class="nr">●</td><td class="nr">5/5</td><td><span class="bx r">경계</span></td></tr>
+          <tr><td>한경1호</td><td class="no">●</td><td class="no">●</td><td>○</td><td class="no">●</td><td>○</td><td class="no">3/5</td><td><span class="bx o">주의</span></td></tr>
+          <tr><td>애월2호</td><td>○</td><td class="no">●</td><td>○</td><td class="no">●</td><td>○</td><td class="no">2/5</td><td><span class="bx o">주의</span></td></tr>
+          <tr><td>성산3호</td><td>○</td><td>○</td><td>○</td><td>○</td><td class="no">●</td><td class="ny">1/5</td><td><span class="bx gr">관심</span></td></tr>
+          <tr><td>표선1호</td><td>○</td><td>○</td><td>○</td><td>○</td><td>○</td><td class="ng">0/5</td><td><span class="bx g">정상</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c7)"></span>인버터/RTU 통신 상태</div>
+      <div class="al">
+        <div class="ai a-cr"><div class="a-lbl">⛔ 수망1호 — RTU 통신 단절 3분 지속</div><div class="a-tm">14:29:12 · 인근 발전소 출력 정상 → 자원 이상 의심</div></div>
+        <div class="ai a-wn"><div class="a-lbl">⚠️ 한경1호 — 인버터 응답 지연 (800ms)</div><div class="a-tm">14:15:00 · 임계치 500ms 초과</div></div>
+        <div class="ai a-wn"><div class="a-lbl">⚠️ 애월2호 — 발전시간 지역 평균 대비 −40%</div><div class="a-tm">14:00:00 · 음영/먼지 가능성</div></div>
+        <div class="ai a-ok"><div class="a-lbl">✅ ESS 제주1 BMS 정상 통신 중</div><div class="a-tm">연속 72시간 정상</div></div>
+        <div class="ai a-ok"><div class="a-lbl">✅ 풍력1·2호 SCADA 연결 정상</div><div class="a-tm">연속 168시간 정상</div></div>
+      </div>
+    </div>
+  </div>
+  <div class="cd">
+    <div class="cd-t"><span class="dot"></span>설비 점검 이력 및 계획 (SFR-016)</div>
+    <table class="t">
+      <thead><tr><th>발전기명</th><th>점검 유형</th><th>예약일</th><th>담당자</th><th>작업계획서</th><th>승인상태</th><th>발전운영계획 반영</th><th>비고</th></tr></thead>
+      <tbody>
+        <tr><td>수망1호</td><td>긴급 RTU 교체</td><td>2026-04-16</td><td>김철수</td><td><button class="btn btn-n" style="padding:3px 8px;font-size:10px">확인</button></td><td><span class="bx g">승인완료</span></td><td><span class="bx b">반영</span></td><td>통신 단절 대응</td></tr>
+        <tr><td>한경1호</td><td>인버터 점검</td><td>2026-04-18</td><td>이영희</td><td><button class="btn btn-n" style="padding:3px 8px;font-size:10px">확인</button></td><td><span class="bx o">승인대기</span></td><td><span class="bx gr">미반영</span></td><td>응답지연</td></tr>
+        <tr><td>제주 풍력 1</td><td>정기 점검</td><td>2026-04-25</td><td>박민수</td><td><button class="btn btn-n" style="padding:3px 8px;font-size:10px">확인</button></td><td><span class="bx g">승인완료</span></td><td><span class="bx b">반영</span></td><td>분기 정기</td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════ 5. 이중 시장 입찰 ═══════════ -->
+<div id="v-mkt_bid" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">DA 1차 입찰</div><div><span class="kv ng">완료</span></div><div class="kt na">10:00 자동 전송</div></div>
+    <div class="kc"><div class="kl">DA 2차 입찰</div><div><span class="kv ng">완료</span></div><div class="kt na">10:20 자동 전송</div></div>
+    <div class="kc"><div class="kl">RT 변경 입찰</div><div><span class="kv ny">72</span><span class="ku">/96회</span></div><div class="kt up">▲ 금일 잔여 24회</div></div>
+    <div class="kc"><div class="kl">총 입찰량 (금일)</div><div><span class="kv nc">87.4</span><span class="ku">MW</span></div><div class="kt up">▲ 예측정확도 93.2%</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>DA 입찰 vs 실측 발전량</div>
+      <div class="cw" style="height:210px"><canvas id="ch-da"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c2)"></span>RT 변경 입찰 이력 (금일)</div>
+      <table class="t">
+        <thead><tr><th>시각</th><th>VPP그룹</th><th>입찰량</th><th>변경사유</th><th>입찰모드</th><th>전송상태</th></tr></thead>
+        <tbody>
+          <tr><td>14:30</td><td>VPP-A</td><td>85.2 MW</td><td>기상급변</td><td><span class="bx b">자동</span></td><td><span class="bx g">완료</span></td></tr>
+          <tr><td>14:15</td><td>VPP-A</td><td>87.4 MW</td><td>자동갱신</td><td><span class="bx b">자동</span></td><td><span class="bx g">완료</span></td></tr>
+          <tr><td>13:30</td><td>VPP-B</td><td>88.1 MW</td><td>KPX지시</td><td><span class="bx gr">수동</span></td><td><span class="bx g">완료</span></td></tr>
+          <tr><td>13:00</td><td>VPP-A</td><td>90.0 MW</td><td>자동갱신</td><td><span class="bx b">자동</span></td><td><span class="bx g">완료</span></td></tr>
+          <tr><td>12:30</td><td>VPP-A</td><td>91.5 MW</td><td>예측보정</td><td><span class="bx b">자동</span></td><td><span class="bx g">완료</span></td></tr>
+          <tr><td>12:00</td><td>VPP-B</td><td>89.3 MW</td><td>자동갱신</td><td><span class="bx b">자동</span></td><td><span class="bx g">완료</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 6. 10구간 가격입찰 ═══════════ -->
+<div id="v-price_bid" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">총 입찰 구간</div><div><span class="kv nc">10</span><span class="ku">구간</span></div><div class="kt na">제주 시장 규칙</div></div>
+    <div class="kc"><div class="kl">총 입찰량</div><div><span class="kv">100.0</span><span class="ku">MW</span></div></div>
+    <div class="kc"><div class="kl">최적가 제안</div><div><span class="kv ny">139.0</span><span class="ku">원/kWh</span></div><div class="kt na">AI 권고가</div></div>
+    <div class="kc"><div class="kl">예상 낙찰률</div><div><span class="kv ng">87.4</span><span class="ku">%</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>10단계 계단식 가격입찰 곡선</div>
+      <div class="cw" style="height:250px"><canvas id="ch-bid"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>구간별 입찰 설정</div>
+      <table class="t tc tr">
+        <thead><tr><th>구간</th><th>공급가격 (원/kWh)</th><th>입찰량 (MW)</th><th>AI 권고가</th><th>비율</th></tr></thead>
+        <tbody>
+          <tr><td>1구간</td><td class="nc">110.0</td><td>15.0</td><td class="ng">110.5</td><td>15%</td></tr>
+          <tr><td>2구간</td><td class="nc">118.5</td><td>12.0</td><td class="ng">119.0</td><td>12%</td></tr>
+          <tr><td>3구간</td><td class="nc">125.0</td><td>10.0</td><td class="ng">124.5</td><td>10%</td></tr>
+          <tr><td>4구간</td><td class="nc">130.0</td><td>12.0</td><td class="ng">130.2</td><td>12%</td></tr>
+          <tr><td>5구간</td><td class="nc">135.0</td><td>10.0</td><td class="ng">135.0</td><td>10%</td></tr>
+          <tr><td>6구간</td><td class="nc">139.0</td><td>8.0</td><td class="ng">138.8</td><td>8%</td></tr>
+          <tr><td>7구간</td><td class="nc">142.0</td><td>8.0</td><td class="ng">141.5</td><td>8%</td></tr>
+          <tr><td>8구간</td><td class="nc">145.0</td><td>7.0</td><td class="ng">144.9</td><td>7%</td></tr>
+          <tr><td>9구간</td><td class="nc">148.0</td><td>6.0</td><td class="ng">148.2</td><td>6%</td></tr>
+          <tr><td>10구간</td><td class="nc">152.0</td><td>12.0</td><td class="ng">152.0</td><td>12%</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 7. 사후 입찰 지원 ═══════════ -->
+<div id="v-post_bid" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">현재 오차율</div><div><span class="kv no">10.2</span><span class="ku">%</span></div><div class="kt dn">▼ 기준 12% 초과 위험</div></div>
+    <div class="kc"><div class="kl">보정 가능 시간</div><div><span class="kv nr">14:45</span></div><div class="kt dn">▼ 15분 후 마감</div></div>
+    <div class="kc"><div class="kl">권고 보정값</div><div><span class="kv nc">−3.2</span><span class="ku">MW</span></div><div class="kt na">AI 자동 산출</div></div>
+    <div class="kc"><div class="kl">보정 후 예상 오차</div><div><span class="kv ng">7.1</span><span class="ku">%</span></div><div class="kt up">▲ 안전 구간 진입</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c7)"></span>오차율 추이 및 12% 기준선</div>
+      <div class="cw" style="height:200px"><canvas id="ch-err"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>사후 입찰 보정 권고</div>
+      <div style="background:rgba(249,115,22,.07);border:1px solid rgba(249,115,22,.25);border-radius:7px;padding:12px;margin-bottom:10px">
+        <div style="font-size:12px;font-weight:700;color:var(--c7);margin-bottom:6px">⚠️ 오차율 10.2% — 보정 입찰 권고</div>
+        <div class="ir"><span class="ir-lbl">현재 입찰량</span><span class="nc">87.4 MW</span></div>
+        <div class="ir"><span class="ir-lbl">권고 보정량</span><span class="nr">−3.2 MW (84.2 MW)</span></div>
+        <div class="ir"><span class="ir-lbl">보정 후 오차 예상</span><span class="ng">7.1%</span></div>
+        <div class="ir"><span class="ir-lbl">보정 사유</span><span class="no">구름 유입에 의한 일사 급감</span></div>
+        <div style="display:flex;gap:7px;margin-top:10px">
+          <button class="btn btn-p" style="flex:1">보정 입찰 전송</button>
+          <button class="btn btn-n">무시</button>
+        </div>
+      </div>
+      <div class="al">
+        <div class="ai a-ok"><div class="a-lbl">✅ 13:45 보정 완료 — 오차율 9.8%→8.2%</div><div class="a-tm">기상 급변 대응 성공</div></div>
+        <div class="ai a-ok"><div class="a-lbl">✅ 12:30 보정 완료 — 오차율 7.1%→5.9%</div><div class="a-tm">정상 범위 유지</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 8. 급전 지시 이행 관리 ═══════════ -->
+<div id="v-dispatch" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">금일 KPX 지시 수신</div><div><span class="kv nb">4</span><span class="ku">건</span></div></div>
+    <div class="kc"><div class="kl">이행률 (금일 평균)</div><div><span class="kv ng">97.2</span><span class="ku">%</span></div><div class="kt up">▲ 목표 95% 달성</div></div>
+    <div class="kc"><div class="kl">최근 지시값</div><div><span class="kv no">−5.0</span><span class="ku">MW</span></div><div class="kt dn">▼ 감축 명령</div></div>
+    <div class="kc"><div class="kl">실제 이행값</div><div><span class="kv nc">−4.8</span><span class="ku">MW</span></div></div>
+    <div class="kc"><div class="kl">편차</div><div><span class="kv ng">0.2</span><span class="ku">MW</span></div><div class="kt na">허용 편차 이내</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>KPX 지시 vs 실제 출력량 (금일)</div>
+      <div class="cw" style="height:205px"><canvas id="ch-disp"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c2)"></span>이행 신뢰도 분석</div>
+      <div class="ks ks2" style="margin-bottom:10px">
+        <div class="kc"><div class="kl">준중앙급전 자원</div><div><span class="kv nc">11.4</span><span class="ku">MW</span></div></div>
+        <div class="kc"><div class="kl">이행 신뢰도</div><div><span class="kv ng">A+</span></div></div>
+      </div>
+      <table class="t">
+        <thead><tr><th>시각</th><th>지시값</th><th>이행값</th><th>이행률</th><th>응답시간</th><th>평가</th></tr></thead>
+        <tbody>
+          <tr><td>14:30</td><td>−5.0 MW</td><td class="nc">−4.8 MW</td><td class="ng">96%</td><td>0.28초</td><td><span class="bx g">적합</span></td></tr>
+          <tr><td>13:30</td><td>−3.0 MW</td><td class="nc">−3.0 MW</td><td class="ng">100%</td><td>0.31초</td><td><span class="bx g">적합</span></td></tr>
+          <tr><td>12:00</td><td>+2.0 MW</td><td class="nc">+1.9 MW</td><td class="ng">95%</td><td>0.44초</td><td><span class="bx g">적합</span></td></tr>
+          <tr><td>10:15</td><td>−8.0 MW</td><td class="nc">−7.6 MW</td><td class="ng">95%</td><td>0.38초</td><td><span class="bx g">적합</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 9. 15분 적응형 예측 ═══════════ -->
+<div id="v-fc15" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">현재 예측 정확도</div><div><span class="kv ng">93.2</span><span class="ku">%</span></div><div class="kt up">▲ 전일 대비 +1.4%p</div></div>
+    <div class="kc"><div class="kl">최근 갱신</div><div><span class="kv">14:30</span></div><div class="kt na">15분 주기 자동</div></div>
+    <div class="kc"><div class="kl">현재 MAPE</div><div><span class="kv nb">6.8</span><span class="ku">%</span></div></div>
+    <div class="kc"><div class="kl">현장 일사량</div><div><span class="kv ny">812</span><span class="ku">W/m²</span></div><div class="kt na">초단기 연계</div></div>
+    <div class="kc"><div class="kl">오차 경보</div><div><span class="kv no">1</span><span class="ku">건</span></div><div class="kt dn">▼ 10% 초과</div></div>
+  </div>
+  <div class="gm">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>15분 단위 예측 갱신 곡선 (48구간 · 금일)</div>
+      <div style="display:flex;gap:14px;margin-bottom:8px;font-size:10.5px">
+        <span style="color:var(--c1)">─ 실측</span><span style="color:var(--c2)">─ 예측1차</span><span style="color:var(--c3)">─ 예측2차</span><span style="color:rgba(255,255,255,.4)">─ 오차율</span>
+        <span style="margin-left:auto;color:var(--tx3)">[60Hz 핵심] 현장기상 반영 15분 보정</span>
+      </div>
+      <div class="cw" style="height:235px"><canvas id="ch-ai15"></canvas></div>
+    </div>
+    <div class="col">
+      <div class="cd">
+        <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>기상 정보 (실시간)</div>
+        <div class="ir"><span class="ir-lbl">일사량</span><span class="ny">812 W/m²</span></div>
+        <div class="ir"><span class="ir-lbl">풍속</span><span class="nc">6.4 m/s</span></div>
+        <div class="ir"><span class="ir-lbl">기온</span><span class="nc">18.2 °C</span></div>
+        <div class="ir"><span class="ir-lbl">운량</span><span class="no">3/10 약간흐림</span></div>
+        <div class="ir"><span class="ir-lbl">예보 수집</span><span class="ng">초단기 ✓</span></div>
+      </div>
+      <div class="cd">
+        <div class="cd-t"><span class="dot" style="background:var(--c4)"></span>오차율 구간 분포</div>
+        <div class="pg-row"><div class="pg-lbl">6% 이하</div><div class="pg-bg"><div class="pg-fill" style="width:70%;background:var(--c4)"></div></div><span style="font-size:10px;color:var(--tx2);width:28px">70%</span></div>
+        <div class="pg-row"><div class="pg-lbl">6~8%</div><div class="pg-bg"><div class="pg-fill" style="width:15%;background:var(--c2)"></div></div><span style="font-size:10px;color:var(--tx2);width:28px">15%</span></div>
+        <div class="pg-row"><div class="pg-lbl">8~10%</div><div class="pg-bg"><div class="pg-fill" style="width:10%;background:var(--c7)"></div></div><span style="font-size:10px;color:var(--tx2);width:28px">10%</span></div>
+        <div class="pg-row"><div class="pg-lbl">10% 초과</div><div class="pg-bg"><div class="pg-fill" style="width:5%;background:var(--c6)"></div></div><span style="font-size:10px;color:var(--tx2);width:28px">5%</span></div>
+      </div>
+      <div class="cd">
+        <div class="cd-t"><span class="dot" style="background:var(--c3)"></span>결측치 추정 현황 (SFR-010)</div>
+        <div class="ir"><span class="ir-lbl">결측 발전소</span><span class="no">수망1호</span></div>
+        <div class="ir"><span class="ir-lbl">추정 방식</span><span class="nc">AI 모델 추론</span></div>
+        <div class="ir"><span class="ir-lbl">추정 출력</span><span class="nc">2.1 MW</span></div>
+        <div style="margin-top:8px"><button class="btn btn-n" style="width:100%;font-size:11px">수기 입력 수정</button></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 10. 예측-실측 대조 ═══════════ -->
+<div id="v-pa" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">설비용량 합계</div><div><span class="kv">143.0</span><span class="ku">MW</span></div></div>
+    <div class="kc"><div class="kl">실측 발전량 (금일)</div><div><span class="kv nc">624.8</span><span class="ku">MWh</span></div></div>
+    <div class="kc"><div class="kl">예측 발전량 (금일)</div><div><span class="kv nb">598.4</span><span class="ku">MWh</span></div></div>
+    <div class="kc"><div class="kl">NMAE 평균 오차</div><div><span class="kv no">6.8</span><span class="ku">%</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>시계열 비교 (실측 vs 예측1 vs 예측2)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-pa"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c6)"></span>오차 원인 분석 (AI 자동 판별)</div>
+      <div style="margin-bottom:10px">
+        <div class="rb-box rb-m"><span>기상 요인 (일사 급감)</span><span class="no">45%</span></div>
+        <div class="rb-box rb-l"><span>기상 요인 (풍속 변동)</span><span class="ny">28%</span></div>
+        <div class="rb-box rb-s"><span>설비 요인 (인버터 효율)</span><span class="ng">15%</span></div>
+        <div class="rb-box rb-s"><span>모델 예측 오차</span><span class="ng">12%</span></div>
+      </div>
+      <div class="cd-t" style="margin-bottom:8px"><span class="dot" style="background:var(--c5)"></span>자원별 MAPE</div>
+      <div class="pg-row"><div class="pg-lbl">태양광</div><div class="pg-bg"><div class="pg-fill" style="width:68%;background:var(--c5)"></div></div><span style="font-size:10px;color:var(--tx2);width:30px">6.8%</span></div>
+      <div class="pg-row"><div class="pg-lbl">풍력</div><div class="pg-bg"><div class="pg-fill" style="width:82%;background:var(--c2)"></div></div><span style="font-size:10px;color:var(--tx2);width:30px">8.2%</span></div>
+      <div class="pg-row"><div class="pg-lbl">바이오</div><div class="pg-bg"><div class="pg-fill" style="width:22%;background:var(--c4)"></div></div><span style="font-size:10px;color:var(--tx2);width:30px">2.2%</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 11. 최적 급전 제안 ═══════════ -->
+<div id="v-opt" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">최적화 목표 수익</div><div><span class="kv ng">9,140</span><span class="ku">천원</span></div><div class="kt up">▲ 현재 대비 +428천</div></div>
+    <div class="kc"><div class="kl">ESS 최적 방전량</div><div><span class="kv np">7.2</span><span class="ku">MW</span></div><div class="kt na">SMP 피크 시간대</div></div>
+    <div class="kc"><div class="kl">최적 감축 대상</div><div><span class="kv no">−2.1</span><span class="ku">MW</span></div><div class="kt na">페널티 최소화</div></div>
+    <div class="kc"><div class="kl">시나리오 수</div><div><span class="kv nb">5</span><span class="ku">개</span></div><div class="kt na">GIST 알고리즘</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>자원별 최적 출력 스케줄링 (SMP·페널티 고려)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-opt"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c3)"></span>ESS 충·방전 최적 가이드</div>
+      <div style="background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:7px;padding:11px;margin-bottom:10px">
+        <div style="font-size:11.5px;font-weight:600;color:var(--c3);margin-bottom:6px">🔋 ESS 최적 운영 권고</div>
+        <div class="ir"><span class="ir-lbl">현재 SOC</span><span class="no">92%</span></div>
+        <div class="ir"><span class="ir-lbl">권고 모드</span><span class="nc">방전 전환</span></div>
+        <div class="ir"><span class="ir-lbl">권고 방전량</span><span class="np">7.2 MW</span></div>
+        <div class="ir"><span class="ir-lbl">최적 시간대</span><span class="ny">14:00~18:00 (SMP 고점)</span></div>
+        <div class="ir"><span class="ir-lbl">예상 추가수익</span><span class="ng">+428 천원</span></div>
+      </div>
+      <div class="cd-t" style="margin-bottom:8px"><span class="dot" style="background:var(--c5)"></span>시나리오 비교</div>
+      <table class="t tc tr">
+        <thead><tr><th>시나리오</th><th>전략</th><th>예상수익</th><th>페널티 리스크</th></tr></thead>
+        <tbody>
+          <tr><td><span class="bx c">최적</span></td><td>ESS방전+PV유지</td><td class="ng">9,140천</td><td class="ng">낮음</td></tr>
+          <tr><td><span class="bx b">현재</span></td><td>현상유지</td><td class="ny">8,712천</td><td class="no">중간</td></tr>
+          <tr><td><span class="bx gr">보수</span></td><td>ESS충전+감축</td><td>8,200천</td><td class="ng">매우낮음</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 12. 예측 모델 비교 ═══════════ -->
+<div id="v-mdl" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">비교 모델 수</div><div><span class="kv nb">4</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">최고 정확도 모델</div><div><span class="kv nc">GIST-v2</span></div><div class="kt up">▲ MAPE 5.9%</div></div>
+    <div class="kc"><div class="kl">현재 입찰 적용 모델</div><div><span class="kv ng">GIST-v2</span></div><div class="kt na">가중치 0.65</div></div>
+    <div class="kc"><div class="kl">D-1 앙상블 정확도</div><div><span class="kv ng">93.2</span><span class="ku">%</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>모델별 정확도 추이 (최근 30일)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-mdl"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>모델 성능 비교 및 가중치 설정</div>
+      <div class="g2" style="margin-bottom:10px">
+        <div class="mc"><div class="mc-rnk nc">1위</div><div class="mc-nm">GIST-v2</div><div class="mc-sub">MAPE 5.9% · 30일 평균</div><div style="margin-top:6px"><span class="bx g">현재 적용</span><span style="margin-left:5px;font-size:10px;color:var(--tx3)">가중치 0.65</span></div></div>
+        <div class="mc"><div class="mc-rnk nb">2위</div><div class="mc-nm">ECMWF+AI</div><div class="mc-sub">MAPE 6.4% · 30일 평균</div><div style="margin-top:6px"><span class="bx b">보조 모델</span><span style="margin-left:5px;font-size:10px;color:var(--tx3)">가중치 0.25</span></div></div>
+        <div class="mc"><div class="mc-rnk np">3위</div><div class="mc-nm">D-1 기상청</div><div class="mc-sub">MAPE 7.8% · 30일 평균</div><div style="margin-top:6px"><span class="bx p">참고용</span><span style="margin-left:5px;font-size:10px;color:var(--tx3)">가중치 0.10</span></div></div>
+        <div class="mc"><div class="mc-rnk" style="color:var(--tx3)">4위</div><div class="mc-nm">EWP 자체</div><div class="mc-sub">MAPE 8.5% · 30일 평균</div><div style="margin-top:6px"><span class="bx gr">비교용</span><span style="margin-left:5px;font-size:10px;color:var(--tx3)">가중치 0.00</span></div></div>
+      </div>
+      <div style="font-size:11px;color:var(--tx3);margin-top:4px">* 가중치는 최근 30일 MAPE 기반 자동 산출 (수동 조정 가능)</div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 13. 이중 정산 시뮬레이션 ═══════════ -->
+<div id="v-settle" class="vw">
+  <div class="ks ks3">
+    <div class="kc"><div class="kl">예상 MEP 정산금</div><div><span class="kv ng">4,320</span><span class="ku">천원</span></div><div class="kt up">▲ MEP 시장</div></div>
+    <div class="kc"><div class="kl">예상 MWP 정산금</div><div><span class="kv nb">2,890</span><span class="ku">천원</span></div><div class="kt up">▲ MWP 시장</div></div>
+    <div class="kc"><div class="kl">MAP 인센티브</div><div><span class="kv ny">1,502</span><span class="ku">천원</span></div><div class="kt up">▲ 이행 인센티브</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>이중정산 시뮬레이션 (일별 · 제주 산식 적용)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-settle"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>이중정산 세부 내역 (금일 추정)</div>
+      <div style="margin-bottom:10px">
+        <div style="font-size:11px;color:var(--tx3);margin-bottom:6px">이파워마켓 연계 (SFR-005) — 실시간 수집</div>
+        <table class="t tc tr">
+          <thead><tr><th>정산 항목</th><th>낙찰량</th><th>단가</th><th>정산금</th><th>상태</th></tr></thead>
+          <tbody>
+            <tr><td>MEP 기본</td><td>87.4 MWh</td><td>139.4원</td><td class="ng">4,320천</td><td><span class="bx g">확정</span></td></tr>
+            <tr><td>MWP 예측수익</td><td>87.4 MWh</td><td>33.1원</td><td class="nb">2,890천</td><td><span class="bx b">추정</span></td></tr>
+            <tr><td>MAP 이행인센티브</td><td>87.4 MWh</td><td>17.2원</td><td class="ny">1,502천</td><td><span class="bx b">추정</span></td></tr>
+            <tr><td>임밸런스 페널티</td><td>—</td><td>—</td><td class="no">−214천</td><td><span class="bx o">경고</span></td></tr>
+            <tr style="background:rgba(0,212,224,.04)"><td><strong>합계</strong></td><td>—</td><td>—</td><td><strong class="ng">8,498천</strong></td><td>—</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 14. 임밸런스 페널티 관리 ═══════════ -->
+<div id="v-penalty" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">현재 오차율</div><div><span class="kv no">10.2</span><span class="ku">%</span></div><div class="kt dn">▼ 위험 구간 진입</div></div>
+    <div class="kc"><div class="kl">예상 페널티</div><div><span class="kv nr">214</span><span class="ku">천원</span></div><div class="kt dn">▼ 금일 추정</div></div>
+    <div class="kc"><div class="kl">안전 구간 비율</div><div><span class="kv ng">85</span><span class="ku">%</span></div><div class="kt up">▲ 금일 시간대</div></div>
+    <div class="kc"><div class="kl">최대 허용 오차</div><div><span class="kv nb">12</span><span class="ku">%</span></div><div class="kt na">제주 시장 기준</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c6)"></span>시간대별 오차율 및 페널티 구간</div>
+      <div class="cw" style="height:210px"><canvas id="ch-pen"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>페널티 리스크 구간 기준</div>
+      <div class="rb-box rb-s"><span>오차 6% 이하</span><span class="ng">페널티 없음</span></div>
+      <div class="rb-box rb-l"><span>오차 6~8%</span><span class="ny">임밸런스 비용 10% 적용</span></div>
+      <div class="rb-box rb-m"><span>오차 8~10%</span><span class="no">임밸런스 비용 50% 적용</span></div>
+      <div class="rb-box rb-h"><span>오차 10~12%</span><span class="nr">임밸런스 비용 100% + 경고</span></div>
+      <div class="rb-box rb-h" style="margin-bottom:12px"><span>오차 12% 초과</span><span class="nr">⛔ 강제 감축 대상</span></div>
+      <div style="background:var(--bg4);border:1px solid var(--bd);border-radius:7px;padding:11px">
+        <div style="font-size:10px;color:var(--tx3);margin-bottom:4px">금일 페널티 누적</div>
+        <div style="font-size:22px;font-weight:700;color:var(--c7)">214<span style="font-size:12px;color:var(--tx3);font-weight:400"> 천원</span></div>
+        <div style="font-size:10px;color:var(--tx3);margin-top:4px">사후 입찰 보정 시 약 −80천원 절감 가능</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 15. 실효용량 CP 정산 ═══════════ -->
+<div id="v-cp" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">이번 달 CP 정산 예상</div><div><span class="kv ng">12,480</span><span class="ku">천원</span></div></div>
+    <div class="kc"><div class="kl">평균 기여도</div><div><span class="kv nc">82.4</span><span class="ku">%</span></div><div class="kt up">▲ 전월 대비 +3.1%p</div></div>
+    <div class="kc"><div class="kl">실효용량</div><div><span class="kv nb">117.8</span><span class="ku">MW</span></div></div>
+    <div class="kc"><div class="kl">CP 단가</div><div><span class="kv ny">105.8</span><span class="ku">원/kWh</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>시간대별 자원 기여도 (실효용량 산정)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-cp"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>자원별 CP 정산금 내역</div>
+      <table class="t tc tr">
+        <thead><tr><th>자원명</th><th>설비용량</th><th>기여도</th><th>실효용량</th><th>CP정산금</th></tr></thead>
+        <tbody>
+          <tr><td>태양광 전체</td><td>80.0 MW</td><td class="ng">79.2%</td><td class="nc">63.4 MW</td><td class="ng">6,710천</td></tr>
+          <tr><td>풍력 전체</td><td>30.0 MW</td><td class="ng">88.1%</td><td class="nc">26.4 MW</td><td class="ng">2,795천</td></tr>
+          <tr><td>ESS</td><td>20.0 MW</td><td class="ng">95.0%</td><td class="nc">19.0 MW</td><td class="ng">2,011천</td></tr>
+          <tr><td>바이오</td><td>10.0 MW</td><td class="ng">96.4%</td><td class="nc">9.6 MW</td><td class="ng">1,016천</td></tr>
+          <tr><td>V2G</td><td>3.0 MW</td><td class="no">5.0%</td><td class="nc">0.15 MW</td><td>—</td></tr>
+          <tr style="background:rgba(0,212,224,.04)"><td><strong>합계</strong></td><td>143.0 MW</td><td class="nc">82.4%</td><td class="nc">118.6 MW</td><td class="ng">12,532천</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 16. 수익 배분 및 정산서 ═══════════ -->
+<div id="v-profit" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">이번 달 총 수익</div><div><span class="kv ng">254,800</span><span class="ku">천원</span></div></div>
+    <div class="kc"><div class="kl">배분 대상 사업자</div><div><span class="kv nb">12</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">발행 완료 정산서</div><div><span class="kv ng">10</span><span class="ku">건</span></div></div>
+    <div class="kc"><div class="kl">발행 대기</div><div><span class="kv no">2</span><span class="ku">건</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>사업자별 수익 배분 (계약 요율 기준)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-prof"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c4)"></span>정산서 발행 현황 (SFR-007)</div>
+      <table class="t">
+        <thead><tr><th>사업자명</th><th>자원유형</th><th>배분금</th><th>발행상태</th><th>전송</th><th>액션</th></tr></thead>
+        <tbody>
+          <tr><td>제주에너지(주)</td><td>☀️ PV</td><td class="ng">42,180천</td><td><span class="bx g">발행완료</span></td><td><span class="bx b">메일전송</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">보기</button></td></tr>
+          <tr><td>한라풍력(주)</td><td>💨 Wind</td><td class="ng">38,420천</td><td><span class="bx g">발행완료</span></td><td><span class="bx b">메일전송</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">보기</button></td></tr>
+          <tr><td>제주ESS에너지</td><td>🔋 ESS</td><td class="ng">31,200천</td><td><span class="bx g">발행완료</span></td><td><span class="bx b">메일전송</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">보기</button></td></tr>
+          <tr><td>협재바이오(주)</td><td>🌿 Bio</td><td class="ng">22,400천</td><td><span class="bx o">준비중</span></td><td><span class="bx gr">대기</span></td><td><button class="btn btn-p" style="padding:2px 7px;font-size:10px">발행</button></td></tr>
+          <tr><td>V2G코리아</td><td>🚗 V2G</td><td class="no">—</td><td><span class="bx gr">준비중</span></td><td><span class="bx gr">대기</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">대기</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 17. 누적 성과 분석 ═══════════ -->
+<div id="v-perf" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">VPP 도입 전후 수익 증대</div><div><span class="kv ng">+18.4</span><span class="ku">%</span></div><div class="kt up">▲ 연간 누적</div></div>
+    <div class="kc"><div class="kl">페널티 절감액</div><div><span class="kv nc">3,240</span><span class="ku">천원</span></div><div class="kt up">▲ 전년 대비</div></div>
+    <div class="kc"><div class="kl">예측 정확도 (3개월)</div><div><span class="kv ng">92.1</span><span class="ku">%</span></div><div class="kt up">▲ 목표 90% 초과</div></div>
+    <div class="kc"><div class="kl">이행 신뢰도 KPI</div><div><span class="kv ng">A+</span></div><div class="kt up">▲ KPX 평가</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>월별 수익 추이 (VPP 도입 전·후 비교)</div>
+      <div class="cw" style="height:215px"><canvas id="ch-perf"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c4)"></span>KPI 달성 현황</div>
+      <div class="pg-row"><div class="pg-lbl">예측 정확도</div><div class="pg-bg"><div class="pg-fill" style="width:92%;background:var(--c4)"></div></div><span style="font-size:10px;color:var(--tx2);width:35px">92%</span></div>
+      <div class="pg-row"><div class="pg-lbl">이행 신뢰도</div><div class="pg-bg"><div class="pg-fill" style="width:97%;background:var(--c1)"></div></div><span style="font-size:10px;color:var(--tx2);width:35px">97%</span></div>
+      <div class="pg-row"><div class="pg-lbl">수익 증대율</div><div class="pg-bg"><div class="pg-fill" style="width:92%;background:var(--c5)"></div></div><span style="font-size:10px;color:var(--tx2);width:35px">+18%</span></div>
+      <div class="pg-row"><div class="pg-lbl">페널티 절감</div><div class="pg-bg"><div class="pg-fill" style="width:85%;background:var(--c3)"></div></div><span style="font-size:10px;color:var(--tx2);width:35px">85%</span></div>
+      <div class="pg-row"><div class="pg-lbl">제어 응답속도</div><div class="pg-bg"><div class="pg-fill" style="width:98%;background:var(--c2)"></div></div><span style="font-size:10px;color:var(--tx2);width:35px">0.3초</span></div>
+      <div style="margin-top:12px">
+        <div class="cd-t" style="margin-bottom:8px"><span class="dot" style="background:var(--c5)"></span>월별 발전량 분석</div>
+        <div class="cw" style="height:120px"><canvas id="ch-mon"></canvas></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 18. 원격 출력 제어 ═══════════ -->
+<div id="v-rctrl" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">KPX 제어 명령</div><div><span class="kv no">−5.0</span><span class="ku">MW</span></div><div class="kt dn">▼ 감축 명령</div></div>
+    <div class="kc"><div class="kl">이행값</div><div><span class="kv ng">−4.8</span><span class="ku">MW</span></div><div class="kt up">이행률 96%</div></div>
+    <div class="kc"><div class="kl">ACK 응답</div><div><span class="kv ng">0.28</span><span class="ku">초</span></div><div class="kt na">기준 0.5초</div></div>
+    <div class="kc"><div class="kl">MQTT 상태</div><div><span class="kv ng">정상</span></div></div>
+    <div class="kc"><div class="kl">제어 가능 자원</div><div><span class="kv nb">6</span><span class="ku">개</span></div></div>
+  </div>
+  <div class="g3">
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c5)"></span>태양광 A 출력 제어</div>
+      <div style="font-size:11.5px;margin-bottom:7px">현재 출력 <span class="nc">12.4 MW</span> / 설비 15.0 MW</div>
+      <input type="range" class="ctrl-sl" min="0" max="15" value="12.4" step="0.1" oninput="document.getElementById('sv-pv').textContent=parseFloat(this.value).toFixed(1)">
+      <div style="font-size:11.5px;margin-bottom:9px">설정값 <span id="sv-pv" class="nc">12.4</span> MW</div>
+      <div style="display:flex;gap:6px"><button class="btn btn-p" style="flex:1">제어 전송</button><button class="btn btn-n">초기화</button></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c2)"></span>풍력 1 출력 제어</div>
+      <div style="font-size:11.5px;margin-bottom:7px">현재 출력 <span class="nc">8.7 MW</span> / 설비 12.0 MW</div>
+      <input type="range" class="ctrl-sl" min="0" max="12" value="8.7" step="0.1" oninput="document.getElementById('sv-wnd').textContent=parseFloat(this.value).toFixed(1)">
+      <div style="font-size:11.5px;margin-bottom:9px">설정값 <span id="sv-wnd" class="nc">8.7</span> MW</div>
+      <div style="display:flex;gap:6px"><button class="btn btn-p" style="flex:1">제어 전송</button><button class="btn btn-n">초기화</button></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c3)"></span>ESS 제주1 충·방전 제어</div>
+      <div style="font-size:11.5px;margin-bottom:7px">SOC <span class="no">92%</span> · 현재 <span class="nc">방전 9.4MW</span></div>
+      <div style="display:flex;gap:5px;margin-bottom:8px">
+        <button class="btn btn-g" style="flex:1">충전</button>
+        <button class="btn btn-p" style="flex:1">방전</button>
+        <button class="btn btn-d">정지</button>
+      </div>
+      <input type="range" class="ctrl-sl" min="0" max="10" value="9.4" step="0.1" oninput="document.getElementById('sv-ess').textContent=parseFloat(this.value).toFixed(1)">
+      <div style="font-size:11.5px;margin-bottom:9px">출력 <span id="sv-ess" class="nc">9.4</span> MW</div>
+      <button class="btn btn-p" style="width:100%">명령 전송</button>
+    </div>
+  </div>
+  <div class="cd">
+    <div class="cd-t"><span class="dot"></span>제어 이력 (최근 20건 · SFR-014)</div>
+    <table class="t">
+      <thead><tr><th>시각</th><th>자원명</th><th>제어유형</th><th>지시값</th><th>실행값</th><th>편차</th><th>ACK지연</th><th>상태</th></tr></thead>
+      <tbody>
+        <tr><td>14:30:01</td><td>태양광 A</td><td>출력감축</td><td>10.0 MW</td><td class="nc">9.9 MW</td><td>−0.1</td><td class="ng">0.28초</td><td><span class="bx g">완료</span></td></tr>
+        <tr><td>14:15:00</td><td>풍력 1</td><td>출력감축</td><td>8.0 MW</td><td class="nc">8.0 MW</td><td>0.0</td><td class="ng">0.31초</td><td><span class="bx g">완료</span></td></tr>
+        <tr><td>13:30:00</td><td>ESS 제주1</td><td>충전모드</td><td>−5.0 MW</td><td class="nc">−4.8 MW</td><td>−0.2</td><td class="ng">0.41초</td><td><span class="bx g">완료</span></td></tr>
+        <tr><td>13:00:05</td><td>수망1호</td><td>출력감축</td><td>2.5 MW</td><td class="nr">—</td><td>—</td><td class="nr">타임아웃</td><td><span class="bx r">실패</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════ 19. 클릭 제어 ═══════════ -->
+<div id="v-cctrl" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">제어 가능 자원</div><div><span class="kv nb">46</span><span class="ku">개소</span></div></div>
+    <div class="kc"><div class="kl">현재 출력 감축량</div><div><span class="kv no">4.8</span><span class="ku">MW</span></div></div>
+    <div class="kc"><div class="kl">ON 자원</div><div><span class="kv ng">44</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">OFF 자원</div><div><span class="kv nr">1</span><span class="ku">개</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>자원별 수동 출력 제어 (Set-point 전송)</div>
+      <table class="t">
+        <thead><tr><th>자원명</th><th>현재 출력</th><th>수동 설정값</th><th>ON/OFF</th><th>전송</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>제주 태양광 A</td><td class="nc">12.4 MW</td>
+            <td><input type="number" value="12.4" step="0.1" min="0" max="15" style="width:65px;background:var(--bg4);border:1px solid var(--bd2);color:var(--tx);padding:3px 5px;border-radius:4px;font-size:11px"></td>
+            <td><button class="sw-btn sw-on" onclick="this.classList.toggle('sw-on');this.classList.toggle('sw-off')"></button></td>
+            <td><button class="btn btn-p" style="padding:3px 9px;font-size:10px">전송</button></td>
+          </tr>
+          <tr>
+            <td>제주 풍력 1</td><td class="nc">8.7 MW</td>
+            <td><input type="number" value="8.7" step="0.1" min="0" max="12" style="width:65px;background:var(--bg4);border:1px solid var(--bd2);color:var(--tx);padding:3px 5px;border-radius:4px;font-size:11px"></td>
+            <td><button class="sw-btn sw-on" onclick="this.classList.toggle('sw-on');this.classList.toggle('sw-off')"></button></td>
+            <td><button class="btn btn-p" style="padding:3px 9px;font-size:10px">전송</button></td>
+          </tr>
+          <tr>
+            <td>ESS 제주1</td><td class="nc">9.4 MW</td>
+            <td><input type="number" value="9.4" step="0.1" min="-10" max="10" style="width:65px;background:var(--bg4);border:1px solid var(--bd2);color:var(--tx);padding:3px 5px;border-radius:4px;font-size:11px"></td>
+            <td><button class="sw-btn sw-on" onclick="this.classList.toggle('sw-on');this.classList.toggle('sw-off')"></button></td>
+            <td><button class="btn btn-p" style="padding:3px 9px;font-size:10px">전송</button></td>
+          </tr>
+          <tr>
+            <td>바이오 협재</td><td class="nc">7.2 MW</td>
+            <td><input type="number" value="7.2" step="0.1" min="0" max="7.5" style="width:65px;background:var(--bg4);border:1px solid var(--bd2);color:var(--tx);padding:3px 5px;border-radius:4px;font-size:11px"></td>
+            <td><button class="sw-btn sw-on" onclick="this.classList.toggle('sw-on');this.classList.toggle('sw-off')"></button></td>
+            <td><button class="btn btn-p" style="padding:3px 9px;font-size:10px">전송</button></td>
+          </tr>
+          <tr>
+            <td>수망1호</td><td class="nr">— (오류)</td>
+            <td>—</td>
+            <td><button class="sw-btn sw-off"></button></td>
+            <td><button class="btn btn-n" style="padding:3px 9px;font-size:10px" disabled>불가</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c6)"></span>편차 한계치 설정 (SFR-015)</div>
+      <div style="font-size:11px;color:var(--tx3);margin-bottom:10px">발전기별 출력값/제어값 편차 허용 범위 설정</div>
+      <table class="t">
+        <thead><tr><th>자원명</th><th>설정 한계치</th><th>현재 편차</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>태양광 A</td><td>±5%</td><td class="ng">0.8%</td><td><span class="bx g">정상</span></td></tr>
+          <tr><td>풍력 1</td><td>±8%</td><td class="ng">1.2%</td><td><span class="bx g">정상</span></td></tr>
+          <tr><td>ESS 제주1</td><td>±3%</td><td class="no">4.1%</td><td><span class="bx o">경고</span></td></tr>
+          <tr><td>바이오 협재</td><td>±2%</td><td class="ng">0.3%</td><td><span class="bx g">정상</span></td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn btn-p" style="flex:1">일괄 전송</button>
+        <button class="btn btn-d">전체 OFF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 20. 제어 신호 모니터링 ═══════════ -->
+<div id="v-cmon" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">평균 ACK 지연</div><div><span class="kv ng">0.31</span><span class="ku">초</span></div><div class="kt na">기준 0.5초</div></div>
+    <div class="kc"><div class="kl">최대 지연</div><div><span class="kv no">0.48</span><span class="ku">초</span></div></div>
+    <div class="kc"><div class="kl">전송 성공률</div><div><span class="kv ng">99.1</span><span class="ku">%</span></div></div>
+    <div class="kc"><div class="kl">MQTT 브로커</div><div><span class="kv ng">EMQX</span></div><div class="kt na">정상 연결</div></div>
+    <div class="kc"><div class="kl">타임아웃 발생</div><div><span class="kv nr">1</span><span class="ku">건</span></div><div class="kt dn">▼ 수망1호</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>MQTT 패킷 전송 지연 추이 (초저지연 0.5초 기준)</div>
+      <div class="cw" style="height:210px"><canvas id="ch-mqtt"></canvas></div>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c2)"></span>통신 무결성 모니터링</div>
+      <div class="al" style="margin-bottom:10px">
+        <div class="ai a-ok"><div class="a-lbl">✅ EMQX 브로커 정상 — TLS 1.3 암호화 연결</div><div class="a-tm">VPN 터널 상태 정상</div></div>
+        <div class="ai a-cr"><div class="a-lbl">⛔ 수망1호 MQTT 구독 끊김 — 재연결 시도 중</div><div class="a-tm">14:29:12 · 3회 재시도 실패</div></div>
+        <div class="ai a-ok"><div class="a-lbl">✅ LTE 게이트웨이 45개소 연결 정상</div><div class="a-tm">평균 신호강도 −82 dBm</div></div>
+      </div>
+      <table class="t">
+        <thead><tr><th>자원명</th><th>프로토콜</th><th>연결상태</th><th>ACK지연</th><th>마지막수신</th></tr></thead>
+        <tbody>
+          <tr><td>태양광 A</td><td>MQTT/TLS</td><td><span class="sd ok"></span>연결</td><td class="ng">0.28초</td><td>14:30:01</td></tr>
+          <tr><td>풍력 1</td><td>MQTT/TLS</td><td><span class="sd ok"></span>연결</td><td class="ng">0.31초</td><td>14:30:00</td></tr>
+          <tr><td>ESS 제주1</td><td>MQTT/TLS</td><td><span class="sd ok"></span>연결</td><td class="ng">0.35초</td><td>14:29:55</td></tr>
+          <tr><td>수망1호</td><td>MQTT/TLS</td><td><span class="sd er"></span>단절</td><td class="nr">타임아웃</td><td>14:26:32</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 21. 자원 및 그룹 관리 ═══════════ -->
+<div id="v-rgrp" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">등록 자원</div><div><span class="kv nb">47</span><span class="ku">개소</span></div></div>
+    <div class="kc"><div class="kl">VPP 그룹</div><div><span class="kv nc">3</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">집합자원 구성</div><div><span class="kv ng">완료</span></div></div>
+    <div class="kc"><div class="kl">신규 등록 대기</div><div><span class="kv no">2</span><span class="ku">건</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t" style="justify-content:space-between"><span><span class="dot"></span>자원 마스터 정보 (SFR-022)</span><button class="btn btn-p" style="padding:3px 9px;font-size:10px">+ 신규 등록</button></div>
+      <table class="t">
+        <thead><tr><th>자원명</th><th>유형</th><th>설비용량</th><th>위치</th><th>RTU ID</th><th>VPP 그룹</th><th>정산단위</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>제주 태양광 A</td><td>☀️ PV</td><td>15.0 MW</td><td>제주시 한경</td><td>RTU-001</td><td><span class="bx c">VPP-A</span></td><td>개별</td><td><span class="bx g">활성</span></td></tr>
+          <tr><td>제주 풍력 1</td><td>💨 Wind</td><td>12.0 MW</td><td>제주시 구좌</td><td>RTU-010</td><td><span class="bx b">VPP-B</span></td><td>집합</td><td><span class="bx g">활성</span></td></tr>
+          <tr><td>ESS 제주1</td><td>🔋 ESS</td><td>10.0 MW</td><td>서귀포시</td><td>RTU-020</td><td><span class="bx c">VPP-A</span></td><td>집합</td><td><span class="bx g">활성</span></td></tr>
+          <tr><td>바이오 협재</td><td>🌿 Bio</td><td>7.5 MW</td><td>제주시 협재</td><td>RTU-030</td><td><span class="bx p">VPP-C</span></td><td>개별</td><td><span class="bx g">활성</span></td></tr>
+          <tr><td>V2G 충전소1</td><td>🚗 V2G</td><td>0.5 MW</td><td>제주시 노형</td><td>RTU-040</td><td><span class="bx gr">미배정</span></td><td>미설정</td><td><span class="bx o">등록중</span></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c3)"></span>VPP 집합자원 그룹 구성</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        <div style="background:rgba(0,212,224,.07);border:1px solid rgba(0,212,224,.2);border-radius:7px;padding:10px">
+          <div style="font-size:11.5px;font-weight:700;color:var(--c1);margin-bottom:5px">VPP-A (준중앙급전)</div>
+          <div style="font-size:10.5px;color:var(--tx3);margin-bottom:4px">집합자원 11.4 MW · 태양광 4개소 + ESS 1개소</div>
+          <div class="ir"><span class="ir-lbl">현재 출력</span><span class="nc">21.8 MW</span></div>
+          <div class="ir"><span class="ir-lbl">KPX 등록</span><span class="ng">완료</span></div>
+        </div>
+        <div style="background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.2);border-radius:7px;padding:10px">
+          <div style="font-size:11.5px;font-weight:700;color:var(--c2);margin-bottom:5px">VPP-B (풍력 집합)</div>
+          <div style="font-size:10.5px;color:var(--tx3);margin-bottom:4px">집합자원 42.0 MW · 풍력 3개소</div>
+          <div class="ir"><span class="ir-lbl">현재 출력</span><span class="nc">18.7 MW</span></div>
+          <div class="ir"><span class="ir-lbl">KPX 등록</span><span class="ng">완료</span></div>
+        </div>
+        <div style="background:rgba(139,92,246,.07);border:1px solid rgba(139,92,246,.2);border-radius:7px;padding:10px">
+          <div style="font-size:11.5px;font-weight:700;color:var(--c3);margin-bottom:5px">VPP-C (바이오·기타)</div>
+          <div style="font-size:10.5px;color:var(--tx3);margin-bottom:4px">집합자원 10.0 MW · 바이오 4개소</div>
+          <div class="ir"><span class="ir-lbl">현재 출력</span><span class="nc">7.2 MW</span></div>
+          <div class="ir"><span class="ir-lbl">KPX 등록</span><span class="ng">완료</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 22. RTU 및 통신 관리 ═══════════ -->
+<div id="v-rtu" class="vw">
+  <div class="ks ks5">
+    <div class="kc"><div class="kl">등록 RTU</div><div><span class="kv nb">47</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">정상 연결</div><div><span class="kv ng">46</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">단절</div><div><span class="kv nr">1</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">EMQX 브로커</div><div><span class="kv ng">정상</span></div><div class="kt na">TPS 142 msg/s</div></div>
+    <div class="kc"><div class="kl">VPN 터널</div><div><span class="kv ng">활성</span></div><div class="kt na">47/47 연결</div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>RTU 통신 현황 (EMQX 브로커 · SFR-022)</div>
+      <table class="t">
+        <thead><tr><th>RTU ID</th><th>자원명</th><th>통신방식</th><th>VPN IP</th><th>유심번호</th><th>신호강도</th><th>마지막수신</th><th>상태</th></tr></thead>
+        <tbody>
+          <tr><td>RTU-001</td><td>태양광 A</td><td>LTE</td><td>10.1.0.1</td><td>010-****-0001</td><td class="ng">−78 dBm</td><td>14:30:01</td><td><span class="sd ok"></span>연결</td></tr>
+          <tr><td>RTU-010</td><td>풍력 1</td><td>LTE</td><td>10.1.0.10</td><td>010-****-0010</td><td class="ng">−82 dBm</td><td>14:30:00</td><td><span class="sd ok"></span>연결</td></tr>
+          <tr><td>RTU-020</td><td>ESS 제주1</td><td>LTE</td><td>10.1.0.20</td><td>010-****-0020</td><td class="ng">−75 dBm</td><td>14:29:55</td><td><span class="sd ok"></span>연결</td></tr>
+          <tr><td>RTU-031</td><td>수망1호</td><td>LTE</td><td>—</td><td>010-****-0031</td><td class="nr">—</td><td>14:26:32</td><td><span class="sd er"></span>단절</td></tr>
+          <tr><td>RTU-030</td><td>바이오 협재</td><td>유선VPN</td><td>10.1.0.30</td><td>—</td><td class="ng">안정</td><td>14:30:01</td><td><span class="sd ok"></span>연결</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c2)"></span>EMQX 브로커 통신 품질</div>
+      <div class="cw" style="height:155px"><canvas id="ch-mqtt2"></canvas></div>
+      <div class="ir" style="margin-top:8px"><span class="ir-lbl">브로커 버전</span><span class="nc">EMQX 5.4.0</span></div>
+      <div class="ir"><span class="ir-lbl">현재 구독</span><span class="nc">47 topics</span></div>
+      <div class="ir"><span class="ir-lbl">처리량</span><span class="nc">142 msg/s</span></div>
+      <div class="ir"><span class="ir-lbl">보안</span><span class="ng">TLS 1.3 + mTLS</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ 23. 배치 및 권한 관리 ═══════════ -->
+<div id="v-bat" class="vw">
+  <div class="ks ks4">
+    <div class="kc"><div class="kl">등록 배치 작업</div><div><span class="kv nb">8</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">정상 실행중</div><div><span class="kv ng">7</span><span class="ku">개</span></div></div>
+    <div class="kc"><div class="kl">사용자 계정</div><div><span class="kv nc">12</span><span class="ku">명</span></div></div>
+    <div class="kc"><div class="kl">접근 권한 그룹</div><div><span class="kv nb">4</span><span class="ku">개</span></div></div>
+  </div>
+  <div class="g2">
+    <div class="cd">
+      <div class="cd-t"><span class="dot"></span>AI 모델 배치 스케줄 (Python/Docker · SFR-023)</div>
+      <table class="t">
+        <thead><tr><th>배치명</th><th>설명</th><th>주기</th><th>마지막실행</th><th>소요시간</th><th>상태</th><th>액션</th></tr></thead>
+        <tbody>
+          <tr><td>predict-15min</td><td>15분 예측 갱신</td><td>15분</td><td>14:30:02</td><td class="ng">8초</td><td><span class="bx g">실행중</span></td><td><button class="btn btn-d" style="padding:2px 7px;font-size:10px">정지</button></td></tr>
+          <tr><td>forecast-da</td><td>DA 예측 생성</td><td>1시간</td><td>14:00:05</td><td class="ng">23초</td><td><span class="bx g">완료</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">실행</button></td></tr>
+          <tr><td>bid-rt</td><td>RT 입찰 자동화</td><td>15분</td><td>14:30:00</td><td class="ng">3초</td><td><span class="bx g">실행중</span></td><td><button class="btn btn-d" style="padding:2px 7px;font-size:10px">정지</button></td></tr>
+          <tr><td>settle-sim</td><td>정산 시뮬레이션</td><td>1시간</td><td>14:00:10</td><td class="ng">45초</td><td><span class="bx g">완료</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">실행</button></td></tr>
+          <tr><td>anomaly-detect</td><td>AI 이상탐지</td><td>10분</td><td>14:20:00</td><td class="no">120초</td><td><span class="bx o">지연</span></td><td><button class="btn btn-d" style="padding:2px 7px;font-size:10px">재시작</button></td></tr>
+          <tr><td>report-daily</td><td>일간 보고서</td><td>매일 00:00</td><td>2026-04-14</td><td class="ng">180초</td><td><span class="bx gr">대기</span></td><td><button class="btn btn-n" style="padding:2px 7px;font-size:10px">즉시실행</button></td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="cd">
+      <div class="cd-t"><span class="dot" style="background:var(--c3)"></span>ACL 권한 설정</div>
+      <table class="t">
+        <thead><tr><th>권한 그룹</th><th>대시보드</th><th>시장참여</th><th>제어</th><th>정산</th><th>설정</th><th>사용자 수</th></tr></thead>
+        <tbody>
+          <tr><td><span class="bx r">관리자</span></td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>✅</td><td>2명</td></tr>
+          <tr><td><span class="bx b">운영자</span></td><td>✅</td><td>✅</td><td>✅</td><td>읽기</td><td>❌</td><td>5명</td></tr>
+          <tr><td><span class="bx p">분석자</span></td><td>✅</td><td>읽기</td><td>❌</td><td>✅</td><td>❌</td><td>3명</td></tr>
+          <tr><td><span class="bx gr">조회자</span></td><td>✅</td><td>❌</td><td>❌</td><td>읽기</td><td>❌</td><td>2명</td></tr>
+        </tbody>
+      </table>
+      <div style="margin-top:10px;display:flex;gap:6px">
+        <button class="btn btn-p" style="flex:1">사용자 추가</button>
+        <button class="btn btn-n">권한 수정</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  </div><!-- /ct -->
+</div><!-- /mn -->
+
+<script>
+const H24 = Array.from({length:24},(_,i)=>i+':00');
+const H48 = Array.from({length:48},(_,i)=>{const h=Math.floor(i/2);return h+':'+(i%2?'30':'00');});
+const DAYS = ['4/9','4/10','4/11','4/12','4/13','4/14','4/15'];
+const CR = {}; // chart registry
+const ttls = {
+  main:'통합 운영 대시보드',resource:'자원별 상세 관제',gis:'GIS 기반 자원 맵',health:'설비 건전성 진단',
+  mkt_bid:'이중 시장 입찰',price_bid:'10구간 가격입찰',post_bid:'사후 입찰 지원',dispatch:'급전 지시 이행 관리',
+  fc15:'15분 적응형 예측',pa:'예측-실측 대조',opt:'최적 급전 제안',mdl:'예측 모델 비교',
+  settle:'이중 정산 시뮬레이션',penalty:'임밸런스 페널티 관리',cp:'실효용량 CP 정산',profit:'수익 배분 및 정산서',perf:'누적 성과 분석',
+  rctrl:'원격 출력 제어',cctrl:'클릭 제어',cmon:'제어 신호 모니터링',
+  rgrp:'자원 및 그룹 관리',rtu:'RTU 및 통신 관리',bat:'배치 및 권한 관리'
+};
+
+function sw(id,el){
+  document.querySelectorAll('.vw').forEach(v=>v.classList.remove('on'));
+  document.querySelectorAll('.ni').forEach(n=>n.classList.remove('on'));
+  document.getElementById('v-'+id).classList.add('on');
+  el.classList.add('on');
+  document.getElementById('ttl').textContent = ttls[id]||id;
+  setTimeout(()=>initChart(id),60);
+}
+
+// Clock
+(function tick(){
+  const n=new Date(),p=x=>String(x).padStart(2,'0');
+  document.getElementById('clk').textContent=`${n.getFullYear()}-${p(n.getMonth()+1)}-${p(n.getDate())} ${p(n.getHours())}:${p(n.getMinutes())}:${p(n.getSeconds())}`;
+  setTimeout(tick,1000);
+})();
+
+// Chart defaults
+Chart.defaults.color='#566780';
+Chart.defaults.borderColor='rgba(28,42,64,.5)';
+Chart.defaults.font.family="'Malgun Gothic','맑은 고딕',sans-serif";
+Chart.defaults.font.size=10;
+
+function mk(id,cfg){
+  if(CR[id]){CR[id].destroy();delete CR[id];}
+  const el=document.getElementById(id);
+  if(!el)return;
+  CR[id]=new Chart(el,cfg);
+  return CR[id];
+}
+const gX={ticks:{color:'#566780',font:{size:9}},grid:{color:'rgba(28,42,64,.5)'}};
+const gY={ticks:{color:'#566780',font:{size:9}},grid:{color:'rgba(28,42,64,.5)'}};
+const gYR={position:'right',ticks:{color:'#566780',font:{size:9}},grid:{display:false}};
+const leg={labels:{color:'#8899aa',font:{size:10},boxWidth:9,padding:10}};
+
+function sine(n,s,e,sc=1){return Array.from({length:n},(_,i)=>Math.max(0,sc*(e-s)*Math.sin(Math.PI*i/(n-1))+s+(Math.random()-.5)*3));}
+function flat(n,v,noise=0){return Array.from({length:n},()=>v+(Math.random()-.5)*noise*2);}
+function ramp(vals){return vals.map(v=>v*(0.94+Math.random()*.1));}
+
+// Init all charts
+function initChart(id){
+  if(id==='main'||id===undefined){initMain();}
+  if(id==='resource'){initResource();}
+  if(id==='mkt_bid'){initMktBid();}
+  if(id==='price_bid'){initPriceBid();}
+  if(id==='post_bid'){initPostBid();}
+  if(id==='dispatch'){initDispatch();}
+  if(id==='fc15'){initFC15();}
+  if(id==='pa'){initPA();}
+  if(id==='opt'){initOpt();}
+  if(id==='mdl'){initMdl();}
+  if(id==='settle'){initSettle();}
+  if(id==='penalty'){initPenalty();}
+  if(id==='cp'){initCP();}
+  if(id==='profit'){initProfit();}
+  if(id==='perf'){initPerf();}
+  if(id==='rctrl'){/* no chart */}
+  if(id==='cmon'){initCMon();}
+  if(id==='rtu'){initRTU2();}
+}
+
+function initMain(){
+  const pv=sine(24,0,60);
+  const wnd=flat(24,17,4);
+  const ess=H24.map((_,i)=>i<7||i>18?-4:6);
+  const bio=flat(24,7.2,0.3);
+  const pred1=ramp(pv.map((v,i)=>v+wnd[i]+Math.max(0,ess[i])+bio[i]));
+  const act=pv.map((v,i)=>v+wnd[i]+Math.max(0,ess[i])+bio[i]);
+  const err=act.map((v,i)=>v?Math.abs((pred1[i]-v)/Math.max(v,1)*100):0);
+  mk('ch-pwr',{type:'bar',data:{labels:H24,datasets:[
+    {label:'태양광',data:pv,backgroundColor:'rgba(245,158,11,.65)',stack:'s'},
+    {label:'풍력',data:wnd,backgroundColor:'rgba(59,130,246,.65)',stack:'s'},
+    {label:'ESS',data:ess,backgroundColor:'rgba(139,92,246,.65)',stack:'s'},
+    {label:'바이오',data:bio,backgroundColor:'rgba(16,185,129,.65)',stack:'s'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:gY}}});
+  mk('ch-fc',{type:'bar',data:{labels:H24,datasets:[
+    {label:'실측',data:act,backgroundColor:'rgba(0,212,224,.3)',order:2},
+    {label:'예측1차',data:pred1,type:'line',borderColor:'#3b82f6',borderWidth:1.5,pointRadius:0,fill:false,order:1},
+    {label:'오차율%',data:err,type:'line',borderColor:'rgba(255,255,255,.35)',borderWidth:1,pointRadius:0,fill:false,yAxisID:'y2',order:0},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:gY,y2:{...gYR,max:25}}}});
+}
+
+function initResource(){
+  const chg=H24.map((_,i)=>i<8||i>17?4.5:0);
+  const dis=H24.map((_,i)=>i>=8&&i<=17?9.4:0);
+  mk('ch-ess',{type:'bar',data:{labels:H24,datasets:[
+    {label:'충전',data:chg,backgroundColor:'rgba(139,92,246,.6)'},
+    {label:'방전',data:dis,backgroundColor:'rgba(0,212,224,.6)'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:gY}}});
+  mk('ch-pie',{type:'doughnut',data:{
+    labels:['태양광','풍력','ESS','바이오','V2G'],
+    datasets:[{data:[52.1,18.7,9.4,7.2,0.1],backgroundColor:['#f59e0b','#3b82f6','#8b5cf6','#10b981','#f97316'],borderWidth:0}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{...leg,position:'right'}}}});
+}
+
+function initMktBid(){
+  const da=sine(24,0,90);
+  const ac=ramp(da);
+  mk('ch-da',{type:'bar',data:{labels:H24,datasets:[
+    {label:'DA 입찰량',data:da,backgroundColor:'rgba(0,212,224,.4)',order:2},
+    {label:'실측 발전량',data:ac,type:'line',borderColor:'#f59e0b',borderWidth:2,pointRadius:0,fill:false,order:1},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,title:{display:true,text:'MW',color:'#566780',font:{size:9}}}}}});
+}
+
+function initPriceBid(){
+  mk('ch-bid',{type:'bar',data:{
+    labels:['1구','2구','3구','4구','5구','6구','7구','8구','9구','10구'],
+    datasets:[
+      {label:'입찰량(MW)',data:[15,12,10,12,10,8,8,7,6,12],backgroundColor:'rgba(0,212,224,.5)',order:2},
+      {label:'가격(원/kWh)',data:[110,118.5,125,130,135,139,142,145,148,152],type:'line',borderColor:'#f59e0b',borderWidth:2,pointRadius:4,pointBackgroundColor:'#f59e0b',yAxisID:'y2',fill:false,order:1},
+    ]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},
+    scales:{x:gX,y:{...gY,title:{display:true,text:'MW',color:'#566780',font:{size:9}}},y2:{...gYR,title:{display:true,text:'원/kWh',color:'#f59e0b',font:{size:9}},ticks:{color:'#f59e0b',font:{size:9}}}}}});
+}
+
+function initPostBid(){
+  const err=H24.map((_,i)=>Math.max(0,3+Math.sin(i*.8)*4+(Math.random()-.3)*2));
+  mk('ch-err',{type:'line',data:{labels:H24,datasets:[
+    {label:'오차율(%)',data:err,borderColor:'#f97316',borderWidth:2,pointRadius:0,fill:'origin',backgroundColor:'rgba(249,115,22,.08)'},
+    {label:'12% 기준',data:flat(24,12),borderColor:'#ef4444',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false},
+    {label:'6% 안전',data:flat(24,6),borderColor:'#22c55e',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,min:0,max:18}}}});
+}
+
+function initDispatch(){
+  const kpx=H24.map((_,i)=>(i>=10&&i<=16)?-5+(Math.random()-.5)*1:0);
+  const act=kpx.map(v=>v*(0.95+Math.random()*.05));
+  mk('ch-disp',{type:'line',data:{labels:H24,datasets:[
+    {label:'KPX 지시값',data:kpx,borderColor:'#f97316',borderWidth:2,pointRadius:0,fill:false,borderDash:[4,2]},
+    {label:'실제 이행값',data:act,borderColor:'#00d4e0',borderWidth:2,pointRadius:0,fill:false},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:gY}}});
+}
+
+function initFC15(){
+  const base=H48.map((_,i)=>{const h=i/2;return Math.max(0,h<5||h>19?0:80*Math.sin(Math.PI*(h-5)/14));});
+  const p1=ramp(base),p2=base.map(v=>v*(0.92+Math.random()*.12));
+  const err=base.map((v,i)=>v?Math.abs((p1[i]-v)/Math.max(v,1)*100):0);
+  mk('ch-ai15',{type:'line',data:{labels:H48,datasets:[
+    {label:'실측',data:base,borderColor:'#00d4e0',borderWidth:2,pointRadius:0,fill:false},
+    {label:'예측1차',data:p1,borderColor:'#3b82f6',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,2]},
+    {label:'예측2차',data:p2,borderColor:'#8b5cf6',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,2]},
+    {label:'오차율%',data:err,borderColor:'rgba(255,255,255,.3)',borderWidth:1,pointRadius:0,fill:false,yAxisID:'y2'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},
+    scales:{x:{...gX,ticks:{...gX.ticks,maxTicksLimit:12}},y:gY,y2:{...gYR,max:20}}}});
+}
+
+function initPA(){
+  const act=sine(24,0,90),p1=ramp(act),p2=act.map(v=>v*(0.91+Math.random()*.13));
+  mk('ch-pa',{type:'line',data:{labels:H24,datasets:[
+    {label:'실측',data:act,borderColor:'#00d4e0',borderWidth:2,pointRadius:0,fill:false},
+    {label:'예측1차',data:p1,borderColor:'#3b82f6',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,2]},
+    {label:'예측2차',data:p2,borderColor:'#8b5cf6',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,2]},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:gY}}});
+}
+
+function initOpt(){
+  const pv=sine(24,0,55),wnd=flat(24,17,4),ess=H24.map((_,i)=>i>=14&&i<=18?7.2:i<7||i>20?-4:0),bio=flat(24,7.2);
+  mk('ch-opt',{type:'bar',data:{labels:H24,datasets:[
+    {label:'태양광 최적',data:pv,backgroundColor:'rgba(245,158,11,.65)',stack:'s'},
+    {label:'풍력 최적',data:wnd,backgroundColor:'rgba(59,130,246,.65)',stack:'s'},
+    {label:'ESS 최적',data:ess,backgroundColor:'rgba(139,92,246,.65)',stack:'s'},
+    {label:'바이오 최적',data:bio,backgroundColor:'rgba(16,185,129,.65)',stack:'s'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:gY}}});
+}
+
+function initMdl(){
+  mk('ch-mdl',{type:'line',data:{labels:Array.from({length:30},(_,i)=>`4/${i+1}`),datasets:[
+    {label:'GIST-v2',data:Array.from({length:30},()=>91+Math.random()*5),borderColor:'#00d4e0',borderWidth:2,pointRadius:0,fill:false},
+    {label:'ECMWF+AI',data:Array.from({length:30},()=>89+Math.random()*4),borderColor:'#3b82f6',borderWidth:1.5,pointRadius:0,fill:false},
+    {label:'D-1 기상청',data:Array.from({length:30},()=>86+Math.random()*4),borderColor:'#8b5cf6',borderWidth:1.5,pointRadius:0,fill:false,borderDash:[3,2]},
+    {label:'EWP 자체',data:Array.from({length:30},()=>84+Math.random()*4),borderColor:'#566780',borderWidth:1,pointRadius:0,fill:false,borderDash:[2,3]},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:{...gX,ticks:{...gX.ticks,maxTicksLimit:10}},y:{...gY,min:80,max:100}}}});
+}
+
+function initSettle(){
+  mk('ch-settle',{type:'bar',data:{labels:DAYS,datasets:[
+    {label:'MEP',data:[3800,4200,4100,3900,4500,4100,4320],backgroundColor:'rgba(0,212,224,.65)',stack:'s'},
+    {label:'MWP',data:[2600,2800,2700,2500,3000,2700,2890],backgroundColor:'rgba(59,130,246,.65)',stack:'s'},
+    {label:'MAP',data:[1200,1300,1100,1400,1600,1400,1502],backgroundColor:'rgba(245,158,11,.65)',stack:'s'},
+    {label:'페널티',data:[-100,-150,-80,-200,-180,-120,-214],backgroundColor:'rgba(239,68,68,.65)',stack:'s'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,title:{display:true,text:'천원',color:'#566780'}}}}});
+}
+
+function initPenalty(){
+  const err=H24.map((_,i)=>Math.max(0,3+Math.sin(i*.7)*5+(Math.random()-.3)*2));
+  mk('ch-pen',{type:'line',data:{labels:H24,datasets:[
+    {label:'오차율(%)',data:err,borderColor:'#f97316',borderWidth:2,pointRadius:0,fill:'origin',backgroundColor:'rgba(249,115,22,.07)'},
+    {label:'12% 강제감축',data:flat(24,12),borderColor:'#ef4444',borderWidth:1.5,borderDash:[5,3],pointRadius:0,fill:false},
+    {label:'10% 위험',data:flat(24,10),borderColor:'#f97316',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false},
+    {label:'6% 안전',data:flat(24,6),borderColor:'#22c55e',borderWidth:1,borderDash:[3,3],pointRadius:0,fill:false},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,min:0,max:18}}}});
+}
+
+function initCP(){
+  mk('ch-cp',{type:'bar',data:{labels:H24,datasets:[
+    {label:'태양광',data:sine(24,0,63),backgroundColor:'rgba(245,158,11,.6)',stack:'s'},
+    {label:'풍력',data:flat(24,26,3),backgroundColor:'rgba(59,130,246,.6)',stack:'s'},
+    {label:'ESS',data:flat(24,19,1),backgroundColor:'rgba(139,92,246,.6)',stack:'s'},
+    {label:'바이오',data:flat(24,9.6,.5),backgroundColor:'rgba(16,185,129,.6)',stack:'s'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,title:{display:true,text:'MW',color:'#566780'}}}}});
+}
+
+function initProfit(){
+  mk('ch-prof',{type:'doughnut',data:{
+    labels:['제주에너지','한라풍력','제주ESS','협재바이오','기타'],
+    datasets:[{data:[42180,38420,31200,22400,15800],backgroundColor:['#f59e0b','#3b82f6','#8b5cf6','#10b981','#566780'],borderWidth:0}]
+  },options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{...leg,position:'right'}}}});
+}
+
+function initPerf(){
+  const bef=[180,185,178,190,182,188,185];
+  const aft=[210,218,212,225,220,228,224];
+  mk('ch-perf',{type:'bar',data:{labels:['10월','11월','12월','1월','2월','3월','4월'],datasets:[
+    {label:'도입 전 수익',data:bef,backgroundColor:'rgba(100,116,139,.5)',stack:'s'},
+    {label:'도입 후 수익',data:aft,backgroundColor:'rgba(0,212,224,.6)',stack:'s2'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,title:{display:true,text:'천원',color:'#566780'}}}}});
+  mk('ch-mon',{type:'line',data:{labels:['10월','11월','12월','1월','2월','3월','4월'],datasets:[
+    {label:'예측정확도(%)',data:[91.2,91.8,92.0,92.4,92.8,93.0,93.2],borderColor:'#00d4e0',borderWidth:2,pointRadius:3,fill:false},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,min:88,max:96}}}});
+}
+
+function initCMon(){
+  const delays=H48.map(()=>0.2+Math.random()*.25);
+  mk('ch-mqtt',{type:'line',data:{labels:H48,datasets:[
+    {label:'ACK 지연(초)',data:delays,borderColor:'#00d4e0',borderWidth:1.5,pointRadius:0,fill:'origin',backgroundColor:'rgba(0,212,224,.06)'},
+    {label:'0.5초 기준',data:flat(48,0.5),borderColor:'#ef4444',borderWidth:1,borderDash:[4,3],pointRadius:0,fill:false},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:{...gX,ticks:{...gX.ticks,maxTicksLimit:12}},y:{...gY,min:0,max:0.7}}}});
+}
+
+function initRTU2(){
+  const tps=H24.map(()=>120+Math.random()*40);
+  mk('ch-mqtt2',{type:'line',data:{labels:H24,datasets:[
+    {label:'처리량 (msg/s)',data:tps,borderColor:'#3b82f6',borderWidth:2,pointRadius:0,fill:'origin',backgroundColor:'rgba(59,130,246,.07)'},
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:leg},scales:{x:gX,y:{...gY,min:80}}}});
+}
+
+// Init main on load
+setTimeout(initMain,150);
+
+// Live KPI flicker
+setInterval(()=>{
+  const el=document.getElementById('kv-out');
+  if(el)el.textContent=(87.4+(Math.random()-.5)*.6).toFixed(1);
+},4000);
+</script>
+</body>
+</html>
