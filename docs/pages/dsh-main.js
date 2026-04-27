@@ -51,8 +51,7 @@ window.P['dsh-main']=()=>`
 
 <div class="g65">
   <div class="card mb"><div class="sh"><div class="st">실시간 발전 곡선 (예측 vs 실측)</div><div class="sa">96구간</div></div><div style="height:200px;position:relative"><canvas id="c-dmain" role="img" aria-label="예측 vs 실측 비교"></canvas></div></div>
-  <div class="card mb"><div class="sh"><div class="st">자원 구성</div></div><div style="height:140px;position:relative"><canvas id="c-donut" role="img" aria-label="에너지원 비중"></canvas></div>
-  <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;font-size:9px;font-family:var(--mono)"><span style="color:#0059ff">■ 태양광 58%</span><span style="color:#1f98ff">■ 풍력 16%</span><span style="color:#ffca42">■ ESS 12%</span><span style="color:#925fff">■ 바이오 8%</span><span style="color:#00d4a8">■ V2G 6%</span></div></div>
+  <div class="card mb"><div class="sh"><div class="st">자원 구성</div></div><div style="height:180px;position:relative"><canvas id="c-donut" role="img" aria-label="에너지원 비중"></canvas></div></div>
 </div>
 
 <!-- 시간축 비교 차트 3종 -->
@@ -194,7 +193,7 @@ window['I_dsh-main']=function(){
   const p=[0,0,0,0,0,2,18,45,82,115,134,142,148,145,138,143,150,147,132,108,74,42,18,4];
   const a=[0,0,0,0,0,1,17,43,80,112,131,139,146,141,134,138,143,141,128,103,70,39,15,3];
   mkChart('c-dmain','line',h,[{data:p,borderColor:'#1f98ff',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:a,borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(37,99,235,0.07)'}],{scales:{x:{ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'MW',color:'#666666',font:{size:9}}}}});
-  mkChart('c-donut','doughnut',['태양광','풍력','ESS','바이오','V2G'],[{data:[58,16,12,8,6],backgroundColor:['#0059ff','#1f98ff','#ffca42','#925fff','#00d4a8'],borderWidth:0}],{cutout:'68%'});
+  mkChart('c-donut','doughnut',['태양광 58%','풍력 16%','ESS 12%','바이오 8%','V2G 6%'],[{data:[58,16,12,8,6],backgroundColor:['#0059ff','#1f98ff','#ffca42','#925fff','#00d4a8'],borderWidth:0}],{cutout:'68%',plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,boxHeight:10,padding:8,usePointStyle:true,pointStyle:'rectRounded'}}}});
 
   // 월간 — 12개월 stacked bar + revenue line (dual y-axis)
   const mLab=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
