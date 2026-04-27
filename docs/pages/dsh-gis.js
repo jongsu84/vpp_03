@@ -86,9 +86,9 @@ window.P['dsh-gis']=()=>{
   </div>
   <div class="card mb">
     <div class="sh"><div class="st">지역별 현황</div></div>
-    <div class="pr"><div class="pl">전남권</div><div class="pb"><div class="pf" style="width:78%;background:var(--semantic-brand-primary)"></div></div><div class="pv">8 · 13.2MW</div></div>
-    <div class="pr"><div class="pl">제주권</div><div class="pb"><div class="pf" style="width:52%;background:#1f98ff"></div></div><div class="pv">3 · 7.98MW</div></div>
-    <div class="pr"><div class="pl">경북권</div><div class="pb"><div class="pf" style="width:88%;background:var(--palette-yellow-40)"></div></div><div class="pv">2 · 14.0MW</div></div>
+    <div class="pr"><div class="pl">전남권</div><div class="pb"><div class="pf" style="width:78%;background:var(--semantic-brand-primary)"></div></div><div class="pv">8개소 · 13.2MW</div></div>
+    <div class="pr"><div class="pl">제주권</div><div class="pb"><div class="pf" style="width:52%;background:#1f98ff"></div></div><div class="pv">3개소 · 7.98MW</div></div>
+    <div class="pr"><div class="pl">경북권</div><div class="pb"><div class="pf" style="width:88%;background:var(--palette-yellow-40)"></div></div><div class="pv">2개소 · 14.0MW</div></div>
     <div class="sh" style="margin-top:14px"><div class="st">유형별 분포</div></div>
     <table class="tbl"><thead><tr><th>유형</th><th>개소</th><th>용량 합</th><th>현재 출력</th></tr></thead><tbody>
       <tr><td><span class="badge inf">태양광</span></td><td class="mono">5</td><td class="mono">7.47 MW</td><td class="mono" style="color:var(--semantic-brand-primary)">+7.04 MW</td></tr>
