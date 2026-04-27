@@ -34,7 +34,7 @@ ${_mkCross('bidDA-log')}
 <div class="g4">
   <div class="card acc"><div class="ct">최근 30일 제출 성공률 ${window.tip('최근 30일 제출 성공률','입찰 제출이 KPX에 정상 접수된 비율','정상 접수 ÷ 시도 × 100 [%]','99% 이상 정상 / Fail-Safe 발동 시 자동 재시도 (최대 3회) / 100% 미달 시 운영 점검')}</div><div class="kv" style="color:var(--semantic-positive-normal)">100<span class="ku">%</span></div><div class="kd up">Fail-Safe 0회 발동</div></div>
   <div class="card"><div class="ct">평균 제출 지연 ${window.tip('평균 제출 지연','마감 시각 대비 입찰 제출 시각','제출 시각 - 마감 시각 [분 단위, 음수 = 마감 전 제출]','-3~-5분 권장 / 마감 임박 제출 시 KPX 서버 부하로 실패 위험 증가')}</div><div class="kv">-4<span class="ku">분 전</span></div><div class="kd up">마감 대비</div></div>
-  <div class="card"><div class="ct">KPX 제도 개정 모니터링 ${window.tip('KPX 제도 개정 모니터링','다음 KPX 정산 규정 검토 시점','분기별 KPX 운영규정 변경 자동 점검','신규 시장(보조서비스, 출력제어 보상 등) 도입 시 입찰 전략 영향 — 사전 검토 필수')}</div><div class="kv" style="font-size:14px">2026 Q2</div><div class="kd neu">분기별 점검</div></div>
+  <div class="card"><div class="ct">KPX 제도 개정 모니터링 ${window.tip('KPX 제도 개정 모니터링','다음 KPX 정산 규정 검토 시점','분기별 KPX 운영규정 변경 자동 점검','신규 시장(보조서비스, 출력제어 보상 등) 도입 시 입찰 전략 영향 — 사전 검토 필수')}</div><div class="kv">2026 Q2</div><div class="kd neu">분기별 점검</div></div>
   <div class="card"><div class="ct">로그 보관 기간 ${window.tip('로그 보관 기간','입찰 제출·정산 로그의 법적 보관 기간','전기사업법 시행령 — 5년 의무 보관','SHA-256 해시 체인으로 무결성 보장 — 분쟁 시 KPX·금감원 제출 가능')}</div><div class="kv">5<span class="ku">년</span></div><div class="kd neu">SHA-256 무결성</div></div>
 </div>
 <div class="card mb"><div class="sh"><div class="st">Fail-Safe 정책 상태</div></div>

@@ -48,11 +48,11 @@ window.P['ctl-cfg']=()=>`
 
 <!-- KPI 5종 -->
 <div class="g5" style="margin-bottom:12px">
-  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘','감발 요구량을 자원에 분배하는 방식','수익 최적화: 한계수익 낮은 자원 우선 / 균등: 공평 / 수동: 운영자 지정','수익 최적화 권장 — 일반 균등 배분 대비 30% 손실 절감 가능')}</div><div class="kv" style="font-size:13px">수익 최적화<span class="ku" style="font-size:9px">v2.3</span></div></div>
-  <div class="card"><div class="ct">제어 우선순위 모드 ${window.tip('제어 우선순위 모드','KPX 급전지시와 운영자 수동 제어 간 우선순위','자동 우선: KPX → VPP 알고리즘 / 수동 우선: 운영자 → 알고리즘','자동 우선 기본 — 비상시(설비 이상)는 수동 우선으로 일시 변경')}</div><div class="kv" style="font-size:13px">자동 우선</div></div>
+  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘','감발 요구량을 자원에 분배하는 방식','수익 최적화: 한계수익 낮은 자원 우선 / 균등: 공평 / 수동: 운영자 지정','수익 최적화 권장 — 일반 균등 배분 대비 30% 손실 절감 가능')}</div><div class="kv">수익 최적화<span class="ku">v2.3</span></div></div>
+  <div class="card"><div class="ct">제어 우선순위 모드 ${window.tip('제어 우선순위 모드','KPX 급전지시와 운영자 수동 제어 간 우선순위','자동 우선: KPX → VPP 알고리즘 / 수동 우선: 운영자 → 알고리즘','자동 우선 기본 — 비상시(설비 이상)는 수동 우선으로 일시 변경')}</div><div class="kv">자동 우선</div></div>
   <div class="card"><div class="ct">제어 가능 자원 ${window.tip('제어 가능 자원','현재 알고리즘에 포함된 자원 수','자원 동의 + 통신 OK + 운전 정상','정비/차단 자원은 자동 제외 — 그 자원의 감발량은 다른 자원으로 재분배')}</div><div class="kv">11<span class="ku">/13</span></div></div>
-  <div class="card"><div class="ct">배분 정책 버전 ${window.tip('배분 정책 버전','현재 적용 중인 가중치·정책 버전','SMP·CP·AS·REC·마모비용 가중치 + 제약 조건','정책 변경 시 자동 버전업 — 감사 로그에 변경자/사유 기록')}</div><div class="kv" style="font-size:13px">v2.3<span class="ku" style="font-size:9px">2026-04-20</span></div></div>
-  <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 알고리즘 재계산 시각','Merit Order(제어 순서) 재계산 시각','SMP·CP·AS 변경 시 또는 정해진 주기마다 자동 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv" style="font-size:13px">2분 전</div></div>
+  <div class="card"><div class="ct">배분 정책 버전 ${window.tip('배분 정책 버전','현재 적용 중인 가중치·정책 버전','SMP·CP·AS·REC·마모비용 가중치 + 제약 조건','정책 변경 시 자동 버전업 — 감사 로그에 변경자/사유 기록')}</div><div class="kv">v2.3<span class="ku">2026-04-20</span></div></div>
+  <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 알고리즘 재계산 시각','Merit Order(제어 순서) 재계산 시각','SMP·CP·AS 변경 시 또는 정해진 주기마다 자동 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv">2분 전</div></div>
 </div>
 
 <!-- 제어 배분 알고리즘 & 가중치 -->

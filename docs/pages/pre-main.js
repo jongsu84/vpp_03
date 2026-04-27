@@ -10,7 +10,7 @@ ${_mkFilterBar({showPeriod:false,interval:'1시간',extras:`
 <div class="g4">
   <div class="card acc"><div class="ct">NMAE10 오차율 ${window.tip('NMAE10 오차율','Normalized Mean Absolute Error (10% 컷오프) — 정격용량 대비 평균 절대 오차','Σ |예측 - 실측| ÷ 정격용량 × 100 (10% 미만 구간 제외) [%]','KPX 정산 기준: 8% 이하 정상 / 8~10% 주의 / 10% 초과 시 정산금 차감')}</div><div class="kv" style="color:var(--acc)">6.8<span class="ku">%</span></div><div class="kd up">기준 8% 이하 ✓</div></div>
   <div class="card"><div class="ct">예측 정확도 등급 ${window.tip('예측 정확도 등급','NMAE10 기반 KPX 등급 분류','NMAE10 ≤ 6% A / 6~8% B / 8~10% C / 10%+ D','A·B 등급은 정산금 가산, C·D 등급은 차감')}</div><div class="kv" style="color:var(--acc2)">A<span class="ku">등급</span></div></div>
-  <div class="card"><div class="ct">적용 모델 ${window.tip('적용 예측 모델','현재 입찰에 사용 중인 ML 모델','D1_min: 하루전 분 단위 / RT_15: 실시간 15분 단위 / hybrid-ensemble: 통합','자원·시간대별 자동 모델 선택 — 정확도 높은 모델 우선')}</div><div class="kv" style="font-size:15px">D1_min</div></div>
+  <div class="card"><div class="ct">적용 모델 ${window.tip('적용 예측 모델','현재 입찰에 사용 중인 ML 모델','D1_min: 하루전 분 단위 / RT_15: 실시간 15분 단위 / hybrid-ensemble: 통합','자원·시간대별 자동 모델 선택 — 정확도 높은 모델 우선')}</div><div class="kv">D1_min</div></div>
   <div class="card"><div class="ct">예측 정산금 추정 ${window.tip('예측 정산금 추정','NMAE10 등급 기반 예상 정산금 (가산금 - 차감금)','등급 × 발전량 × 정산 단가 [원/kWh]','A 등급: +3~4원/kWh 가산 / D 등급: -2원/kWh 차감')}</div><div class="kv">3.2<span class="ku">원/kWh</span></div></div>
 </div>
 <div class="card mb"><div class="sh"><div class="st">예측 vs 실측 (금일 24시간)</div></div><div style="height:190px;position:relative"><canvas id="c-pred" role="img" aria-label="예측 vs 실측 비교"></canvas></div></div>

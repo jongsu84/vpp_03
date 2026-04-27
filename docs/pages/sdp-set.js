@@ -69,8 +69,8 @@ window.P['sdp-set']=()=>`
       <div style="font-size:11px;color:var(--semantic-label-alt)">수수료·페널티 차감 후</div>
     </div>
     <div style="padding:14px 18px;display:flex;align-items:center;gap:8px">
-      <button class="cb n sm" onclick="toast('정산서 미리보기')">미리보기</button>
-      <button class="cb p sm" onclick="toast('정산서 PDF 발행')">PDF 발행</button>
+      <button class="cb n sm" onclick="ssOpenPreview()">미리보기</button>
+      <button class="cb p sm" onclick="ssDownloadPDF()">PDF 다운로드</button>
     </div>
   </div>
 </div>
@@ -158,9 +158,81 @@ window.P['sdp-set']=()=>`
 <div style="font-size:12px;color:var(--semantic-label-alt);margin-top:10px;padding:12px 14px;background:var(--semantic-background-2);border-radius:6px;line-height:20px">
   ℹ️ 준중앙급전 정산서는 <b>EWP 당사자 계약 기반 자동 생성</b>되며 SHA-256 해시 무결성 로그와 함께 5년 영구 보관됩니다.<br>
   ※ <b>지시 이행 보상금</b>은 <span onclick="activate('sdp-del')" style="color:var(--semantic-brand-primary);cursor:pointer">발전량인도 ↗</span> 이행률 집계에서 자동 산출되며 · <b>인센티브 단가</b>는 <span onclick="activate('sdp-con')" style="color:var(--semantic-brand-primary);cursor:pointer">계약정보 ↗</span> 마스터 값 참조
+</div>
+
+<!-- 정산서 미리보기 / PDF 모달 -->
+<div class="modal-backdrop" id="modal-ss-doc" style="display:none" onclick="closeModalBg(event,'modal-ss-doc')">
+  <div class="modal" style="width:760px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-hdr no-print" style="flex-shrink:0;background:var(--semantic-background-1);position:relative;z-index:2">
+      <span class="modal-title">정산서 미리보기</span>
+      <button class="modal-close" onclick="closeModal('modal-ss-doc')" aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="ss-doc-body" style="overflow-y:auto;flex:1 1 auto;min-height:0">
+      <div style="text-align:center;padding-bottom:18px;border-bottom:2px solid var(--semantic-label-strong);margin-bottom:20px">
+        <div style="font-size:11px;color:var(--semantic-label-alt);letter-spacing:1px">60Hz · VPP 집합운영자</div>
+        <div style="font-size:22px;font-weight:700;margin-top:6px">준중앙급전 정산서</div>
+        <div style="font-size:12px;color:var(--semantic-label-alt);margin-top:4px">STL-2026-04-SDP · 가정산 · 발행일 2026-04-27</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:12px;margin-bottom:20px;line-height:20px">
+        <div><b style="color:var(--semantic-label-normal)">정산 기간</b> &nbsp; 2026.04.01 ~ 2026.04.30</div>
+        <div><b style="color:var(--semantic-label-normal)">확정 예정</b> &nbsp; 2026-05-15</div>
+        <div><b style="color:var(--semantic-label-normal)">확정 물량</b> &nbsp; 4,821 MWh</div>
+        <div><b style="color:var(--semantic-label-normal)">대상 자원</b> &nbsp; 7개소</div>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">정산 산식 상세</div>
+      <table class="tbl" style="margin-bottom:18px">
+        <thead><tr><th>정산 항목</th><th>산식</th><th style="text-align:right">금액</th></tr></thead>
+        <tbody>
+          <tr><td><b>① 이행 보상금</b></td><td class="mono" style="font-size:11px">이행량(4,721 MWh) × SMP(11.18원)</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal);font-weight:600">+52.80M</td></tr>
+          <tr><td><b>② 용량정산금 (CP)</b></td><td class="mono" style="font-size:11px">계약용량(3.78 MW) × 6,500원/kW·월</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal)">+24.60M</td></tr>
+          <tr><td><b>③ 부가정산금 (AS)</b></td><td class="mono" style="font-size:11px">주파수 기여도 × 1,250원/MWh</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal)">+10.00M</td></tr>
+          <tr><td>④ 응답속도 인센티브</td><td class="mono" style="font-size:11px">평균 25s · 60s 기준 보너스</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal)">+1.50M</td></tr>
+          <tr style="background:var(--semantic-tag-bg-green)"><td><b>소계</b></td><td class="mono" style="font-size:11px">① + ② + ③ + ④</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal);font-weight:700">+88.90M</td></tr>
+          <tr><td>⑤ 미이행 페널티</td><td class="mono" style="font-size:11px">미이행량(100 MWh) × -2.5원/kWh</td><td class="mono" style="text-align:right;color:var(--semantic-negative-normal)">-0.84M</td></tr>
+          <tr><td>⑥ 운영 수수료 (5%)</td><td class="mono" style="font-size:11px">소계 × 5%</td><td class="mono" style="text-align:right;color:var(--semantic-negative-normal)">-5.03M</td></tr>
+          <tr style="background:var(--semantic-brand-primary-assistive);font-weight:700"><td colspan="2">최종 순 지급액</td><td class="mono" style="text-align:right;font-size:16px;color:var(--semantic-brand-primary)">+83.03M</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">사업자별 명세 (요약)</div>
+      <table class="tbl" style="margin-bottom:18px">
+        <thead><tr><th>사업자 / 자원</th><th>유형</th><th>이행</th><th style="text-align:right">순 지급</th></tr></thead>
+        <tbody>
+          <tr><td>광양에너지(주) — 광양항태양광 01단계</td><td>태양광</td><td class="mono">915 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+16.18M</td></tr>
+          <tr><td>광양에너지(주) — 광양항태양광 04단계</td><td>태양광</td><td class="mono">878 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+15.52M</td></tr>
+          <tr><td>㈜해맞이솔라 — 해맞이 태양광</td><td>태양광</td><td class="mono">398 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+7.04M</td></tr>
+          <tr><td>(주)온누리E&C — 온누리 태양광</td><td>태양광</td><td class="mono">398 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+7.04M</td></tr>
+          <tr><td>금능태양광협동조합 — 금능1호 태양광</td><td>태양광</td><td class="mono">392 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+6.93M</td></tr>
+          <tr><td>김주풍력㈜ — 김주풍력 01단계</td><td>풍력</td><td class="mono">1,158 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+20.40M</td></tr>
+          <tr><td>제주에너지㈜ — 금능1호 ESS</td><td>ESS</td><td class="mono">582 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+10.15M</td></tr>
+          <tr style="background:var(--semantic-background-2);font-weight:600"><td colspan="2">합계</td><td class="mono">4,721 MWh</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+83.26M</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--semantic-label-alt);line-height:18px;padding-top:14px;border-top:1px solid var(--semantic-line-alt)">
+        ※ AS(부가정산금)는 KPX 월 마감 후 확정 — 현재 가정산 상태<br>
+        ※ 운영 수수료는 60Hz VPP 집합운영 보수 (계약 5% 적용)<br>
+        ※ M+2월 10일 사업자 계좌로 자동 입금 — 분쟁 시 14일 이내 이의신청<br>
+        ※ SHA-256 해시 무결성 로그와 함께 5년 영구 보관
+      </div>
+    </div>
+    <div class="modal-footer no-print" style="flex-shrink:0;background:var(--semantic-background-1);position:relative;z-index:2">
+      <button class="cb n" onclick="closeModal('modal-ss-doc')">닫기</button>
+      <button class="cb p" onclick="ssDownloadPDF()">PDF 다운로드</button>
+    </div>
+  </div>
 </div>`;
 window['I_sdp-set']=function(){
   setTimeout(window._ssInitCharts,40);
+};
+window.ssOpenPreview=function(){ openModal('modal-ss-doc'); };
+window.ssDownloadPDF=function(){
+  const wasOpen=document.getElementById('modal-ss-doc')?.style.display==='flex';
+  if(!wasOpen) openModal('modal-ss-doc');
+  const prevTitle=document.title;
+  document.title='준중앙급전 정산서_2026-04';
+  setTimeout(()=>{
+    window.print();
+    document.title=prevTitle;
+  },wasOpen?50:250);
 };
 window._ssInitCharts=function(){
   // 기여도 도넛

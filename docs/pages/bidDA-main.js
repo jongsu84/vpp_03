@@ -163,7 +163,7 @@ ${_mkCross('bidDA-main')}
     <div class="card acc"><div class="ct">1차 예측 상태</div><div class="kv" style="color:var(--semantic-positive-normal)">완료</div><div class="kd up">성공 6/6 · NMAE 6.8%</div></div>
     <div class="card"><div class="ct">2차 예측 상태</div><div class="kv" style="color:var(--semantic-label-alt)">대기</div><div class="kd neu">14:00 생성 예정</div></div>
     <div class="card"><div class="ct">Fail-Safe 발동</div><div class="kv">0<span class="ku">회</span></div><div class="kd up">금일 / 월누적 1회</div></div>
-    <div class="card"><div class="ct">정확도 Top 자원</div><div class="kv" style="font-size:15px">광양항태양광</div><div class="kd up">NMAE 4.2%</div></div>
+    <div class="card"><div class="ct">정확도 Top 자원</div><div class="kv">광양항태양광</div><div class="kd up">NMAE 4.2%</div></div>
   </div>
   <div class="card mb"><div class="sh"><div class="st">자원별 예측 현황 (금일 생성분)</div><div style="display:flex;gap:8px;align-items:center"><span class="kpi-pill" style="font-size:11px">1차 10:00 생성</span><button class="cb n sm" onclick="toast('실패 자원 재예측을 실행합니다.')">실패 자원 재예측</button></div></div>
   <div style="overflow-x:auto">

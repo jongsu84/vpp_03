@@ -121,10 +121,10 @@ window.P['dsh-main']=()=>`
     <div class="rs-slide-body">
       <!-- 1. KPI 4종 -->
       <div class="g4" style="margin-bottom:14px">
-        <div class="card"><div class="ct">총 실적 ${window.tip('총 실적','조회 일자에 8개 자원이 실제 생산한 발전량 합계','Σ(자원별 실측 kWh) — RTU 1분 폴링 적분','RTU 데이터 기반 — 통신 단절 자원은 보간 처리')}</div><div class="kv" style="font-size:22px">19,146<span class="ku">kWh</span></div><div class="kd up">▲ 가동률 88.4%</div></div>
-        <div class="card"><div class="ct">총 예측 ${window.tip('총 예측','입찰·운영 계획에 사용된 예측 발전량 합계','Σ(자원별 예측 kWh) — D-1 21시 시점 hybrid-ensemble 모델','MongoDB prod-mart/actual_vs_forecast_{date} 컬렉션 기준')}</div><div class="kv" style="font-size:22px;color:var(--semantic-label-alt)">19,730<span class="ku">kWh</span></div><div class="kd neu">MongoDB 원본</div></div>
-        <div class="card"><div class="ct">절대 오차 ${window.tip('절대 오차','실적 - 예측 (음수: 과대 예측, 양수: 과소 예측)','실적 - 예측 [kWh] · 비율: 실적/예측 - 1','정산 SLA: ±5% 이내 정상 / 5~10% 경계 / 10% 이상 IMBP 페널티')}</div><div class="kv" style="font-size:22px;color:#d32">-584<span class="ku">kWh</span></div><div class="kd down">-2.96%</div></div>
-        <div class="card acc"><div class="ct">MAPE (가중) ${window.tip('MAPE (가중)','Mean Absolute Percentage Error — 가중 평균 절대 백분율 오차','Σ |실측 - 예측| × 가중치 ÷ Σ 예측 × 100 [%]','SLA: 5% 이내 정상 / 5~8% 경계 / 8% 초과 시 정산 페널티 발생')}</div><div class="kv" style="font-size:22px;color:#0a7">2.96<span class="ku">%</span></div><div class="kd up">SLA 5% 이내</div></div>
+        <div class="card"><div class="ct">총 실적 ${window.tip('총 실적','조회 일자에 8개 자원이 실제 생산한 발전량 합계','Σ(자원별 실측 kWh) — RTU 1분 폴링 적분','RTU 데이터 기반 — 통신 단절 자원은 보간 처리')}</div><div class="kv">19,146<span class="ku">kWh</span></div><div class="kd up">▲ 가동률 88.4%</div></div>
+        <div class="card"><div class="ct">총 예측 ${window.tip('총 예측','입찰·운영 계획에 사용된 예측 발전량 합계','Σ(자원별 예측 kWh) — D-1 21시 시점 hybrid-ensemble 모델','MongoDB prod-mart/actual_vs_forecast_{date} 컬렉션 기준')}</div><div class="kv" style="color:var(--semantic-label-alt)">19,730<span class="ku">kWh</span></div><div class="kd neu">MongoDB 원본</div></div>
+        <div class="card"><div class="ct">절대 오차 ${window.tip('절대 오차','실적 - 예측 (음수: 과대 예측, 양수: 과소 예측)','실적 - 예측 [kWh] · 비율: 실적/예측 - 1','정산 SLA: ±5% 이내 정상 / 5~10% 경계 / 10% 이상 IMBP 페널티')}</div><div class="kv" style="color:#d32">-584<span class="ku">kWh</span></div><div class="kd down">-2.96%</div></div>
+        <div class="card acc"><div class="ct">MAPE (가중) ${window.tip('MAPE (가중)','Mean Absolute Percentage Error — 가중 평균 절대 백분율 오차','Σ |실측 - 예측| × 가중치 ÷ Σ 예측 × 100 [%]','SLA: 5% 이내 정상 / 5~8% 경계 / 8% 초과 시 정산 페널티 발생')}</div><div class="kv" style="color:#0a7">2.96<span class="ku">%</span></div><div class="kd up">SLA 5% 이내</div></div>
       </div>
 
       <!-- 2. TOP 3 과대/과소 예측 -->
