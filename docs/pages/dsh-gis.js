@@ -48,7 +48,7 @@ window.P['dsh-gis']=()=>{
     <div class="fbar-item">
       <span class="fbar-lbl">용량 범위</span>
       <select class="fbar-sel" id="gis-f-cap" onchange="_gisApplyFilter()">
-        <option value="all">전체</option><option value="0-1">&lt; 1 MW</option><option value="1-5">1~5 MW</option><option value="5-">5 MW 이상</option>
+        <option value="all">전체</option><option value="0-1">1 MW 미만</option><option value="1-5">1~5 MW</option><option value="5-">5 MW 이상</option>
       </select>
     </div>
     <div class="fbar-item">
