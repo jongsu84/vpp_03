@@ -1,0 +1,5 @@
+# Working files for the SPA split tooling
+docs/.claude/
+
+# LibreOffice / Excel lock files
+docs/.~lock.*
