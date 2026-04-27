@@ -2,29 +2,29 @@
 window.P = window.P || {};
 /* ===== 클릭제어: 출력제어설정 (지능형 최적 급전 + 수익 손실 최소화) ===== */
 window.P['ctl-cfg']=()=>`
-<!-- 최상위 필터 바 (그룹 → 정책/허용 → 세부) -->
+<!-- 최상위 필터 바 (VPP 그룹 → 자원 유형 → 정책/허용 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">VPP 그룹</label>
+  <div class="fbar-item"><label class="fbar-lbl">VPP 그룹</label>
     <select class="fbar-sel" id="cg-f-vpp" onchange="cgFilterApply()">
       <option value="">전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="flabel">배분 정책</label>
-    <select class="fbar-sel" id="cg-f-policy" onchange="cgFilterApply()">
-      <option value="">전체</option><option value="profit">수익 최적화</option><option value="equal">균등 배분</option><option value="manual">수동 순서</option>
-    </select>
-  </div>
-  <div class="fbar-item"><label class="flabel">제어 허용</label>
-    <select class="fbar-sel" id="cg-f-allow" onchange="cgFilterApply()">
-      <option value="">전체</option><option value="ok">허용</option><option value="block">차단</option>
-    </select>
-  </div>
-  <div class="fbar-item"><label class="flabel">자원 유형</label>
+  <div class="fbar-item"><label class="fbar-lbl">자원 유형</label>
     <select class="fbar-sel" id="cg-f-type" onchange="cgFilterApply()">
       <option value="">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="flabel">제어 우선순위</label>
+  <div class="fbar-item"><label class="fbar-lbl">배분 정책</label>
+    <select class="fbar-sel" id="cg-f-policy" onchange="cgFilterApply()">
+      <option value="">전체</option><option value="profit">수익 최적화</option><option value="equal">균등 배분</option><option value="manual">수동 순서</option>
+    </select>
+  </div>
+  <div class="fbar-item"><label class="fbar-lbl">제어 허용</label>
+    <select class="fbar-sel" id="cg-f-allow" onchange="cgFilterApply()">
+      <option value="">전체</option><option value="ok">허용</option><option value="block">차단</option>
+    </select>
+  </div>
+  <div class="fbar-item"><label class="fbar-lbl">제어 우선순위</label>
     <select class="fbar-sel" id="cg-f-pri" onchange="cgFilterApply()">
       <option value="">전체</option><option value="high">1~3 (최우선)</option><option value="mid">4~8 (중간)</option><option value="low">9+ (후순위)</option>
     </select>

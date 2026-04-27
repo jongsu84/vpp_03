@@ -123,8 +123,8 @@ window.P['dsh-main']=()=>`
       <div class="g4" style="margin-bottom:14px">
         <div class="card"><div class="ct">총 실적 ${window.tip('총 실적','조회 일자에 8개 자원이 실제 생산한 발전량 합계','Σ(자원별 실측 kWh) — RTU 1분 폴링 적분','RTU 데이터 기반 — 통신 단절 자원은 보간 처리')}</div><div class="kv">19,146<span class="ku">kWh</span></div><div class="kd up">▲ 가동률 88.4%</div></div>
         <div class="card"><div class="ct">총 예측 ${window.tip('총 예측','입찰·운영 계획에 사용된 예측 발전량 합계','Σ(자원별 예측 kWh) — D-1 21시 시점 hybrid-ensemble 모델','MongoDB prod-mart/actual_vs_forecast_{date} 컬렉션 기준')}</div><div class="kv" style="color:var(--semantic-label-alt)">19,730<span class="ku">kWh</span></div><div class="kd neu">MongoDB 원본</div></div>
-        <div class="card"><div class="ct">절대 오차 ${window.tip('절대 오차','실적 - 예측 (음수: 과대 예측, 양수: 과소 예측)','실적 - 예측 [kWh] · 비율: 실적/예측 - 1','정산 SLA: ±5% 이내 정상 / 5~10% 경계 / 10% 이상 IMBP 페널티')}</div><div class="kv" style="color:#d32">-584<span class="ku">kWh</span></div><div class="kd down">-2.96%</div></div>
-        <div class="card acc"><div class="ct">MAPE (가중) ${window.tip('MAPE (가중)','Mean Absolute Percentage Error — 가중 평균 절대 백분율 오차','Σ |실측 - 예측| × 가중치 ÷ Σ 예측 × 100 [%]','SLA: 5% 이내 정상 / 5~8% 경계 / 8% 초과 시 정산 페널티 발생')}</div><div class="kv" style="color:#0a7">2.96<span class="ku">%</span></div><div class="kd up">SLA 5% 이내</div></div>
+        <div class="card kpi-light" id="kpi-err" data-val="2.96" data-warn="5" data-alert="10"><div class="ct">절대 오차 ${window.tip('절대 오차','실적 - 예측 (음수: 과대 예측, 양수: 과소 예측)','실적 - 예측 [kWh] · 비율: 실적/예측 - 1','정산 SLA: ±5% 이내 정상 / 5~10% 경계 / 10% 이상 IMBP 페널티')}</div><div class="kv" id="kpi-err-v">-584<span class="ku">kWh</span></div><div class="kd" id="kpi-err-sub">-2.96%</div></div>
+        <div class="card kpi-light" id="kpi-mape" data-val="2.96" data-warn="5" data-alert="8"><div class="ct">MAPE (가중) ${window.tip('MAPE (가중)','Mean Absolute Percentage Error — 가중 평균 절대 백분율 오차','Σ |실측 - 예측| × 가중치 ÷ Σ 예측 × 100 [%]','SLA: 5% 이내 정상 / 5~8% 경계 / 8% 초과 시 정산 페널티 발생')}</div><div class="kv" id="kpi-mape-v">2.96<span class="ku">%</span></div><div class="kd" id="kpi-mape-sub">SLA 5% 이내</div></div>
       </div>
 
       <!-- 2. TOP 3 과대/과소 예측 -->
@@ -166,8 +166,8 @@ window.P['dsh-main']=()=>`
             <tr><td>광양항4단계</td><td>태양광</td><td class="mono">2,199 kW</td><td class="mono">1,952</td><td class="mono">1,980</td><td class="mono" style="color:#d32">-28</td><td class="mono" style="color:#0a7">-1.41%</td><td class="mono">242,048</td><td><span class="badge ok">정상</span></td></tr>
             <tr><td>해맞이</td><td>태양광</td><td class="mono">996 kW</td><td class="mono">894</td><td class="mono">900</td><td class="mono" style="color:#d32">-6</td><td class="mono" style="color:#0a7">-0.67%</td><td class="mono">110,856</td><td><span class="badge ok">정상</span></td></tr>
             <tr><td>온누리</td><td>태양광</td><td class="mono">996 kW</td><td class="mono">912</td><td class="mono">940</td><td class="mono" style="color:#d32">-28</td><td class="mono" style="color:#0a7">-2.98%</td><td class="mono">113,088</td><td><span class="badge ok">정상</span></td></tr>
-            <tr style="background:rgba(226,51,51,0.04)"><td>금능1호</td><td>ESS</td><td class="mono">495 kW</td><td class="mono">441</td><td class="mono">460</td><td class="mono" style="color:#d32">-19</td><td class="mono" style="color:#d32">-4.13%</td><td class="mono">54,684</td><td><span class="badge warn">경계</span></td></tr>
-            <tr style="background:rgba(226,51,51,0.06)"><td>김주풍력</td><td>풍력</td><td class="mono">10,000 kW</td><td class="mono">7,452</td><td class="mono">7,800</td><td class="mono" style="color:#d32">-348</td><td class="mono" style="color:#d32">-4.46%</td><td class="mono">924,048</td><td><span class="badge err">이상</span></td></tr>
+            <tr style="background:rgba(226,51,51,0.04)"><td class="row-warn">금능1호</td><td>ESS</td><td class="mono">495 kW</td><td class="mono">441</td><td class="mono">460</td><td class="mono" style="color:#d32">-19</td><td class="mono" style="color:#d32">-4.13%</td><td class="mono">54,684</td><td><span class="badge warn">경계</span></td></tr>
+            <tr style="background:rgba(226,51,51,0.08)"><td class="row-warn"><b>김주풍력</b></td><td>풍력</td><td class="mono">10,000 kW</td><td class="mono">7,452</td><td class="mono">7,800</td><td class="mono" style="color:#d32;font-weight:600">-348</td><td class="mono" style="color:#d32;font-weight:600">-4.46%</td><td class="mono">924,048</td><td><span class="badge err">이상</span></td></tr>
             <tr><td>백학</td><td>태양광</td><td>3,500 kW</td><td class="mono">3,466</td><td class="mono">3,500</td><td class="mono" style="color:#d32">-34</td><td class="mono" style="color:#0a7">-0.97%</td><td class="mono">429,784</td><td><span class="badge ok">정상</span></td></tr>
             <tr><td>삼성솔라2호</td><td>태양광</td><td class="mono">3,020 kW</td><td class="mono">3,011</td><td class="mono">3,050</td><td class="mono" style="color:#d32">-39</td><td class="mono" style="color:#0a7">-1.28%</td><td class="mono">373,364</td><td><span class="badge ok">정상</span></td></tr>
             <tr data-no-sort="1" style="background:rgba(0,89,255,0.04);font-weight:700"><td colspan="3" style="text-align:right">합계</td><td class="mono">19,146</td><td class="mono">19,730</td><td class="mono" style="color:#d32">-584</td><td class="mono" style="color:#e80">-2.96%</td><td class="mono">2,498,104</td><td><span class="badge warn">경계</span></td></tr>
@@ -189,10 +189,23 @@ window.P['dsh-main']=()=>`
   </div>
 </div>`;
 window['I_dsh-main']=function(){
+  // KPI 신호등 — 임계값 비교해 카드 배경 자동 반전
+  document.querySelectorAll('.kpi-light').forEach(el=>{
+    const v=Math.abs(parseFloat(el.dataset.val||'0'));
+    const w=parseFloat(el.dataset.warn||'5');
+    const a=parseFloat(el.dataset.alert||'10');
+    el.classList.remove('lvl-ok','lvl-warn','lvl-alert');
+    if(v>=a) el.classList.add('lvl-alert');
+    else if(v>=w) el.classList.add('lvl-warn');
+    else el.classList.add('lvl-ok');
+  });
   const h=Array.from({length:24},(_,i)=>i+':00');
   const p=[0,0,0,0,0,2,18,45,82,115,134,142,148,145,138,143,150,147,132,108,74,42,18,4];
   const a=[0,0,0,0,0,1,17,43,80,112,131,139,146,141,134,138,143,141,128,103,70,39,15,3];
-  mkChart('c-dmain','line',h,[{data:p,borderColor:'#1f98ff',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},{data:a,borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(37,99,235,0.07)'}],{scales:{x:{ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'MW',color:'#666666',font:{size:9}}}}});
+  mkChart('c-dmain','line',h,[
+    {label:'예측',data:p,borderColor:'#ef4444',borderWidth:2,pointRadius:0,tension:0.4,borderDash:[5,3],fill:false},
+    {label:'실적',data:a,borderColor:'#0059ff',borderWidth:2.5,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,89,255,0.12)'}
+  ],{scales:{x:{ticks:{maxTicksLimit:8}},y:{title:{display:true,text:'MW',color:'#666666',font:{size:9}}}},plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:10,padding:6,usePointStyle:true}}}});
   mkChart('c-donut','doughnut',['태양광 58%','풍력 16%','ESS 12%','바이오 8%','V2G 6%'],[{data:[58,16,12,8,6],backgroundColor:['#0059ff','#1f98ff','#ffca42','#925fff','#00d4a8'],borderWidth:0}],{cutout:'68%',plugins:{legend:{display:true,position:'bottom',labels:{font:{size:10},boxWidth:10,boxHeight:10,padding:8,usePointStyle:true,pointStyle:'rectRounded'}}}});
 
   // 월간 — 12개월 stacked bar + revenue line (dual y-axis)
@@ -291,15 +304,23 @@ window['I_dsh-main']=function(){
   function _pdRender(key){
     var act=window._pdProfilesAct[key]||window._pdProfilesAct.all;
     var frc=window._pdProfilesFrc[key]||window._pdProfilesFrc.all;
+    // 오차 큰 지점 표시 (실적-예측 절대 편차 5% 초과)
+    var pointRadii=act.map(function(v,i){
+      var f=frc[i]||0;
+      if(v===0&&f===0) return 0;
+      var rel=Math.abs(v-f)/Math.max(f,1);
+      return rel>0.05?5:0;
+    });
     mkChart('c-pd-profile','line',pdHours,[
-      {label:'실적',data:act,borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.3,fill:true,backgroundColor:'rgba(0,89,255,0.08)'},
-      {label:'예측',data:frc,borderColor:'#8ba5d6',borderWidth:1.5,borderDash:[4,4],pointRadius:0,tension:0.3,fill:false}
+      {label:'실적',data:act,borderColor:'#0059ff',borderWidth:2.5,pointRadius:0,tension:0.3,fill:true,backgroundColor:'rgba(0,89,255,0.12)'},
+      {label:'예측',data:frc,borderColor:'#ef4444',borderWidth:2,borderDash:[5,3],pointRadius:0,tension:0.3,fill:false},
+      {label:'오차 ≥5% 지점',data:act,borderColor:'transparent',backgroundColor:'#ef4444',pointRadius:pointRadii,pointHoverRadius:7,pointBorderColor:'#fff',pointBorderWidth:1.5,showLine:false}
     ],{
       scales:{
         x:{grid:{display:false},ticks:{color:'var(--semantic-label-alt,#7d8590)',font:{size:9},maxTicksLimit:12}},
         y:{grid:{color:'rgba(0,0,0,0.05)'},ticks:{color:'var(--semantic-label-alt,#7d8590)',font:{size:10},callback:v=>v.toLocaleString()},title:{display:true,text:'kWh',color:'#666',font:{size:9}}}
       },
-      plugins:{legend:{display:true,position:'bottom',align:'end',labels:{font:{size:11},boxWidth:10,boxHeight:10,padding:8,usePointStyle:true}}}
+      plugins:{legend:{display:true,position:'bottom',align:'end',labels:{font:{size:11},boxWidth:10,boxHeight:10,padding:8,usePointStyle:true,filter:function(item){ return item.text!=='오차 ≥5% 지점' || item.datasetIndex===2; }}}}
     });
   }
   window.pdSwitchRes=function(v){

@@ -4,23 +4,23 @@ window.P = window.P || {};
 window.P['cfg-eqp']=()=>`
 <!-- 최상위 필터 바 (분류 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">설비 유형</label>
+  <div class="fbar-item"><label class="fbar-lbl">설비 유형</label>
     <select class="fbar-sel" id="ceq-f-type" onchange="cfgEqpFilterApply()">
       <option value="">전체</option><option>인버터</option><option>PCS(ESS)</option><option>기상관측장비</option><option>RTU</option><option>계량기</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">운전 상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">운전 상태</label>
     <select class="fbar-sel" id="ceq-f-stat" onchange="cfgEqpFilterApply()">
       <option value="">전체</option><option>가동</option><option>단절</option><option>점검</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상위 발전소</label>
+  <div class="fbar-item"><label class="fbar-lbl">상위 발전소</label>
     <select class="fbar-sel" id="ceq-f-plant" onchange="cfgEqpFilterApply()">
       <option value="">전체</option><option>광양항태양광</option><option>광양항4단계</option><option>온누리</option><option>금능1호</option><option>김주풍력</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">제조사</label>
+  <div class="fbar-item"><label class="fbar-lbl">제조사</label>
     <select class="fbar-sel" id="ceq-f-mfr" onchange="cfgEqpFilterApply()">
       <option value="">전체</option><option>SMA</option><option>삼성SDI</option><option>두산</option><option>LS일렉트릭</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">프로토콜</label>
+  <div class="fbar-item"><label class="fbar-lbl">프로토콜</label>
     <select class="fbar-sel" id="ceq-f-prot" onchange="cfgEqpFilterApply()">
       <option value="">전체</option><option>Modbus/TCP</option><option>DNP3.0</option><option>IEC 61850</option><option>IEC61400</option><option>MQTT</option>
     </select></div>
@@ -33,7 +33,7 @@ window.P['cfg-eqp']=()=>`
   <div class="card"><div class="ct">점검 필요 ${window.tip('점검 필요 설비','정기 점검 주기 도래 또는 이상 감지 설비 수','마지막 점검일 + 점검 주기 ≤ 오늘 OR 이상 감지','권장 주기: 인버터 6개월 / 배터리 3개월 / 기상관측 12개월')}</div><div class="kv" style="color:var(--acc3)">12<span class="ku">대</span></div></div>
 </div>
 <div class="card">
-  <div class="sh"><div class="st">설비 목록</div><div style="display:flex;gap:6px;align-items:center">${window.csvBtn('eqp-tbody','equipment_master','설비 목록')}<button class="cb p" style="font-size:10px" onclick="openModal('modal-eqp-add')">설비 등록</button></div></div>
+  <div class="sh"><div class="st">설비 목록</div><div style="display:flex;gap:6px;align-items:center"><input class="inp" placeholder="검색 (S/N·모델·발전소)" style="width:180px;height:32px;font-size:12px" oninput="eqpSearch(this.value)"><button class="cb p sm" onclick="openModal('modal-eqp-add')">설비 등록</button>${window.csvBtn('eqp-tbody','equipment_master','설비 목록')}</div></div>
   <table class="tbl"><thead><tr><th>설비 S/N</th><th>유형</th><th>제조사/모델</th><th>상위 발전소</th><th>프로토콜</th><th>FW 버전</th><th>운전 상태</th></tr></thead>
   <tbody id="eqp-tbody">
     <tr><td class="mono" style="font-size:9px;color:var(--acc2)">INV-GY-001</td><td>인버터</td><td>SMA/Sunny Tripower</td><td>광양항태양광</td><td class="mono" style="font-size:9px">Modbus/TCP</td><td class="mono">3.12.1</td><td><span class="badge ok">가동</span></td></tr>
@@ -96,6 +96,10 @@ window.P['cfg-eqp']=()=>`
 </div>`;
 
 window['I_cfg-eqp']=function(){
+  window.eqpSearch=function(v){
+    const rows=document.querySelectorAll('#eqp-tbody tr');
+    rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
+  };
   window.cfgEqpFilterApply=function(){
     const type=document.getElementById('ceq-f-type')?.value||'';
     const stat=document.getElementById('ceq-f-stat')?.value||'';

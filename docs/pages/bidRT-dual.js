@@ -3,7 +3,6 @@ window.P = window.P || {};
 /* ===== 실시간입찰: 이중정산 (DA↔RT) ===== */
 window.P['bidRT-dual']=()=>`
 ${_mkCross('bidRT-dual')}
-${_mkBidFilter({rightInfo:'편차(Imbalance) · IMBP 정산 기준'})}
 <div class="card mb" style="border-left:3px solid var(--semantic-brand-primary);padding:16px 20px;background:var(--semantic-brand-primary-assistive)">
   <div style="font-size:14px;font-weight:600;color:var(--semantic-label-strong);margin-bottom:6px">이중정산 구조 (Dual Settlement)</div>
   <div style="font-size:13px;line-height:20px;color:var(--semantic-label-normal)">
@@ -11,6 +10,7 @@ ${_mkBidFilter({rightInfo:'편차(Imbalance) · IMBP 정산 기준'})}
     <span style="color:var(--semantic-label-alt)">※ DA 입찰 → RT 영향 O, RT 입찰 → DA 영향 X. 본 메뉴에서는 RT 단계에서의 편차/정산을 관리합니다.</span>
   </div>
 </div>
+${_mkBidFilter({prefix:'brd',onChange:'bidRtDualApply',rightInfo:'금일 합산 +19.13M · IMBP -0.48M · 편차 2건'})}
 <div class="g4">
   <div class="card acc"><div class="ct">금일 DAES ${window.tip('DAES (Day-Ahead Energy Settlement)','하루전 시장에서 낙찰된 발전량의 정산금','Σ(낙찰량 × 낙찰가 × 24h 분배) [백만원]','시장 1차 정산 — 익일 06:00 KPX 확정')}</div><div class="kv">+17.73<span class="ku">백만원</span></div><div class="kd up">DA 낙찰 성공</div></div>
   <div class="card"><div class="ct">금일 RTES ${window.tip('RTES (Real-Time Energy Settlement)','실시간 시장에서 발생한 편차 정산금','Σ(실측 - DA 낙찰량) × RT SMP [백만원]','DA 부족 → +RTES (추가 수익) / DA 초과 → -RTES (감산 손실)')}</div><div class="kv">+1.88<span class="ku">백만원</span></div><div class="kd up">편차 순이익</div></div>
@@ -29,13 +29,24 @@ ${_mkBidFilter({rightInfo:'편차(Imbalance) · IMBP 정산 기준'})}
   <tr><td class="mono">16:00</td><td class="mono">10.1</td><td class="mono">9.2</td><td class="mono" style="color:var(--semantic-negative-normal)">-8.9%</td><td class="mono">140</td><td class="mono">138</td><td class="mono" style="color:var(--semantic-positive-normal)">+1,414</td><td class="mono" style="color:var(--semantic-negative-normal)">-124</td><td class="mono" style="color:var(--semantic-negative-normal)">-240</td></tr>
 </tbody></table></div>`;
 window['I_bidRT-dual']=function(){
+  window._brdRender();
+};
+window._brdRender=function(){
+  const vpp=document.getElementById('brd-vpp')?.value||'전체';
+  const type=document.getElementById('brd-type')?.value||'all';
+  const vMul={'전체':1.0,'VPP-전남권':0.62,'VPP-제주권':0.18,'VPP-경북권':0.20}[vpp]||1.0;
+  const tMul={'all':1.0,'태양광':0.55,'풍력':0.30,'ESS':0.08,'바이오':0.05,'V2G':0.02}[type]||1.0;
+  const mul=vMul*tMul;
   const h=['09','10','11','12','13','14','15','16','17'];
+  const da=[5.8,8.1,9.8,10.7,10.9,10.5,10,10.1,9.6].map(v=>+(v*mul).toFixed(2));
+  const meas=[6.0,8.3,10.0,10.9,11.0,9.7,9.2,10.3,9.4].map(v=>+(v*mul).toFixed(2));
   mkChart('c-imb','bar',h,[
-    {label:'DA 낙찰',data:[5.8,8.1,9.8,10.7,10.9,10.5,10,10.1,9.6],backgroundColor:'rgba(120,120,120,0.35)',borderWidth:0},
-    {label:'실측',data:[6.0,8.3,10.0,10.9,11.0,9.7,9.2,10.3,9.4],backgroundColor:'rgba(0,89,255,0.55)',borderWidth:0},
+    {label:'DA 낙찰',data:da,backgroundColor:'rgba(120,120,120,0.35)',borderWidth:0},
+    {label:'실측',data:meas,backgroundColor:'rgba(0,89,255,0.55)',borderWidth:0},
   ],{});
   mkChart('c-imbdist','bar',['-10%↓','-5~-10%','±5%','+5~+10%','+10%↑'],[
     {data:[1,2,18,3,0],backgroundColor:['rgba(239,68,68,0.55)','rgba(245,158,11,0.55)','rgba(0,212,168,0.55)','rgba(245,158,11,0.55)','rgba(239,68,68,0.55)'],borderWidth:0}
   ],{});
 };
+window.bidRtDualApply=function(){ window._brdRender(); };
 

@@ -14,29 +14,31 @@ ${_mkCross('bidDA-settle')}
 </div>
 
 <!-- VPP 그룹 · 자원 유형 · 차수 · 기간 필터 -->
-<div class="card mb" style="display:flex;gap:16px;align-items:center;padding:12px 16px;margin-bottom:12px;flex-wrap:wrap">
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">VPP 그룹</span>
-    <select class="sel" style="min-width:130px;max-width:160px;height:32px;font-size:13px"><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
+<div class="card fbar"><div class="fbar-row">
+  <div class="fbar-item">
+    <span class="fbar-lbl">VPP 그룹</span>
+    <select class="fbar-sel" id="bds-vpp" onchange="stlUpdateInfo()"><option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">자원 유형</span>
-    ${_mkResMulti()}
+  <div class="fbar-item">
+    <span class="fbar-lbl">자원 유형</span>
+    <select class="fbar-sel" id="bds-type" onchange="stlUpdateInfo()"><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">차수</span>
-    <div style="display:inline-flex;background:var(--semantic-background-3);padding:3px;border-radius:6px;gap:2px">
+  <div class="fbar-item" style="width:auto">
+    <span class="fbar-lbl">차수</span>
+    <div style="display:inline-flex;background:var(--semantic-background-3);padding:3px;border-radius:6px;gap:2px;height:34px;align-items:center;white-space:nowrap">
       <button class="rd-tab active" onclick="selStlRound('all',this)">통합</button>
       <button class="rd-tab" onclick="selStlRound('1',this)">1차</button>
       <button class="rd-tab" onclick="selStlRound('2',this)">2차</button>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">기간</span>
-    <select class="sel" style="min-width:120px;max-width:140px;height:32px;font-size:13px"><option>2026년 4월</option><option>2026년 3월</option><option>2026년 2월</option></select>
+  <div class="fbar-item">
+    <span class="fbar-lbl">기간</span>
+    <select class="fbar-sel" id="bds-period" onchange="stlUpdateInfo()"><option>2026년 4월</option><option>2026년 3월</option><option>2026년 2월</option></select>
   </div>
-  <span style="margin-left:auto;color:var(--semantic-label-alt);font-size:12px" id="stl-filter-info">통합 · 금일 + 월누계</span>
-</div>
+  <div class="fbar-item" style="margin-left:auto;justify-content:flex-end">
+    <span class="fbar-lbl" id="stl-filter-info" style="text-align:right">통합 · 금일 + 월누계</span>
+  </div>
+</div></div>
 
 <!-- KPI 4종 -->
 <div class="g4">
@@ -95,23 +97,33 @@ window['I_bidDA-settle']=function(){
 window.selStlRound=function(r,el){
   document.querySelectorAll('#pages .rd-tab').forEach(e=>e.classList.remove('active'));
   el.classList.add('active');
+  window._stlRound=r;
+  window.stlUpdateInfo();
+};
+window.stlUpdateInfo=function(){
+  const r=window._stlRound||'all';
+  const vpp=document.getElementById('bds-vpp')?.value||'전체';
+  const type=document.getElementById('bds-type')?.value||'all';
+  const period=document.getElementById('bds-period')?.value||'2026년 4월';
   const Q=id=>document.getElementById(id);
   const info=Q('stl-filter-info');
-  if(r==='all'){
-    if(Q('stl-daes'))Q('stl-daes').innerHTML='17.73<span class="ku">백만원</span>';
-    if(Q('stl-net'))Q('stl-net').innerHTML='20.85<span class="ku">백만원</span>';
-    if(Q('stl-rate'))Q('stl-rate').innerHTML='94<span class="ku">%</span>';
-    if(info)info.textContent='통합 · 금일 + 월누계';
-  } else if(r==='1'){
-    if(Q('stl-daes'))Q('stl-daes').innerHTML='10.45<span class="ku">백만원</span>';
-    if(Q('stl-net'))Q('stl-net').innerHTML='13.57<span class="ku">백만원</span>';
-    if(Q('stl-rate'))Q('stl-rate').innerHTML='96<span class="ku">%</span>';
-    if(info)info.textContent='1차 기준 · D-1 11:00 제출';
-  } else {
-    if(Q('stl-daes'))Q('stl-daes').innerHTML='7.28<span class="ku">백만원</span>';
-    if(Q('stl-net'))Q('stl-net').innerHTML='10.40<span class="ku">백만원</span>';
-    if(Q('stl-rate'))Q('stl-rate').innerHTML='91<span class="ku">%</span>';
-    if(info)info.textContent='2차 기준 · D-1 15:00 제출';
+  // 차수 + VPP·자원유형별 정산금액 (시뮬레이션 — 그룹별 가중치 적용)
+  const vppMul={'전체':1.0,'VPP-전남권':0.62,'VPP-제주권':0.18,'VPP-경북권':0.20}[vpp]||1.0;
+  const typeMul={'all':1.0,'태양광':0.55,'풍력':0.30,'ESS':0.08,'바이오':0.05,'V2G':0.02}[type]||1.0;
+  const mul=vppMul*typeMul;
+  let daes,net,rate,base;
+  if(r==='all'){ daes=17.73; net=20.85; rate=94; base='통합'; }
+  else if(r==='1'){ daes=10.45; net=13.57; rate=96; base='1차 기준 · D-1 11:00 제출'; }
+  else { daes=7.28; net=10.40; rate=91; base='2차 기준 · D-1 15:00 제출'; }
+  if(Q('stl-daes')) Q('stl-daes').innerHTML=(daes*mul).toFixed(2)+'<span class="ku">백만원</span>';
+  if(Q('stl-net')) Q('stl-net').innerHTML=(net*mul).toFixed(2)+'<span class="ku">백만원</span>';
+  if(Q('stl-rate')) Q('stl-rate').innerHTML=rate+'<span class="ku">%</span>';
+  if(info){
+    const parts=[base];
+    if(vpp!=='전체') parts.push(vpp);
+    if(type!=='all') parts.push(type);
+    if(period!=='2026년 4월') parts.push(period);
+    info.textContent=parts.join(' · ');
   }
 };
 

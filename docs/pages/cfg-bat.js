@@ -4,23 +4,23 @@ window.P = window.P || {};
 window.P['cfg-bat']=()=>`
 <!-- 최상위 필터 바 (분류 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">카테고리</label>
+  <div class="fbar-item"><label class="fbar-lbl">카테고리</label>
     <select class="fbar-sel" id="cba-f-cat" onchange="cfgBatFilterApply()">
       <option value="">전체</option><option value="예측">예측</option><option value="수집">수집</option><option value="정산">정산</option><option value="진단">진단</option><option value="알람">알람</option><option value="리포트">리포트</option><option value="동기화">동기화</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">상태</label>
     <select class="fbar-sel" id="cba-f-stat" onchange="cfgBatFilterApply()">
       <option value="">전체</option><option>실행중</option><option>성공</option><option>실패</option><option>대기</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">실행 결과 (24h)</label>
+  <div class="fbar-item"><label class="fbar-lbl">실행 결과 (24h)</label>
     <select class="fbar-sel" id="cba-f-res" onchange="cfgBatFilterApply()">
       <option value="">전체</option><option value="ok">성공만</option><option value="err">실패 포함</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">우선순위</label>
+  <div class="fbar-item"><label class="fbar-lbl">우선순위</label>
     <select class="fbar-sel" id="cba-f-pri" onchange="cfgBatFilterApply()">
       <option value="">전체</option><option>1</option><option>2</option><option>3</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">실행 주기</label>
+  <div class="fbar-item"><label class="fbar-lbl">실행 주기</label>
     <select class="fbar-sel" id="cba-f-cron" onchange="cfgBatFilterApply()">
       <option value="">전체</option><option value="min1">1분 이내</option><option value="min15">5~15분</option><option value="hourly">시간 단위</option><option value="daily">일 단위</option>
     </select></div>
@@ -34,9 +34,10 @@ window.P['cfg-bat']=()=>`
 </div>
 <div class="card">
   <div class="sh"><div class="st">배치 작업 목록</div><div style="display:flex;gap:6px;align-items:center">
+    <input class="inp" placeholder="검색 (작업 ID·작업명)" style="width:180px;height:32px;font-size:12px" oninput="batSearch(this.value)">
+    <button class="cb p sm" onclick="openModal('modal-bat-run')">즉시 실행</button>
+    <button class="cb n sm" onclick="openModal('modal-bat-add')">작업 추가</button>
     ${window.csvBtn('bat-tbody','batch_jobs','배치 작업 목록')}
-    <button class="cb p" style="font-size:10px" onclick="openModal('modal-bat-run')">즉시 실행</button>
-    <button class="cb n" style="font-size:10px" onclick="openModal('modal-bat-add')">작업 추가</button>
   </div></div>
   <table class="tbl"><thead><tr><th>작업 ID</th><th>작업명</th><th>실행 주기 (Cron)</th><th>우선순위</th><th>마지막 실행</th><th>소요시간</th><th>상태</th><th>제어</th></tr></thead>
   <tbody id="bat-tbody">
@@ -122,6 +123,10 @@ window.P['cfg-bat']=()=>`
 </div>`;
 
 window['I_cfg-bat']=function(){
+  window.batSearch=function(v){
+    const rows=document.querySelectorAll('#bat-tbody tr');
+    rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
+  };
   // 즉시실행 모달 배치 목록 동적 생성 (중첩 백틱 방지)
   var batJobs=[
     ['RT_PRED_01','실시간 발전 예측','ok'],

@@ -5,31 +5,35 @@ window.P['bidDA-log']=()=>`
 ${_mkCross('bidDA-log')}
 
 <!-- VPP 그룹 · 자원 유형 · 차수 · 기간 필터 -->
-<div class="card mb" style="display:flex;gap:14px;align-items:center;padding:12px 16px;margin-bottom:12px;flex-wrap:wrap">
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">VPP 그룹</span>
-    <select class="sel" style="min-width:130px;max-width:160px;height:32px;font-size:13px"><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
+<div class="card fbar"><div class="fbar-row">
+  <div class="fbar-item">
+    <span class="fbar-lbl">VPP 그룹</span>
+    <select class="fbar-sel" id="bdl-vpp" onchange="logUpdateInfo()"><option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">자원 유형</span>
-    ${_mkResMulti()}
+  <div class="fbar-item">
+    <span class="fbar-lbl">자원 유형</span>
+    <select class="fbar-sel" id="bdl-type" onchange="logUpdateInfo()"><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
   </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <span class="flabel">차수</span>
-    <div style="display:inline-flex;background:var(--semantic-background-3);padding:3px;border-radius:6px;gap:2px">
+  <div class="fbar-item" style="width:auto">
+    <span class="fbar-lbl">차수</span>
+    <div style="display:inline-flex;background:var(--semantic-background-3);padding:3px;border-radius:6px;gap:2px;height:34px;align-items:center;white-space:nowrap">
       <button class="rd-tab active" onclick="logFilter('all',this)">전체</button>
       <button class="rd-tab" onclick="logFilter('1',this)">1차</button>
       <button class="rd-tab" onclick="logFilter('2',this)">2차</button>
     </div>
   </div>
-  <div style="display:flex;align-items:center;gap:6px">
-    <span class="flabel">기간</span>
-    <input class="inp" type="date" style="min-width:130px;max-width:160px;height:32px;font-size:13px" value="2026-04-01">
-    <span style="color:var(--semantic-label-alt)">~</span>
-    <input class="inp" type="date" style="min-width:130px;max-width:160px;height:32px;font-size:13px" value="2026-04-23">
+  <div class="fbar-item wide">
+    <span class="fbar-lbl">기간</span>
+    <div class="fbar-period">
+      <input class="fbar-inp" type="date" value="2026-04-01">
+      <span class="fbar-period-sep">→</span>
+      <input class="fbar-inp" type="date" value="2026-04-23">
+    </div>
   </div>
-  <span style="margin-left:auto;color:var(--semantic-label-alt);font-size:12px" id="log-filter-info">전체 기록 · 45건</span>
-</div>
+  <div class="fbar-item" style="margin-left:auto;justify-content:flex-end">
+    <span class="fbar-lbl" id="log-filter-info" style="text-align:right">전체 기록 · 45건</span>
+  </div>
+</div></div>
 
 <div class="g4">
   <div class="card acc"><div class="ct">최근 30일 제출 성공률 ${window.tip('최근 30일 제출 성공률','입찰 제출이 KPX에 정상 접수된 비율','정상 접수 ÷ 시도 × 100 [%]','99% 이상 정상 / Fail-Safe 발동 시 자동 재시도 (최대 3회) / 100% 미달 시 운영 점검')}</div><div class="kv" style="color:var(--semantic-positive-normal)">100<span class="ku">%</span></div><div class="kd up">Fail-Safe 0회 발동</div></div>
@@ -59,6 +63,13 @@ window['I_bidDA-log']=function(){};
 window.logFilter=function(r,el){
   document.querySelectorAll('#pages .rd-tab').forEach(e=>e.classList.remove('active'));
   el.classList.add('active');
+  window._logRound=r;
+  window.logUpdateInfo();
+};
+window.logUpdateInfo=function(){
+  const r=window._logRound||'all';
+  const vpp=document.getElementById('bdl-vpp')?.value||'전체';
+  const type=document.getElementById('bdl-type')?.value||'all';
   const rows=document.querySelectorAll('#log-tbody tr');
   let shown=0;
   rows.forEach(tr=>{
@@ -68,8 +79,11 @@ window.logFilter=function(r,el){
   });
   const info=document.getElementById('log-filter-info');
   if(info){
-    const label=r==='all'?'전체 기록':(r+'차 기록');
-    info.textContent=`${label} · ${shown}건`;
+    const parts=[];
+    parts.push(r==='all'?'전체 기록':(r+'차 기록'));
+    if(vpp!=='전체') parts.push(vpp);
+    if(type!=='all') parts.push(type);
+    info.textContent=`${parts.join(' · ')} · ${shown}건`;
   }
 };
 

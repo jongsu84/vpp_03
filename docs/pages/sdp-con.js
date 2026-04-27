@@ -3,19 +3,19 @@ window.P = window.P || {};
 /* ===== 준중앙급전: 계약정보 ===== */
 /* ===== 준중앙급전: 계약정보 (전용 마스터 데이터) ===== */
 window.P['sdp-con']=()=>`
-<!-- 최상위 필터 바 (자원 유형 · VPP 그룹 · 계약 상태 · 원격 제어) -->
+<!-- 최상위 필터 바 (VPP 그룹 · 자원 유형 · 계약 상태 · 원격 제어) -->
 <div class="card fbar" style="margin-bottom:12px">
   <div class="fbar-row">
-    <div class="fbar-item">
-      <span class="fbar-lbl">자원 유형</span>
-      <select class="fbar-sel" id="con-f-type" onchange="conFilterApply()">
-        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
-      </select>
-    </div>
     <div class="fbar-item">
       <span class="fbar-lbl">VPP 그룹</span>
       <select class="fbar-sel" id="con-f-vpp" onchange="conFilterApply()">
         <option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
+      </select>
+    </div>
+    <div class="fbar-item">
+      <span class="fbar-lbl">자원 유형</span>
+      <select class="fbar-sel" id="con-f-type" onchange="conFilterApply()">
+        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
       </select>
     </div>
     <div class="fbar-item">

@@ -3,12 +3,12 @@ window.P = window.P || {};
 /* ===== 실시간입찰: 입찰수익 시뮬 ===== */
 window.P['bidRT-revenue']=()=>`
 ${_mkCross('bidRT-revenue')}
-${_mkBidFilter({rightInfo:'DAES + RTES - IMBP 기준'})}
+${_mkBidFilter({prefix:'brv',onChange:'bidRtRevApply',rightInfo:'금일 순수익 +19.13M · DAES 17.73M · IMBP -0.48M'})}
 <div class="g4">
-  <div class="card acc"><div class="ct">예상 순수익(금일) ${window.tip('금일 예상 순수익','오늘 발생한 모든 정산 항목의 합산','DAES + RTES - IMBP [백만원]','시장 마감 전 추정값 — KPX 06:00 확정 후 ±5% 변동 가능')}</div><div class="kv">19.13<span class="ku">백만원</span></div><div class="kd up">DAES+RTES-IMBP</div></div>
-  <div class="card"><div class="ct">DAES (하루전 매출) ${window.tip('DAES (하루전 매출)','하루전 시장 낙찰 정산금','Σ(낙찰량 × 낙찰가) [백만원]','전체 매출의 가장 큰 비중 — 보통 80~90%')}</div><div class="kv">17.73<span class="ku">백만원</span></div></div>
-  <div class="card"><div class="ct">RTES (실시간 편차) ${window.tip('RTES (실시간 편차)','RT 시장에서 발생한 편차 정산','Σ(실측 - DA 낙찰량) × RT SMP [백만원]','+ 또는 - 가능 / DA 부족 시 +수익, DA 초과 시 -손실')}</div><div class="kv">1.88<span class="ku">백만원</span></div></div>
-  <div class="card"><div class="ct">IMBP (페널티) ${window.tip('IMBP 페널티','허용오차 초과 시 부과되는 페널티','Σ(초과 편차 × SMP × 1.2) [백만원]','오차 8% 이내로 관리 시 0원 — 예측 정확도가 핵심')}</div><div class="kv" style="color:var(--semantic-negative-normal)">0.48<span class="ku">백만원</span></div></div>
+  <div class="card acc"><div class="ct">예상 순수익(금일) ${window.tip('금일 예상 순수익','오늘 발생한 모든 정산 항목의 합산','DAES + RTES - IMBP [백만원]','시장 마감 전 추정값 — KPX 06:00 확정 후 ±5% 변동 가능')}</div><div class="kv" id="brv-net">19.13<span class="ku">백만원</span></div><div class="kd up">DAES+RTES-IMBP</div></div>
+  <div class="card"><div class="ct">DAES (하루전 매출) ${window.tip('DAES (하루전 매출)','하루전 시장 낙찰 정산금','Σ(낙찰량 × 낙찰가) [백만원]','전체 매출의 가장 큰 비중 — 보통 80~90%')}</div><div class="kv" id="brv-daes">17.73<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">RTES (실시간 편차) ${window.tip('RTES (실시간 편차)','RT 시장에서 발생한 편차 정산','Σ(실측 - DA 낙찰량) × RT SMP [백만원]','+ 또는 - 가능 / DA 부족 시 +수익, DA 초과 시 -손실')}</div><div class="kv" id="brv-rtes">1.88<span class="ku">백만원</span></div></div>
+  <div class="card"><div class="ct">IMBP (페널티) ${window.tip('IMBP 페널티','허용오차 초과 시 부과되는 페널티','Σ(초과 편차 × SMP × 1.2) [백만원]','오차 8% 이내로 관리 시 0원 — 예측 정확도가 핵심')}</div><div class="kv" id="brv-imbp" style="color:var(--semantic-negative-normal)">0.48<span class="ku">백만원</span></div></div>
 </div>
 <div class="g2">
   <div class="card mb"><div class="sh"><div class="st">전략 시나리오 비교</div></div><div style="height:170px;position:relative"><canvas id="c-scenario" role="img" aria-label="시나리오 비교"></canvas></div></div>
@@ -28,5 +28,17 @@ window['I_bidRT-revenue']=function(){
     {label:'공격형',data:[19.4,2.4,3.1,-2.1,22.8],backgroundColor:'rgba(245,158,11,0.45)',borderWidth:0},
   ],{scales:{y:{ticks:{callback:v=>v+'M'}}}});
   mkChart('c-sens','line',['-20%','-10%','0%','+10%','+20%'],[{data:[16.3,18.2,20.3,22.4,24.5],borderColor:'#0059ff',borderWidth:2,pointRadius:3,tension:0.3,fill:true,backgroundColor:'rgba(0,89,255,0.07)'}],{});
+};
+window.bidRtRevApply=function(){
+  const vpp=document.getElementById('brv-vpp')?.value||'전체';
+  const type=document.getElementById('brv-type')?.value||'all';
+  const vMul={'전체':1.0,'VPP-전남권':0.62,'VPP-제주권':0.18,'VPP-경북권':0.20}[vpp]||1.0;
+  const tMul={'all':1.0,'태양광':0.55,'풍력':0.30,'ESS':0.08,'바이오':0.05,'V2G':0.02}[type]||1.0;
+  const m=vMul*tMul;
+  const Q=id=>document.getElementById(id);
+  if(Q('brv-net')) Q('brv-net').innerHTML=(19.13*m).toFixed(2)+'<span class="ku">백만원</span>';
+  if(Q('brv-daes')) Q('brv-daes').innerHTML=(17.73*m).toFixed(2)+'<span class="ku">백만원</span>';
+  if(Q('brv-rtes')) Q('brv-rtes').innerHTML=(1.88*m).toFixed(2)+'<span class="ku">백만원</span>';
+  if(Q('brv-imbp')) Q('brv-imbp').innerHTML=(0.48*m).toFixed(2)+'<span class="ku">백만원</span>';
 };
 

@@ -748,6 +748,58 @@ canvas { max-width: 100%; }
 
 /* ─── Alert list ─── */
 .al { display: flex; align-items: flex-start; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--semantic-line-alt); }
+
+/* ─── Timeline (자동화 단계 시각화) ─── */
+.tl-section-title { font-size: 12px; font-weight: 600; color: var(--semantic-brand-primary); margin: 14px 0 6px; }
+.tl-section-title:first-child { margin-top: 4px; }
+.tl { list-style: none; padding: 0; margin: 0 0 6px 0; position: relative; }
+.tl-step {
+  display: grid;
+  grid-template-columns: 56px minmax(0,1fr) auto;
+  gap: 14px;
+  align-items: center;
+  padding: 9px 0 9px 24px;
+  position: relative;
+  font-size: 13px;
+}
+.tl-step + .tl-step { border-top: 1px solid var(--semantic-line-alt); }
+.tl-step::before {
+  content: ''; position: absolute; left: 6px; top: 50%;
+  width: 10px; height: 10px; border-radius: 50%;
+  background: var(--semantic-line-strong);
+  transform: translateY(-50%); z-index: 1;
+  box-shadow: 0 0 0 3px var(--semantic-background-1);
+}
+.tl-step::after {
+  content: ''; position: absolute; left: 10px; top: 0; bottom: 0;
+  width: 2px; background: var(--semantic-line-alt); z-index: 0;
+}
+.tl-step:first-child::after { top: 50%; }
+.tl-step:last-child::after { bottom: 50%; }
+.tl-step.done::before { background: var(--semantic-positive-normal); }
+.tl-step.run::before  { background: var(--palette-yellow-40); animation: tlPulse 1.6s ease-in-out infinite; }
+.tl-step.wait::before { background: var(--semantic-line-strong); }
+.tl-step.fail::before { background: var(--semantic-negative-normal); }
+@keyframes tlPulse { 0%,100% { box-shadow: 0 0 0 3px var(--semantic-background-1); } 50% { box-shadow: 0 0 0 3px var(--semantic-background-1), 0 0 0 6px rgba(245,158,11,0.25); } }
+.tl-time { font-weight: 600; color: var(--semantic-label-strong); font-variant-numeric: tabular-nums; }
+.tl-desc { color: var(--semantic-label-normal); line-height: 18px; min-width: 0; overflow-wrap: anywhere; }
+.tl-step.wait .tl-time, .tl-step.wait .tl-desc { color: var(--semantic-label-alt); }
+
+/* ─── KPI 신호등 (값 임계 초과 시 카드 배경 반전) ─── */
+.kpi-light { transition: background 200ms, border-color 200ms; }
+.kpi-light.lvl-ok    { background: var(--semantic-tag-bg-green);  border-color: var(--semantic-positive-normal); }
+.kpi-light.lvl-warn  { background: var(--semantic-tag-bg-yellow); border-color: var(--palette-yellow-40); }
+.kpi-light.lvl-alert { background: var(--semantic-tag-bg-red);    border-color: var(--semantic-negative-normal); }
+.kpi-light.lvl-warn .kv  { color: var(--palette-yellow-40) !important; }
+.kpi-light.lvl-alert .kv { color: var(--semantic-negative-normal) !important; }
+
+/* 김주풍력 같은 outlier 행에 부착되는 경고 마크 */
+.row-warn::before {
+  content: '⚠'; display: inline-block;
+  margin-right: 6px;
+  color: var(--semantic-negative-normal);
+  font-size: 12px;
+}
 .al:last-child { border-bottom: 0; }
 .ad { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; margin-top: 6px; }
 .am { font-size: 13px; line-height: 20px; color: var(--semantic-label-strong); flex: 1; }

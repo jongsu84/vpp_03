@@ -28,15 +28,15 @@ window.P['dsh-gis']=()=>{
 <div class="card fbar" style="margin-bottom:12px">
   <div class="fbar-row">
     <div class="fbar-item">
-      <span class="fbar-lbl">자원 유형</span>
-      <select class="fbar-sel" id="gis-f-type" onchange="_gisApplyFilter()">
-        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
-      </select>
-    </div>
-    <div class="fbar-item">
       <span class="fbar-lbl">VPP 그룹</span>
       <select class="fbar-sel" id="gis-f-vpp" onchange="_gisApplyFilter()">
         <option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
+      </select>
+    </div>
+    <div class="fbar-item">
+      <span class="fbar-lbl">자원 유형</span>
+      <select class="fbar-sel" id="gis-f-type" onchange="_gisApplyFilter()">
+        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
       </select>
     </div>
     <div class="fbar-item">

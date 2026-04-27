@@ -4,23 +4,23 @@ window.P = window.P || {};
 window.P['cfg-usr']=()=>`
 <!-- 최상위 필터 바 (분류 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">유저 유형</label>
+  <div class="fbar-item"><label class="fbar-lbl">유저 유형</label>
     <select class="fbar-sel" id="cu-f-type" onchange="cfgUsrFilterApply()">
       <option value="">전체</option><option>시스템관리자</option><option>운영관리자</option><option>자원소유자</option><option>연구진</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">상태</label>
     <select class="fbar-sel" id="cu-f-stat" onchange="cfgUsrFilterApply()">
       <option value="">전체</option><option>활성</option><option>잠금</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">소속</label>
+  <div class="fbar-item"><label class="fbar-lbl">소속</label>
     <select class="fbar-sel" id="cu-f-org" onchange="cfgUsrFilterApply()">
       <option value="">전체</option><option>60Hertz</option><option>동서발전</option><option>광양항태양광</option><option>온누리태양광</option><option>GIST</option><option>Fraunhofer</option><option>에기연</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">MFA</label>
+  <div class="fbar-item"><label class="fbar-lbl">MFA</label>
     <select class="fbar-sel" id="cu-f-mfa" onchange="cfgUsrFilterApply()">
       <option value="">전체</option><option>OTP</option><option>SMS</option><option>선택</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">만료</label>
+  <div class="fbar-item"><label class="fbar-lbl">만료</label>
     <select class="fbar-sel" id="cu-f-exp" onchange="cfgUsrFilterApply()">
       <option value="">전체</option><option value="soon">30일 이내 임박</option><option value="perm">무기한</option>
     </select></div>
@@ -45,12 +45,9 @@ window.P['cfg-usr']=()=>`
   <div class="sh">
     <div class="st">계정 목록</div>
     <div style="display:flex;gap:8px;align-items:center">
-      <select class="sel" style="width:140px;height:32px;font-size:12px">
-        <option>전체 유형</option><option>시스템관리자</option><option>운영관리자</option><option>자원소유자</option><option>연구진</option>
-      </select>
       <input class="inp" placeholder="검색 (성명·소속)" style="width:180px;height:32px;font-size:12px" oninput="usrSearch(this.value)">
-      ${window.csvBtn('usr-tbody','user_accounts','계정 목록')}
       <button class="cb p sm" onclick="openModal('modal-usr-add')">계정 추가</button>
+      ${window.csvBtn('usr-tbody','user_accounts','계정 목록')}
     </div>
   </div>
   <div style="overflow-x:auto">

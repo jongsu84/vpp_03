@@ -3,9 +3,26 @@ window.P = window.P || {};
 /* ===== 준중앙급전: 입찰수익 ===== */
 /* ===== 준중앙급전: 입찰수익 (전용 수익 분석 + 필터) ===== */
 window.P['sdp-rev']=()=>`
-<!-- 최상위 필터 바 (조회 기간 · 단위 · 자원 유형 · VPP 그룹 · 정산 항목) -->
+<!-- 안내 -->
+<div style="font-size:12px;color:var(--semantic-label-normal);padding:10px 14px;background:var(--semantic-brand-primary-assistive);border-radius:6px;margin-bottom:12px;line-height:20px">
+  💡 <b>준중앙급전 전용 수익 분석</b> — KPX 낙찰 결과 기반 · 일반 입찰(DAES/RTES)과 분리 집계. SMP(이행보상) · CP(용량) · AS(부가) 3-tier 정산 구조.
+</div>
+
+<!-- 최상위 필터 바 (VPP 그룹 · 자원 유형 · 조회 기간 · 단위 · 정산 항목) -->
 <div class="card fbar" style="margin-bottom:12px">
   <div class="fbar-row">
+    <div class="fbar-item">
+      <span class="fbar-lbl">VPP 그룹</span>
+      <select class="fbar-sel" id="sr-f-vpp" onchange="srFilterApply()">
+        <option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
+      </select>
+    </div>
+    <div class="fbar-item">
+      <span class="fbar-lbl">자원 유형</span>
+      <select class="fbar-sel" id="sr-f-type" onchange="srFilterApply()">
+        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
+      </select>
+    </div>
     <div class="fbar-item wide">
       <span class="fbar-lbl">조회 기간</span>
       <div class="fbar-period">
@@ -21,29 +38,12 @@ window.P['sdp-rev']=()=>`
       </select>
     </div>
     <div class="fbar-item">
-      <span class="fbar-lbl">자원 유형</span>
-      <select class="fbar-sel" id="sr-f-type" onchange="srFilterApply()">
-        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
-      </select>
-    </div>
-    <div class="fbar-item">
-      <span class="fbar-lbl">VPP 그룹</span>
-      <select class="fbar-sel" id="sr-f-vpp" onchange="srFilterApply()">
-        <option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
-      </select>
-    </div>
-    <div class="fbar-item">
       <span class="fbar-lbl">정산 항목</span>
       <select class="fbar-sel" id="sr-f-item" onchange="srFilterApply()">
         <option value="all">전체</option><option value="smp">이행 보상금 (SMP)</option><option value="cp">용량정산금 (CP)</option><option value="as">부가정산금 (AS)</option>
       </select>
     </div>
   </div>
-</div>
-
-<!-- 안내 -->
-<div style="font-size:12px;color:var(--semantic-label-normal);padding:10px 14px;background:var(--semantic-brand-primary-assistive);border-radius:6px;margin-bottom:12px;line-height:20px">
-  💡 <b>준중앙급전 전용 수익 분석</b> — KPX 낙찰 결과 기반 · 일반 입찰(DAES/RTES)과 분리 집계. SMP(이행보상) · CP(용량) · AS(부가) 3-tier 정산 구조.
 </div>
 
 <!-- KPI 5종 (준중앙급전 전용) -->

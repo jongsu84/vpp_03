@@ -13,6 +13,12 @@ window.P['ctl-man']=()=>`
       </select>
     </div>
     <div class="fbar-item">
+      <span class="fbar-lbl">자원 유형</span>
+      <select class="fbar-sel" id="cm-f-type" onchange="cmFilterApply()">
+        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
+      </select>
+    </div>
+    <div class="fbar-item">
       <span class="fbar-lbl">운전 상태</span>
       <select class="fbar-sel" id="cm-f-state" onchange="cmFilterApply()">
         <option>전체</option><option>ON (가동)</option><option>OFF (정지)</option><option>제어 중</option><option>이상</option>
@@ -22,12 +28,6 @@ window.P['ctl-man']=()=>`
       <span class="fbar-lbl">통신 상태</span>
       <select class="fbar-sel" id="cm-f-comm" onchange="cmFilterApply()">
         <option>전체</option><option>정상</option><option>지연</option><option>단절</option>
-      </select>
-    </div>
-    <div class="fbar-item">
-      <span class="fbar-lbl">자원 유형</span>
-      <select class="fbar-sel" id="cm-f-type" onchange="cmFilterApply()">
-        <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
       </select>
     </div>
     <div class="fbar-item">
@@ -59,9 +59,9 @@ window.P['ctl-man']=()=>`
   <div class="sh">
     <div class="st">자원별 즉시 제어 <span id="cm-res-cnt" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">11건</span></div>
     <div style="display:flex;gap:6px;align-items:center">
-      ${window.csvBtn('cm-res-tbody','manual_control_grid','자원별 즉시 제어')}
       <button class="cb n sm" onclick="toast('비상 All Stop — 확인 필요')" style="color:var(--semantic-negative-normal)">🚨 All Stop</button>
       <button class="cb n sm" onclick="toast('전체 100% 복원')">전체 복원</button>
+      ${window.csvBtn('cm-res-tbody','manual_control_grid','자원별 즉시 제어')}
     </div>
   </div>
   <div style="overflow-x:auto"><table class="tbl">

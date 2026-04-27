@@ -4,23 +4,23 @@ window.P = window.P || {};
 window.P['cfg-rtu']=()=>`
 <!-- 최상위 필터 바 (분류 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">연결 발전소</label>
+  <div class="fbar-item"><label class="fbar-lbl">연결 발전소</label>
     <select class="fbar-sel" id="crt-f-plant" onchange="cfgRtuFilterApply()">
       <option value="">전체</option><option>광양항태양광</option><option>광양항4단계</option><option>온누리</option><option>금능1호</option><option>김주풍력</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">상태</label>
     <select class="fbar-sel" id="crt-f-stat" onchange="cfgRtuFilterApply()">
       <option value="">전체</option><option>정상</option><option>장애</option><option>초기화중</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">VPN</label>
+  <div class="fbar-item"><label class="fbar-lbl">VPN</label>
     <select class="fbar-sel" id="crt-f-vpn" onchange="cfgRtuFilterApply()">
       <option value="">전체</option><option>연결</option><option>단절</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상위 프로토콜</label>
+  <div class="fbar-item"><label class="fbar-lbl">상위 프로토콜</label>
     <select class="fbar-sel" id="crt-f-prot" onchange="cfgRtuFilterApply()">
       <option value="">전체</option><option>MQTT</option><option>DNP3.0</option><option>Modbus/TCP</option><option>HTTP(REST)</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">폴링 주기</label>
+  <div class="fbar-item"><label class="fbar-lbl">폴링 주기</label>
     <select class="fbar-sel" id="crt-f-poll" onchange="cfgRtuFilterApply()">
       <option value="">전체</option><option>30</option><option>60</option><option>300</option>
     </select></div>
@@ -34,9 +34,10 @@ window.P['cfg-rtu']=()=>`
 </div>
 <div class="card mb">
   <div class="sh"><div class="st">RTU 목록</div><div style="display:flex;gap:6px;align-items:center">
+    <input class="inp" placeholder="검색 (RTU ID·발전소·IP)" style="width:180px;height:32px;font-size:12px" oninput="rtuSearch(this.value)">
+    <button class="cb p sm" onclick="openModal('modal-rtu-add')">RTU 등록</button>
+    <button class="cb n sm" onclick="openModal('modal-rtu-ota')">OTA 업데이트</button>
     ${window.csvBtn('rtu-tbody','rtu_master','RTU 목록')}
-    <button class="cb p" style="font-size:10px" onclick="openModal('modal-rtu-add')">RTU 등록</button>
-    <button class="cb n" style="font-size:10px" onclick="openModal('modal-rtu-ota')">OTA 업데이트</button>
   </div></div>
   <table class="tbl"><thead><tr><th>RTU ID</th><th>연결 발전소</th><th>IP 주소</th><th>상위 프로토콜</th><th>폴링(초)</th><th>VPN</th><th>CPU</th><th>상태</th></tr></thead>
   <tbody id="rtu-tbody">
@@ -136,6 +137,10 @@ window.P['cfg-rtu']=()=>`
 </div>`;
 
 window['I_cfg-rtu']=function(){
+  window.rtuSearch=function(v){
+    const rows=document.querySelectorAll('#rtu-tbody tr');
+    rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
+  };
   window.cfgRtuFilterApply=function(){
     const plant=document.getElementById('crt-f-plant')?.value||'';
     const stat=document.getElementById('crt-f-stat')?.value||'';

@@ -4,23 +4,23 @@ window.P = window.P || {};
 window.P['cfg-gen']=()=>`
 <!-- 최상위 필터 바 (분류 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">자원 유형</label>
+  <div class="fbar-item"><label class="fbar-lbl">자원 유형</label>
     <select class="fbar-sel" id="cge-f-type" onchange="cfgGenFilterApply()">
       <option value="">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">상태</label>
     <select class="fbar-sel" id="cge-f-stat" onchange="cfgGenFilterApply()">
       <option value="">전체</option><option>활성</option><option>시운전</option><option>정비</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">지역</label>
+  <div class="fbar-item"><label class="fbar-lbl">지역</label>
     <select class="fbar-sel" id="cge-f-reg" onchange="cfgGenFilterApply()">
       <option value="">전체</option><option>전남</option><option>전북</option><option>경남</option><option>경북</option><option>충남</option><option>제주</option><option>강원</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">REC 가중치</label>
+  <div class="fbar-item"><label class="fbar-lbl">REC 가중치</label>
     <select class="fbar-sel" id="cge-f-rec" onchange="cfgGenFilterApply()">
       <option value="">전체</option><option>1.0</option><option>1.2</option><option>1.5</option><option>2.0</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">제어</label>
+  <div class="fbar-item"><label class="fbar-lbl">제어</label>
     <select class="fbar-sel" id="cge-f-ctrl" onchange="cfgGenFilterApply()">
       <option value="">전체</option><option>가능</option><option>불가</option>
     </select></div>
@@ -34,9 +34,9 @@ window.P['cfg-gen']=()=>`
 </div>
 <div class="card">
   <div class="sh"><div class="st">발전기 목록</div><div style="display:flex;gap:6px;align-items:center">
-    <select class="sel" style="width:auto;font-size:10px" onchange="genFilter(this.value)"><option value="">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
+    <input class="inp" placeholder="검색 (발전소명·지역)" style="width:180px;height:32px;font-size:12px" oninput="genSearch(this.value)">
+    <button class="cb p sm" onclick="openModal('modal-gen-add')">발전소 등록</button>
     ${window.csvBtn('gen-tbody','generator_master','발전기 목록')}
-    <button class="cb p" style="font-size:10px" onclick="openModal('modal-gen-add')">발전소 등록</button>
   </div></div>
   <table class="tbl"><thead><tr><th>발전소명</th><th>유형</th><th>지역</th><th>설치용량</th><th>COD</th><th>REC가중치</th><th>제어</th><th>상태</th></tr></thead>
   <tbody id="gen-tbody">
@@ -115,10 +115,9 @@ window.P['cfg-gen']=()=>`
 </div>`;
 
 window['I_cfg-gen']=function(){
-  window.genFilter=function(v){
-    document.querySelectorAll('#gen-tbody tr').forEach(r=>{
-      r.style.display=(!v||r.cells[1].textContent.includes(v))?'':'none';
-    });
+  window.genSearch=function(v){
+    const rows=document.querySelectorAll('#gen-tbody tr');
+    rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
   };
   window.cfgGenFilterApply=function(){
     const type=document.getElementById('cge-f-type')?.value||'';

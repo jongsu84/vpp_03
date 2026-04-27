@@ -4,27 +4,27 @@ window.P = window.P || {};
 window.P['ctl-mon']=()=>`
 <!-- 최상위 필터 바 (그룹 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">VPP 그룹</label>
+  <div class="fbar-item"><label class="fbar-lbl">VPP 그룹</label>
     <select class="fbar-sel" id="cm2-f-vpp" onchange="cmonFilterApply()">
       <option value="">전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="flabel">세션 상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">세션 상태</label>
     <select class="fbar-sel" id="cm2-f-stat" onchange="cmonFilterApply()">
       <option value="">전체</option><option value="ok">완료</option><option value="warn">지연</option><option value="err">실패</option><option value="prog">진행중</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="flabel">응답 지연</label>
+  <div class="fbar-item"><label class="fbar-lbl">응답 지연</label>
     <select class="fbar-sel" id="cm2-f-lat" onchange="cmonFilterApply()">
       <option value="">전체</option><option value="sla">SLA 준수 (≤500ms)</option><option value="over">SLA 초과 (&gt;500ms)</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="flabel">패킷 무결성</label>
+  <div class="fbar-item"><label class="fbar-lbl">패킷 무결성</label>
     <select class="fbar-sel" id="cm2-f-int" onchange="cmonFilterApply()">
       <option value="">전체</option><option value="ok">OK (CRC 일치)</option><option value="err">오류 (CRC 불일치)</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="flabel">프로토콜</label>
+  <div class="fbar-item"><label class="fbar-lbl">프로토콜</label>
     <select class="fbar-sel" id="cm2-f-proto" onchange="cmonFilterApply()">
       <option value="">전체</option><option>Modbus TCP</option><option>IEC-104</option><option>OCPP</option><option>MQTT</option>
     </select>

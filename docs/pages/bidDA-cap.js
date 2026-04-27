@@ -3,7 +3,7 @@ window.P = window.P || {};
 /* ===== 하루전입찰: 용량 · 물리제약 ===== */
 window.P['bidDA-cap']=()=>`
 ${_mkCross('bidDA-cap')}
-${_mkBidFilter({rightInfo:'물리제약 파라미터 · 자원별 설정 가능'})}
+${_mkBidFilter({prefix:'bdc',onChange:'bidCapApply',rightInfo:'Feasible 10.9MW · 정비 제외 0.5MW · Ramp 2.8MW/min'})}
 <div class="g4">
   <div class="card acc"><div class="ct">총 설비용량 ${window.tip('총 설비용량','VPP 그룹의 모든 자원 정격 용량 합','Σ(자원별 정격 kW) ÷ 1000 [MW]','Nameplate Capacity 기준 — 시운전·정비 자원 모두 포함')}</div><div class="kv">11.4<span class="ku">MW</span></div><div class="kd neu">실증 · 태양광 9개소</div></div>
   <div class="card"><div class="ct">가용 입찰용량 ${window.tip('가용 입찰용량','실제 입찰에 제출 가능한 최대 용량','총 설비용량 - 정비 - 안전마진(5%)','5% 안전마진 — 일사·풍속 변동성 반영 / 마진 적용 후 IMBP 페널티 회피')}</div><div class="kv" style="color:var(--semantic-positive-normal)">10.9<span class="ku">MW</span></div><div class="kd up">안전마진 5% 적용</div></div>
@@ -27,11 +27,21 @@ ${_mkBidFilter({rightInfo:'물리제약 파라미터 · 자원별 설정 가능'
   </div>
 </div>`;
 window['I_bidDA-cap']=function(){
+  window._bdcRender();
+};
+window._bdcRender=function(){
+  const vpp=document.getElementById('bdc-vpp')?.value||'전체';
+  const type=document.getElementById('bdc-type')?.value||'all';
+  const vMul={'전체':1.0,'VPP-전남권':0.62,'VPP-제주권':0.18,'VPP-경북권':0.20}[vpp]||1.0;
+  const tMul={'all':1.0,'태양광':0.55,'풍력':0.30,'ESS':0.08,'바이오':0.05,'V2G':0.02}[type]||1.0;
+  const mul=vMul*tMul;
   const h=Array.from({length:24},(_,i)=>i+'h');
-  const av=[0,0,0,0,0,1,1.2,3.1,5.8,8.1,9.8,10.7,10.9,10.5,10,10.1,9.6,8.5,6.1,3.8,1.9,0.5,0,0];
+  const base=[0,0,0,0,0,1,1.2,3.1,5.8,8.1,9.8,10.7,10.9,10.5,10,10.1,9.6,8.5,6.1,3.8,1.9,0.5,0,0];
+  const av=base.map(v=>+(v*mul).toFixed(2));
   mkChart('c-cap','line',h,[
-    {label:'이론 최대',data:av.map(v=>+(v*1.05).toFixed(1)),borderColor:'rgba(120,120,120,0.5)',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},
+    {label:'이론 최대',data:av.map(v=>+(v*1.05).toFixed(2)),borderColor:'rgba(120,120,120,0.5)',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},
     {label:'Feasible (안전마진 적용)',data:av,borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,89,255,0.08)'}
   ],{});
 };
+window.bidCapApply=function(){ window._bdcRender(); };
 

@@ -3,7 +3,7 @@ window.P = window.P || {};
 /* ===== 실시간입찰: 입찰 운영 (T-75분) ===== */
 window.P['bidRT-main']=()=>`
 ${_mkCross('bidRT-main')}
-${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
+${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="display:inline-flex;align-items:center;gap:6px">마지막 업데이트 <span id="rt-refresh-time" class="mono">14:25:08</span><button onclick="refreshRtHistory()" title="실시간 이력 새로고침" style="width:26px;height:26px;min-width:26px;padding:0;border-radius:50%;border:1px solid var(--semantic-line-normal);background:var(--semantic-background-1);cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:14px;color:var(--semantic-label-normal);flex-shrink:0">↻</button></span>'})}
 
 <!-- 페이지 탭 -->
 <div style="display:flex;gap:24px;margin-bottom:16px;border-bottom:1px solid var(--semantic-line-normal)">
@@ -13,26 +13,82 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
 </div>
 
 <!-- 액션 버튼 바 (공통) -->
-<div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end;flex-wrap:wrap">
+<div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
+  <span id="rt-mode-badge" class="badge ok" style="margin-right:auto;font-size:11px">자동 갱신 모드</span>
   <button class="cb n sm" onclick="openModal('modal-rt-settings')">실시간 설정</button>
   <button class="cb n sm" onclick="openModal('modal-model-settings-rt')">예측모델 설정</button>
-  <button class="cb n sm" onclick="toast('실시간 이력을 새로고침했습니다.')">이력 새로고침</button>
   <button class="cb p sm" onclick="openModal('modal-rt-refresh')">즉시 갱신</button>
 </div>
 
 <!-- ========== VIEW 1: 실시간 현황 ========== -->
 <div id="pg-rt-view-today">
   <div class="g4">
-    <div class="card acc"><div class="ct">다음 마감 ${window.tip('실시간 입찰 다음 마감','T-75 (실시간 75분 전) 입찰 제출 마감까지 남은 시간','15분 단위 96회/일 입찰 — 매시 00·15·30·45분 마감','자동 제출 기본 — 마감 5분 전 수동 개입 가능')}</div><div class="kv">T-75<span class="ku">분</span></div><div class="kd neu">18분 전 · 15:15 제출</div></div>
-    <div class="card"><div class="ct">현재 입찰 상태 ${window.tip('현재 입찰 상태','금회 차수의 입찰 진행 상태','진행중: 예측 갱신 중 / 제출완료: KPX 전송 완료 / 낙찰: 결과 확정','오류 발생 시 직전 차수 입찰값 재사용 (fallback)')}</div><div class="kv" style="color:var(--semantic-brand-primary)">진행중</div><div class="kd neu">초단기 예보 반영</div></div>
+    <div class="card acc"><div class="ct">다음 마감 ${window.tip('실시간 입찰 다음 마감','T-75 (실시간 75분 전) 입찰 제출 마감까지 남은 시간','15분 단위 96회/일 입찰 — 매시 00·15·30·45분 마감','자동 제출 기본 — 마감 5분 전 수동 개입 가능')}</div><div class="kv">T-75<span class="ku">분</span></div><div class="kd neu" id="rt-kpi-deadline-sub">10분 전 알림 · 15:15 제출</div></div>
+    <div class="card"><div class="ct">현재 입찰 상태 ${window.tip('현재 입찰 상태','금회 차수의 입찰 진행 상태','진행중: 예측 갱신 중 / 제출완료: KPX 전송 완료 / 낙찰: 결과 확정','오류 발생 시 직전 차수 입찰값 재사용 (fallback)')}</div><div class="kv" id="rt-kpi-state" style="color:var(--semantic-brand-primary)">진행중</div><div class="kd neu" id="rt-kpi-state-sub">초단기 예보 반영</div></div>
     <div class="card"><div class="ct">DA 대비 갱신폭 ${window.tip('DA 대비 갱신폭','전일 하루전(DA) 입찰량 대비 실시간 갱신량의 차이','RT 입찰량 - DA 입찰량 [MW]','±5MW 이내 정상 / ±10MW 초과 시 IMBP 위험 — 사유 점검 필요')}</div><div class="kv">+2.1<span class="ku">MW</span></div><div class="kd up">실측 상향 반영</div></div>
-    <div class="card"><div class="ct">현재 Imbalance ${window.tip('현재 Imbalance','입찰량 대비 실측 발전량의 절대 편차율','|실측 - 입찰| ÷ 입찰 × 100 [%]','5% 이하 정상 / 5~10% 주의 / 10% 초과 IMBP 페널티 발생 (kWh당 SMP의 1.2배)')}</div><div class="kv" style="color:var(--palette-yellow-40)">1.8<span class="ku">%</span></div><div class="kd neu">허용 범위 내 (임계 5%)</div></div>
+    <div class="card"><div class="ct">현재 Imbalance ${window.tip('현재 Imbalance','입찰량 대비 실측 발전량의 절대 편차율','|실측 - 입찰| ÷ 입찰 × 100 [%]','5% 이하 정상 / 5~10% 주의 / 10% 초과 IMBP 페널티 발생 (kWh당 SMP의 1.2배)')}</div><div class="kv" style="color:var(--palette-yellow-40)">1.8<span class="ku">%</span></div><div class="kd neu" id="rt-kpi-imb-sub">허용 범위 내 (임계 5%)</div></div>
   </div>
-  <div class="card mb"><div class="sh"><div class="st">15분 단위 RT 갱신 로직 현황</div><span class="kpi-pill">T-75분 마감</span></div>
-    <div class="al"><div class="ad" style="background:var(--semantic-positive-normal)"></div><div class="am"><b>T-90</b> 최근 15분 현장 실측값 수집 완료</div><div class="at">15분 전</div></div>
-    <div class="al"><div class="ad" style="background:var(--semantic-positive-normal)"></div><div class="am"><b>T-85</b> 초단기 기상 예보 결합 · 입찰값 재계산</div><div class="at">10분 전</div></div>
-    <div class="al"><div class="ad" style="background:var(--semantic-brand-primary)"></div><div class="am"><b>T-80</b> DA 대비 Imbalance 검증 · 페널티 시뮬</div><div class="at">진행중</div></div>
-    <div class="al"><div class="ad" style="background:var(--semantic-line-strong)"></div><div class="am"><b>T-75</b> KPX 실시간 시장 제출</div><div class="at">18분 후</div></div>
+  <div class="card mb" id="rt-tl-card"><div class="sh"><div class="st">RT 갱신 로직</div><div style="display:flex;gap:6px;align-items:center"><span class="kpi-pill" id="rt-tl-cycle">15분 갱신</span><span class="kpi-pill">T-75분 마감</span></div></div>
+    <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:6px 2px;line-height:24px">
+      <span class="mono" style="color:var(--semantic-positive-normal)">✓ T-90 실측 수집</span>
+      <span style="color:var(--semantic-label-alt)">→</span>
+      <span class="mono" style="color:var(--semantic-positive-normal)">✓ T-85 <span id="rt-tl-source">[hybrid]</span> 예보 결합</span>
+      <span style="color:var(--semantic-label-alt)">→</span>
+      <span class="mono" style="color:var(--palette-yellow-40)">⏵ T-80 Imbalance 검증</span>
+      <span class="badge warn" style="font-size:10px">진행중</span>
+      <span style="color:var(--semantic-label-alt)">→</span>
+      <span class="mono" style="color:var(--semantic-label-alt)">⏸ T-75 <span id="tl-rt-desc">KPX 실시간 시장 제출</span></span>
+      <span class="badge off" id="tl-rt-badge" style="font-size:10px">18분 후</span>
+    </div>
+  </div>
+
+  <!-- 금회 슬롯 자원별 입찰 도표 -->
+  <div class="card mb">
+    <div class="sh">
+      <div class="st">금회 슬롯 자원별 입찰 <span style="font-size:12px;color:var(--semantic-label-alt);font-weight:400;margin-left:8px">15:15 슬롯 · T-75 제출</span></div>
+      <div style="display:flex;gap:10px;align-items:center">
+        <span style="font-size:12px;color:var(--semantic-label-alt)" id="rt-tbl-meta">자동 갱신 · 14:25:08 · DA 대비 +2.1 MW</span>
+        <button class="cb n sm" id="btn-rt-cancel" onclick="rtCancelEdit()" style="display:none">취소</button>
+        <button class="cb n sm" id="btn-rt-edit" onclick="rtToggleEdit()">수정</button>
+        <button class="cb p sm" id="btn-submit-rt" onclick="submitRtBid()" style="display:none">현재 슬롯 제출</button>
+      </div>
+    </div>
+    <div style="overflow-x:auto">
+    <table class="tbl">
+      <thead><tr>
+        <th>순번</th><th>자원명</th><th>발전원</th><th>지역</th>
+        <th>설비용량</th>
+        <th style="color:var(--semantic-label-alt)">DA 입찰량</th>
+        <th style="color:var(--semantic-brand-primary)">RT 갱신량</th>
+        <th>편차(Δ)</th>
+        <th>갱신 사유</th>
+        <th>상태</th>
+      </tr></thead>
+      <tbody>
+      ${[
+        ['광양항태양광 01단계','태양광','전남',2.29,2.18,2.45,'실측 상향'],
+        ['광양항태양광 04단계','태양광','전남',2.20,2.09,2.30,'실측 상향'],
+        ['해맞이 태양광','태양광','전남',1.00,0.95,1.05,'실측 상향'],
+        ['온누리 태양광','태양광','전남',1.00,0.94,1.02,'실측 상향'],
+        ['금능1호 태양광','태양광','제주',0.98,0.88,0.78,'운량 증가'],
+        ['김주풍력 01단계','풍력','경북',4.00,3.80,4.20,'풍속 강화'],
+        ['김주풍력 02단계','풍력','경북',10.00,9.50,10.50,'풍속 강화'],
+        ['금능1호 ESS','ESS','제주',2.00,1.80,1.90,'SOC 활용'],
+        ['제주 ESS허브','ESS','제주',5.00,4.70,4.60,'정기 갱신'],
+        ['순천 바이오가스','바이오','전남',1.50,1.42,1.42,'변동 없음'],
+        ['여수 바이오매스','바이오','전남',3.00,2.85,2.85,'변동 없음'],
+        ['광주 V2G 스테이션','V2G','전남',0.80,0.72,0.72,'변동 없음'],
+        ['전남 V2G 허브','V2G','전남',1.50,1.35,1.35,'변동 없음'],
+      ].map((r,i)=>{
+        const delta=(r[5]-r[4]).toFixed(2);
+        const dNum=parseFloat(delta);
+        const dColor=dNum>0?'var(--semantic-positive-normal)':(dNum<0?'var(--semantic-negative-normal)':'var(--semantic-label-alt)');
+        const dSign=dNum>0?'+':'';
+        return `<tr class="rt-res-row" data-resource="${r[0]}"><td class="mono">${i+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="mono">${r[3].toFixed(2)} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[4].toFixed(2)} MW</td><td class="mono rt-bid-qty" style="color:var(--semantic-brand-primary)">${r[5].toFixed(2)} MW</td><td class="mono" style="color:${dColor}">${dSign}${delta} MW</td><td>${r[6]}</td><td class="rt-status-cell"><span class="badge ok">제출완료</span></td></tr>`;
+      }).join('')}
+      </tbody>
+    </table>
+    </div>
   </div>
   <div class="g2">
     <div class="card mb"><div class="sh"><div class="st">DA 입찰값 vs RT 갱신값 · 금일</div><span class="sa" onclick="activate('bidRT-dual')">편차 관리 ↗</span></div><div style="height:180px;position:relative"><canvas id="c-rtbid" role="img" aria-label="DA vs RT"></canvas></div></div>
@@ -63,7 +119,7 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
   </div>
   <div class="card mb"><div class="sh"><div class="st">자원별 단기 예측값 (15/30/60분 horizon)</div><button class="cb n sm" onclick="toast('자원별 예측값을 재생성합니다.')">재생성</button></div>
   <div style="overflow-x:auto">
-  <table class="tbl"><thead><tr><th>자원명</th><th>발전원</th><th>현재 출력</th><th>+15분 예측</th><th>+30분 예측</th><th>+60분 예측</th><th>사용 모델</th><th>신뢰도</th></tr></thead><tbody>
+  <table class="tbl"><thead><tr><th>자원명</th><th>발전원</th><th>현재 출력</th><th>+15분 예측</th><th>+30분 예측</th><th>+60분 예측</th><th>사용 모델</th><th>신뢰도</th></tr></thead><tbody id="brm-fcst-tbody">
     ${[
       ['광양항태양광 01단계','태양광',2.18,2.22,2.16,1.95,'hybrid-ensemble',96.8],
       ['광양항태양광 04단계','태양광',2.09,2.14,2.08,1.88,'hybrid-ensemble',96.2],
@@ -71,7 +127,7 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
       ['온누리 태양광','태양광',0.94,0.95,0.91,0.80,'nowcast-v2',94.8],
       ['금능1호 태양광','태양광',0.88,0.85,0.82,0.72,'nowcast-v2',91.4],
       ['김주풍력 01단계','풍력',3.80,3.95,4.10,4.25,'kma-ultrashort',93.6],
-    ].map(r=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]} MW</td><td class="mono" style="color:var(--semantic-brand-primary)">${r[3]} MW</td><td class="mono">${r[4]} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[5]} MW</td><td class="mono" style="font-size:12px">${r[6]}</td><td class="mono" style="color:${r[7]>=95?'var(--semantic-positive-normal)':(r[7]>=92?'var(--palette-yellow-40)':'var(--semantic-negative-normal)')}">${r[7]}%</td></tr>`).join('')}
+    ].map(r=>`<tr data-type="${r[1]}"><td>${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]} MW</td><td class="mono" style="color:var(--semantic-brand-primary)">${r[3]} MW</td><td class="mono">${r[4]} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[5]} MW</td><td class="mono" style="font-size:12px">${r[6]}</td><td class="mono" style="color:${r[7]>=95?'var(--semantic-positive-normal)':(r[7]>=92?'var(--palette-yellow-40)':'var(--semantic-negative-normal)')}">${r[7]}%</td></tr>`).join('')}
   </tbody></table>
   </div>
   </div>
@@ -123,32 +179,32 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
 
 <!-- ============ 모달 ① 실시간 설정 ============ -->
 <div class="modal-backdrop" id="modal-rt-settings" style="display:none" onclick="closeModalBg(event,'modal-rt-settings')">
-  <div class="modal">
-    <div class="modal-hdr">
+  <div class="modal" style="max-height:min(78vh,720px);display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-hdr" style="flex-shrink:0">
       <span class="modal-title">실시간 입찰 설정</span>
       <button class="modal-close" onclick="closeModal('modal-rt-settings')">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="overflow-y:auto;flex:1 1 auto;min-height:0">
       <div class="form-section">실시간 모드</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode" checked> 자동 갱신 모드 (기본)</label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode"> 수동 모드 (운영자 직접 실행)</label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode"> OFF (실시간 입찰 중단)</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode" value="auto" checked> 자동 갱신 모드 (기본)</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode" value="manual"> 수동 모드 (운영자 직접 실행)</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode" value="off"> OFF (실시간 입찰 중단)</label>
       </div>
       <hr class="form-divider">
       <div class="form-section">갱신 주기 · 임계값</div>
       <div class="form-row">
         <div class="form-item"><label>갱신 주기</label>
-          <select class="sel"><option selected>15분 (권장)</option><option>30분</option><option>60분</option></select>
+          <select class="sel" id="rt-cycle"><option value="15" selected>15분 (권장)</option><option value="30">30분</option><option value="60">60분</option></select>
         </div>
         <div class="form-item"><label>T-75 사전 알림</label>
-          <select class="sel"><option>5분 전</option><option selected>10분 전</option><option>15분 전</option></select>
+          <select class="sel" id="rt-alert"><option value="5">5분 전</option><option value="10" selected>10분 전</option><option value="15">15분 전</option></select>
         </div>
       </div>
       <div class="form-row full">
         <div class="form-item">
           <label>자동 재입찰 임계값 — Imbalance <b id="rt-thr-v" style="color:var(--semantic-brand-primary)">5</b>% 초과 시 자동 갱신</label>
-          <input type="range" min="0" max="15" step="0.5" value="5" oninput="document.getElementById('rt-thr-v').textContent=this.value" style="width:100%">
+          <input type="range" id="rt-thr-input" min="0" max="15" step="0.5" value="5" oninput="document.getElementById('rt-thr-v').textContent=this.value" style="width:100%">
           <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--semantic-label-alt);margin-top:2px">
             <span>0% (Aggressive)</span><span>5% (Balanced)</span><span>15% (Conservative)</span>
           </div>
@@ -156,14 +212,14 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
       </div>
       <hr class="form-divider">
       <div class="form-section">초단기 예보 소스</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-src"> KMA 초단기실황 (기상청)</label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-src"> 자체 nwp-e</label>
-        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-src" checked> 하이브리드 (KMA + nwp-e 앙상블 · 권장)</label>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-src" value="kma"> KMA 초단기실황 (기상청)</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-src" value="nwp"> 자체 nwp-e</label>
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-src" value="hybrid" checked> 하이브리드 (KMA + nwp-e 앙상블 · 권장)</label>
       </div>
       <hr class="form-divider">
-      <div class="form-section">참여 자원 선택</div>
-      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:10px 14px;margin-bottom:16px">
+      <div class="form-section">참여 자원 선택 <span id="rt-res-count" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">12/13 활성</span></div>
+      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:8px 12px;margin-bottom:12px">
         ${[
           ['광양항태양광 01단계','태양광',true],
           ['광양항태양광 04단계','태양광',true],
@@ -171,8 +227,15 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
           ['온누리 태양광','태양광',true],
           ['금능1호 태양광','태양광',false],
           ['김주풍력 01단계','풍력',true],
+          ['김주풍력 02단계','풍력',true],
+          ['금능1호 ESS','ESS',true],
+          ['제주 ESS허브','ESS',true],
+          ['순천 바이오가스','바이오',true],
+          ['여수 바이오매스','바이오',true],
+          ['광주 V2G 스테이션','V2G',true],
+          ['전남 V2G 허브','V2G',true],
         ].map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--semantic-line-alt)">
-          <label class="toggle"><input type="checkbox" ${r[2]?'checked':''}><div class="ts"></div></label>
+          <label class="toggle"><input type="checkbox" class="rt-res-toggle" data-resource="${r[0]}" ${r[2]?'checked':''} onchange="updateRtResCount()"><div class="ts"></div></label>
           <span style="font-size:13px;flex:1">${r[0]}</span>
           <span class="badge ${r[1]==='태양광'?'inf':'ok'}">${r[1]}</span>
         </div>`).join('')}
@@ -180,13 +243,13 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
       <hr class="form-divider">
       <div class="form-section">제출 결과 통지</div>
       <div class="form-row">
-        <div class="form-item"><label>운영자 이메일</label><input class="inp" value="president@ewp.co.kr"></div>
-        <div class="form-item"><label>문자 알림 번호</label><input class="inp" placeholder="010-0000-0000"></div>
+        <div class="form-item"><label>운영자 이메일</label><input class="inp" id="rt-email" value="president@ewp.co.kr"></div>
+        <div class="form-item"><label>문자 알림 번호</label><input class="inp" id="rt-sms" placeholder="010-0000-0000"></div>
       </div>
     </div>
     <div class="modal-footer">
       <button class="cb n" onclick="closeModal('modal-rt-settings')">취소</button>
-      <button class="cb p" onclick="toast('실시간 설정을 저장했습니다.');closeModal('modal-rt-settings')">적용</button>
+      <button class="cb p" onclick="applyRtMode()">적용</button>
     </div>
   </div>
 </div>
@@ -204,14 +267,15 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
       </div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="radio" name="rt-model-mode" style="margin-top:4px">
+          <input type="radio" name="rt-model-mode" value="latest" onchange="toggleRtModelMode()" style="margin-top:4px">
           <div><div style="font-weight:500">최신 실측값 기반</div><div style="font-size:11px;color:var(--semantic-label-alt);margin-top:2px">예측모델 없이 직전 15분 실측 평균값으로 재입찰합니다.</div></div>
         </label>
         <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="radio" name="rt-model-mode" checked style="margin-top:4px">
+          <input type="radio" name="rt-model-mode" value="per-gen" onchange="toggleRtModelMode()" checked style="margin-top:4px">
           <div><div style="font-weight:500">발전기별 초단기 예측모델 사용</div><div style="font-size:11px;color:var(--semantic-label-alt);margin-top:2px">각 발전기별로 초단기 모델을 지정합니다.</div></div>
         </label>
       </div>
+      <div id="rt-model-per-gen-section">
       <hr class="form-divider">
       <div class="form-row full"><div class="form-item"><label>전체 일괄선택</label><select class="sel"><option>전체 일괄선택</option><option>nowcast-v2 (기본)</option><option>kma-ultrashort</option><option>hybrid-ensemble</option></select></div></div>
       <div class="form-row full"><div class="form-item"><label>발전기 검색</label><input class="inp" placeholder="🔍 발전기명 또는 자원코드"></div></div>
@@ -228,6 +292,10 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
             <select class="sel" style="height:30px;font-size:12px"><option>${r[1]}</option><option>nowcast-v2</option><option>kma-ultrashort</option><option>hybrid-ensemble</option></select>
           </div>
         </div>`).join('')}
+      </div>
+      </div>
+      <div id="rt-model-latest-info" style="display:none;padding:12px 14px;background:var(--semantic-brand-primary-assistive);border-radius:6px;font-size:12px;line-height:18px;color:var(--semantic-label-normal)">
+        ℹ 발전기별 모델 지정 없이, 직전 15분 실측 평균값(persistence)을 RT 갱신 입찰량으로 사용합니다. 예측 실패·모델 응답 지연 시 fallback 용도로도 활용됩니다.
       </div>
     </div>
     <div class="modal-footer">
@@ -259,12 +327,238 @@ ${_mkBidFilter({rightInfo:'T-75분 마감 · 15분 단위 갱신'})}
     </div>
   </div>
 </div>`;
+window.bidRtMainApply=function(){
+  const type=document.getElementById('brm-type')?.value||'all';
+  document.querySelectorAll('#brm-fcst-tbody tr').forEach(tr=>{
+    const cType=tr.dataset.type;
+    tr.style.display=(type==='all'||cType===type)?'':'none';
+  });
+};
 window['I_bidRT-main']=function(){
   const h=['09','10','11','12','13','14','15','16','17'];
   mkChart('c-rtbid','line',h,[
     {label:'DA 입찰',data:[5.8,8.1,9.8,10.7,10.9,10.5,10,10.1,9.6],borderColor:'rgba(120,120,120,0.6)',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},
     {label:'RT 갱신',data:[6.1,8.4,10.1,10.9,11.0,10.4,9.8,10.3,9.7],borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,89,255,0.08)'},
   ],{});
+  if(!window._rtMode) window._rtMode='auto';
+  if(!window._rtSettings){
+    window._rtSettings={
+      cycle:'15',alert:'10',threshold:5,source:'hybrid',email:'',sms:'',
+      resources:[
+        ['광양항태양광 01단계',true],['광양항태양광 04단계',true],['해맞이 태양광',true],['온누리 태양광',true],
+        ['금능1호 태양광',false],['김주풍력 01단계',true],['김주풍력 02단계',true],['금능1호 ESS',true],
+        ['제주 ESS허브',true],['순천 바이오가스',true],['여수 바이오매스',true],['광주 V2G 스테이션',true],['전남 V2G 허브',true]
+      ].map(r=>({name:r[0],enabled:r[1]}))
+    };
+  }
+  if(typeof window.updateRtModeUI==='function') window.updateRtModeUI();
+  if(typeof window.applyRtSettings==='function') window.applyRtSettings();
+};
+window.applyRtMode=function(){
+  const Q=id=>document.getElementById(id);
+  const sel=document.querySelector('input[name="rt-mode"]:checked');
+  window._rtMode=sel?sel.value:'auto';
+  window._rtSubmitted=false;
+  // Read all settings
+  const srcSel=document.querySelector('input[name="rt-src"]:checked');
+  window._rtSettings={
+    cycle: Q('rt-cycle')?.value||'15',
+    alert: Q('rt-alert')?.value||'10',
+    threshold: parseFloat(Q('rt-thr-input')?.value||'5'),
+    source: srcSel?srcSel.value:'hybrid',
+    email: Q('rt-email')?.value||'',
+    sms: Q('rt-sms')?.value||'',
+    resources: Array.from(document.querySelectorAll('.rt-res-toggle')).map(el=>({name:el.dataset.resource,enabled:el.checked}))
+  };
+  window.updateRtModeUI();
+  window.applyRtSettings();
+  const enabled=window._rtSettings.resources.filter(r=>r.enabled).length;
+  const total=window._rtSettings.resources.length;
+  const modeTxt={auto:'자동 갱신',manual:'수동',off:'OFF · 중단'}[window._rtMode];
+  toast('실시간 설정 저장 — '+modeTxt+' · 임계 '+window._rtSettings.threshold+'% · '+enabled+'/'+total+'개 자원');
+  closeModal('modal-rt-settings');
+};
+window.applyRtSettings=function(){
+  const s=window._rtSettings;
+  if(!s) return;
+  const Q=id=>document.getElementById(id);
+  // Imbalance threshold KPI sub
+  const imbSub=Q('rt-kpi-imb-sub');
+  if(imbSub){
+    const cur=1.8;
+    const within=cur<=s.threshold;
+    imbSub.textContent=(within?'허용 범위 내':'임계 초과')+' (임계 '+s.threshold+'%)';
+  }
+  // Deadline alert KPI sub
+  const dlSub=Q('rt-kpi-deadline-sub');
+  if(dlSub) dlSub.textContent=s.alert+'분 전 알림 · 15:15 제출';
+  // Cycle pill
+  const cyclePill=Q('rt-tl-cycle');
+  if(cyclePill) cyclePill.textContent=s.cycle+'분 갱신';
+  // Forecast source label
+  const srcEl=Q('rt-tl-source');
+  if(srcEl){
+    const map={kma:'[KMA]',nwp:'[nwp-e]',hybrid:'[hybrid]'};
+    srcEl.textContent=map[s.source]||'[hybrid]';
+  }
+  // Resource filter on bid table
+  const enabledSet=new Set(s.resources.filter(r=>r.enabled).map(r=>r.name));
+  document.querySelectorAll('.rt-res-row').forEach(tr=>{
+    const name=tr.dataset.resource;
+    if(name) tr.style.display=enabledSet.has(name)?'':'none';
+  });
+};
+window.updateRtResCount=function(){
+  const total=document.querySelectorAll('.rt-res-toggle').length;
+  const checked=document.querySelectorAll('.rt-res-toggle:checked').length;
+  const el=document.getElementById('rt-res-count');
+  if(el) el.textContent=checked+'/'+total+' 활성';
+};
+window.updateRtModeUI=function(){
+  const mode=window._rtMode||'auto';
+  const Q=id=>document.getElementById(id);
+  // Mode badge
+  const badge=Q('rt-mode-badge');
+  if(badge){
+    if(mode==='manual'){badge.textContent='수동 모드';badge.className='badge warn';}
+    else if(mode==='off'){badge.textContent='OFF · 실시간 중단';badge.className='badge err';}
+    else {badge.textContent='자동 갱신 모드';badge.className='badge ok';}
+  }
+  // Submit button
+  const btn=Q('btn-submit-rt');
+  if(btn){
+    btn.style.display=(mode==='manual')?'':'none';
+    btn.disabled=!!window._rtSubmitted;
+    btn.textContent=window._rtSubmitted?'제출 완료':'현재 슬롯 제출';
+  }
+  // KPI: 현재 입찰 상태
+  const kv=Q('rt-kpi-state'),ks=Q('rt-kpi-state-sub');
+  if(kv && ks){
+    if(mode==='manual'){
+      kv.textContent=window._rtSubmitted?'제출 완료':'검토 대기';
+      kv.style.color=window._rtSubmitted?'var(--semantic-brand-primary)':'var(--palette-yellow-40)';
+      ks.textContent=window._rtSubmitted?'KPX 응답 대기':'운영자 제출 필요';
+    } else if(mode==='off'){
+      kv.textContent='중단'; kv.style.color='var(--semantic-negative-normal)';
+      ks.textContent='실시간 입찰 중지됨';
+    } else {
+      kv.textContent='진행중'; kv.style.color='var(--semantic-brand-primary)';
+      ks.textContent='초단기 예보 반영';
+    }
+  }
+  // Timeline T-75 step
+  const td=Q('tl-rt-desc'),tb=Q('tl-rt-badge');
+  if(td && tb){
+    if(mode==='manual'){
+      td.textContent='운영자 제출 마감';
+      tb.textContent=window._rtSubmitted?'제출 완료':'제출 필요';
+      tb.className='badge '+(window._rtSubmitted?'ok':'warn');
+    } else if(mode==='off'){
+      td.textContent='KPX 제출 중단됨';
+      tb.textContent='OFF'; tb.className='badge err';
+    } else {
+      td.textContent='KPX 실시간 시장 제출';
+      tb.textContent='18분 후'; tb.className='badge off';
+    }
+    tb.style.fontSize='10px';
+  }
+  // RT bid table meta + status
+  const meta=Q('rt-tbl-meta');
+  if(meta){
+    if(mode==='manual'){
+      meta.textContent=window._rtSubmitted?'수동 · 운영자 김운영 · 제출 완료':'수동 · 운영자 검토 대기 · 미제출';
+      meta.style.color=window._rtSubmitted?'':'var(--palette-yellow-40)';
+    } else if(mode==='off'){
+      meta.textContent='실시간 입찰 중단됨';
+      meta.style.color='var(--semantic-negative-normal)';
+    } else {
+      meta.textContent='자동 갱신 · 14:25:08 · DA 대비 +2.1 MW';
+      meta.style.color='';
+    }
+  }
+  document.querySelectorAll('.rt-status-cell').forEach(c=>{
+    if(mode==='off') c.innerHTML='<span class="badge err">중단</span>';
+    else if(mode==='manual' && !window._rtSubmitted) c.innerHTML='<span class="badge warn">검토 대기</span>';
+    else if(mode==='manual' && window._rtSubmitted) c.innerHTML='<span class="badge inf">제출 완료</span>';
+    else c.innerHTML='<span class="badge ok">제출완료</span>';
+  });
+  // OFF: dim timeline card
+  const tlCard=Q('rt-tl-card');
+  if(tlCard) tlCard.style.opacity=(mode==='off')?'0.55':'';
+};
+window.submitRtBid=function(){
+  const cells=document.querySelectorAll('.rt-bid-qty');
+  let total=0,count=0;
+  cells.forEach(c=>{
+    const tr=c.closest('tr');
+    if(tr && tr.style.display==='none') return;
+    const v=parseFloat(c.textContent.replace('MW','').trim());
+    if(!isNaN(v)){ total+=v; count++; }
+  });
+  if(!confirm('현재 RT 슬롯(15:15)을 KPX로 제출하시겠습니까?\n총 '+count+'개 자원 · 합계 '+total.toFixed(2)+' MW')) return;
+  window._rtSubmitted=true;
+  window.updateRtModeUI();
+  toast('RT 슬롯 제출 완료');
+};
+window.rtToggleEdit=function(){
+  const editBtn=document.getElementById('btn-rt-edit');
+  const cancelBtn=document.getElementById('btn-rt-cancel');
+  const submitBtn=document.getElementById('btn-submit-rt');
+  if(!window._rtEditMode){
+    document.querySelectorAll('.rt-bid-qty').forEach(td=>{
+      const v=td.textContent.replace('MW','').trim();
+      td.dataset.orig=v;
+      td.innerHTML='<input type="number" step="0.01" min="0" class="inp" style="width:80px;height:28px;font-size:12px;text-align:right;padding:2px 6px" value="'+v+'">';
+    });
+    window._rtEditMode=true;
+    if(editBtn){editBtn.textContent='저장';editBtn.className='cb p sm';}
+    if(cancelBtn) cancelBtn.style.display='';
+    if(submitBtn) submitBtn.disabled=true;
+    toast('RT 갱신량을 수정하고 저장을 누르세요.');
+  } else {
+    let changed=0;
+    document.querySelectorAll('.rt-bid-qty').forEach(td=>{
+      const inp=td.querySelector('input');
+      const v=inp?inp.value:td.dataset.orig;
+      if(v!==td.dataset.orig) changed++;
+      td.innerHTML=v+' MW';
+      delete td.dataset.orig;
+    });
+    window._rtEditMode=false;
+    if(editBtn){editBtn.textContent='수정';editBtn.className='cb n sm';}
+    if(cancelBtn) cancelBtn.style.display='none';
+    if(submitBtn) submitBtn.disabled=false;
+    toast(changed>0?changed+'개 항목이 수정되었습니다.':'변경사항이 없습니다.');
+  }
+};
+window.rtCancelEdit=function(){
+  document.querySelectorAll('.rt-bid-qty').forEach(td=>{
+    if(td.dataset.orig!==undefined){td.innerHTML=td.dataset.orig+' MW';delete td.dataset.orig;}
+  });
+  window._rtEditMode=false;
+  const editBtn=document.getElementById('btn-rt-edit');
+  const cancelBtn=document.getElementById('btn-rt-cancel');
+  const submitBtn=document.getElementById('btn-submit-rt');
+  if(editBtn){editBtn.textContent='수정';editBtn.className='cb n sm';}
+  if(cancelBtn) cancelBtn.style.display='none';
+  if(submitBtn) submitBtn.disabled=false;
+  toast('수정이 취소되었습니다.');
+};
+window.toggleRtModelMode=function(){
+  const sel=document.querySelector('input[name="rt-model-mode"]:checked');
+  const v=sel?sel.value:'per-gen';
+  const perGen=document.getElementById('rt-model-per-gen-section');
+  const latest=document.getElementById('rt-model-latest-info');
+  if(perGen) perGen.style.display=(v==='per-gen')?'':'none';
+  if(latest) latest.style.display=(v==='latest')?'':'none';
+};
+window.refreshRtHistory=function(){
+  const el=document.getElementById('rt-refresh-time');
+  if(el){
+    const d=new Date();
+    el.textContent=d.toTimeString().slice(0,8);
+  }
+  toast('실시간 이력을 새로고침했습니다.');
 };
 window.chkRtRef=function(v){
   const b=document.getElementById('btn-rtref');

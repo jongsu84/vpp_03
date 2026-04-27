@@ -3,21 +3,15 @@ window.P = window.P || {};
 /* ===== 준중앙급전: 수익정산 ===== */
 /* ===== 준중앙급전: 수익정산 (전용 정산 산식 + 정산서) ===== */
 window.P['sdp-set']=()=>`
+<!-- 전용 정산 산식 안내 -->
+<div style="font-size:12px;color:var(--semantic-label-normal);padding:10px 14px;background:var(--semantic-brand-primary-assistive);border-radius:6px;margin-bottom:12px;line-height:20px">
+  💡 <b>준중앙급전 전용 정산 산식</b> — <span class="mono">이행 정산금(SMP×이행량) + 용량정산금(CP) + 부가정산금(AS) + 응답속도 인센티브 − 미이행 페널티 − 운영 수수료(5%) = 최종 순 지급액</span><br>
+  일반 VPP 정산(DAES/RTES/IMBP)과 분리 처리 · KPX 월 마감 후 <b>익월 15일</b> 확정 · <b>지시 이행 보상금 자동 정산</b>
+</div>
+
 <!-- 최상위 필터 바 -->
 <div class="card fbar" style="margin-bottom:12px">
   <div class="fbar-row">
-    <div class="fbar-item">
-      <span class="fbar-lbl">정산 월</span>
-      <select class="fbar-sel" id="ss-f-month" onchange="ssFilterApply()">
-        <option>2026-04</option><option>2026-03</option><option>2026-02</option><option>2026-01</option>
-      </select>
-    </div>
-    <div class="fbar-item">
-      <span class="fbar-lbl">정산 상태</span>
-      <select class="fbar-sel" id="ss-f-state" onchange="ssFilterApply()">
-        <option>전체</option><option>확정</option><option>가정산</option><option>발행 대기</option>
-      </select>
-    </div>
     <div class="fbar-item">
       <span class="fbar-lbl">VPP 그룹</span>
       <select class="fbar-sel" id="ss-f-vpp" onchange="ssFilterApply()">
@@ -31,18 +25,24 @@ window.P['sdp-set']=()=>`
       </select>
     </div>
     <div class="fbar-item">
+      <span class="fbar-lbl">정산 월</span>
+      <select class="fbar-sel" id="ss-f-month" onchange="ssFilterApply()">
+        <option>2026-04</option><option>2026-03</option><option>2026-02</option><option>2026-01</option>
+      </select>
+    </div>
+    <div class="fbar-item">
+      <span class="fbar-lbl">정산 상태</span>
+      <select class="fbar-sel" id="ss-f-state" onchange="ssFilterApply()">
+        <option>전체</option><option>확정</option><option>가정산</option><option>발행 대기</option>
+      </select>
+    </div>
+    <div class="fbar-item">
       <span class="fbar-lbl">지급 상태</span>
       <select class="fbar-sel" id="ss-f-pay" onchange="ssFilterApply()">
         <option>전체</option><option>지급 완료</option><option>지급 대기</option><option>보류</option>
       </select>
     </div>
   </div>
-</div>
-
-<!-- 전용 정산 산식 안내 -->
-<div style="font-size:12px;color:var(--semantic-label-normal);padding:10px 14px;background:var(--semantic-brand-primary-assistive);border-radius:6px;margin-bottom:12px;line-height:20px">
-  💡 <b>준중앙급전 전용 정산 산식</b> — <span class="mono">이행 정산금(SMP×이행량) + 용량정산금(CP) + 부가정산금(AS) + 응답속도 인센티브 − 미이행 페널티 − 운영 수수료(5%) = 최종 순 지급액</span><br>
-  일반 VPP 정산(DAES/RTES/IMBP)과 분리 처리 · KPX 월 마감 후 <b>익월 15일</b> 확정 · <b>지시 이행 보상금 자동 정산</b>
 </div>
 
 <!-- 정산서 Hero -->

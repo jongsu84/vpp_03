@@ -62,11 +62,11 @@ const _hfFilterBar=()=>{
   const genOpts=Object.entries(window.GENERATORS_BY_TYPE||{}).map(([t,gens])=>`<optgroup label="${t}">${gens.map(g=>`<option>${g}</option>`).join('')}</optgroup>`).join('');
   return `<div class="card fbar" style="margin-bottom:10px">
     <div class="fbar-row">
-      <div class="fbar-item"><span class="fbar-lbl">자원 유형</span>
-        <select class="fbar-sel" id="hf-f-type" onchange="hfFilterChange()"><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
-      </div>
       <div class="fbar-item"><span class="fbar-lbl">VPP 그룹</span>
         <select class="fbar-sel" id="hf-f-vpp" onchange="hfFilterChange()"><option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
+      </div>
+      <div class="fbar-item"><span class="fbar-lbl">자원 유형</span>
+        <select class="fbar-sel" id="hf-f-type" onchange="hfFilterChange()"><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
       </div>
       <div class="fbar-item"><span class="fbar-lbl">심각도</span>
         <select class="fbar-sel" id="hf-f-sev" onchange="hfFilterChange()"><option>전체</option><option>위험</option><option>주의</option><option>관찰</option></select>

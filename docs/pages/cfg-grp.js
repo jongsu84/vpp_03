@@ -4,23 +4,23 @@ window.P = window.P || {};
 window.P['cfg-grp']=()=>`
 <!-- 최상위 필터 바 (분류 → 상태 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
-  <div class="fbar-item"><label class="flabel">그룹 유형</label>
+  <div class="fbar-item"><label class="fbar-lbl">그룹 유형</label>
     <select class="fbar-sel" id="cgr-f-type" onchange="cfgGrpFilterApply()">
       <option value="">전체</option><option>집합자원</option><option>지역별</option><option>관리업체별</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">상태</label>
+  <div class="fbar-item"><label class="fbar-lbl">상태</label>
     <select class="fbar-sel" id="cgr-f-stat" onchange="cfgGrpFilterApply()">
       <option value="">전체</option><option>운영중</option><option>일시정지</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">담당 운영자</label>
+  <div class="fbar-item"><label class="fbar-lbl">담당 운영자</label>
     <select class="fbar-sel" id="cgr-f-mgr" onchange="cfgGrpFilterApply()">
       <option value="">전체</option><option>김운영</option><option>이제어</option><option>박기술</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">용량</label>
+  <div class="fbar-item"><label class="fbar-lbl">용량</label>
     <select class="fbar-sel" id="cgr-f-cap" onchange="cfgGrpFilterApply()">
       <option value="">전체</option><option value="small">~ 5 MW</option><option value="mid">5 ~ 10 MW</option><option value="big">10 MW 이상</option>
     </select></div>
-  <div class="fbar-item"><label class="flabel">일괄 제어</label>
+  <div class="fbar-item"><label class="fbar-lbl">일괄 제어</label>
     <select class="fbar-sel" id="cgr-f-ctrl" onchange="cfgGrpFilterApply()">
       <option value="">전체</option><option>허용</option><option>불가</option>
     </select></div>
@@ -36,8 +36,9 @@ window.P['cfg-grp']=()=>`
   <div class="card mb">
     <div class="sh"><div class="st">그룹 목록</div>
       <div style="display:flex;gap:6px;align-items:center">
+        <input class="inp" placeholder="검색 (그룹명·유형)" style="width:180px;height:32px;font-size:12px" oninput="grpSearch(this.value)">
+        <button class="cb p sm" onclick="openModal('modal-grp-add')">그룹 생성</button>
         ${window.csvBtn('grp-tbody','group_master','그룹 목록')}
-        <button class="cb p" style="font-size:10px" onclick="openModal('modal-grp-add')">그룹 생성</button>
       </div>
     </div>
     <table class="tbl"><thead><tr><th>그룹명</th><th>유형</th><th>발전소 수</th><th>총 용량</th><th>상태</th></tr></thead>
@@ -106,6 +107,10 @@ window.P['cfg-grp']=()=>`
 
 window['I_cfg-grp']=function(){
   function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  window.grpSearch=function(v){
+    const rows=document.querySelectorAll('#grp-tbody tr');
+    rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
+  };
   window.cfgGrpFilterApply=function(){
     const type=document.getElementById('cgr-f-type')?.value||'';
     const stat=document.getElementById('cgr-f-stat')?.value||'';

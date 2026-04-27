@@ -3,7 +3,7 @@ window.P = window.P || {};
 /* ===== 하루전입찰: 가격 전략 ===== */
 window.P['bidDA-price']=()=>`
 ${_mkCross('bidDA-price')}
-${_mkBidFilter({rightInfo:'가격 전략 · 자원별 Merit Order 적용'})}
+${_mkBidFilter({prefix:'bdp',onChange:'bidPriceApply',rightInfo:'SMP 평균 138원/kWh · 변동비 12.8원 · 정확도 93.2%'})}
 <div class="g4">
   <div class="card acc"><div class="ct">오늘 SMP 평균 ${window.tip('오늘 SMP 평균','금일 24시간 SMP의 가중 평균','Σ(시간대별 SMP × 거래량) ÷ Σ(거래량) [원/kWh]','전일 대비 ±5% 정상 변동 / 봄·가을 음가격 위험 / 여름·겨울 피크 200원+')}</div><div class="kv">138<span class="ku">원/kWh</span></div><div class="kd up">▲ +4.1%</div></div>
   <div class="card"><div class="ct">적용 하한가 ${window.tip('적용 하한가','입찰 가능한 최저 가격','육지 재생입찰: 0원/kWh — 음(-)가격 입찰 불가','재생에너지는 음가격 시장에서 출력 감축 또는 ESS 충전으로 대응')}</div><div class="kv">0<span class="ku">원/kWh</span></div><div class="kd neu">육지 재생입찰 기준</div></div>
@@ -21,7 +21,7 @@ ${_mkBidFilter({rightInfo:'가격 전략 · 자원별 Merit Order 적용'})}
     <div class="mr" style="border:none"><div class="ml">KPX 시장감시 규정 준수</div><div class="mv"><span class="badge ok">로그 투명기록</span></div></div>
   </div>
   <div class="card mb"><div class="sh"><div class="st">Merit Order · 예측정확도 기준 투찰 우선순위</div></div>
-    <table class="tbl"><thead><tr><th>우선</th><th>자원</th><th>유형</th><th>NMAE</th><th>배정용량</th><th>투찰 가중치</th></tr></thead><tbody>
+    <table class="tbl"><thead><tr><th>우선</th><th>자원</th><th>유형</th><th>NMAE</th><th>배정용량</th><th>투찰 가중치</th></tr></thead><tbody id="bdp-merit-tbody">
       <tr><td class="mono">1</td><td>순천 바이오가스</td><td><span class="badge" style="background:var(--semantic-tag-bg-violet,#e8defa);color:#6035cc">바이오</span></td><td class="mono" style="color:var(--semantic-positive-normal)">2.1%</td><td class="mono">1.42MW</td><td><span class="badge ok">100%</span></td></tr>
       <tr><td class="mono">2</td><td>여수 바이오매스</td><td><span class="badge" style="background:var(--semantic-tag-bg-violet,#e8defa);color:#6035cc">바이오</span></td><td class="mono" style="color:var(--semantic-positive-normal)">2.8%</td><td class="mono">2.85MW</td><td><span class="badge ok">100%</span></td></tr>
       <tr><td class="mono">3</td><td>광양항태양광 01단계</td><td><span class="badge inf">태양광</span></td><td class="mono" style="color:var(--semantic-positive-normal)">4.2%</td><td class="mono">2.18MW</td><td><span class="badge ok">100%</span></td></tr>
@@ -43,5 +43,12 @@ window['I_bidDA-price']=function(){
     {label:'낙찰률',data:[62,78,89,93,95],borderColor:'#0059ff',borderWidth:2,pointRadius:3,tension:0.3,fill:false},
     {label:'순수익(백만원)',data:[14.2,18.1,22.5,24.3,24.9],borderColor:'#ffca42',borderWidth:2,pointRadius:3,tension:0.3,fill:false},
   ],{});
+};
+window.bidPriceApply=function(){
+  const type=document.getElementById('bdp-type')?.value||'all';
+  document.querySelectorAll('#bdp-merit-tbody tr').forEach(tr=>{
+    const cType=tr.cells[2]?.textContent.trim();
+    tr.style.display=(type==='all'||cType===type)?'':'none';
+  });
 };
 

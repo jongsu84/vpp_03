@@ -139,8 +139,8 @@ const _rsTabs=(current)=>{
 // 7필터 바
 const _rsFilterBar=()=>`<div class="card fbar" style="margin-bottom:16px">
   <div class="fbar-row">
-    <div class="fbar-item"><span class="fbar-lbl">자원 유형</span><select class="fbar-sel" id="rf-type" onchange="rsFilterApply()"><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select></div>
     <div class="fbar-item"><span class="fbar-lbl">VPP 그룹</span><select class="fbar-sel" id="rf-vpp" onchange="rsFilterApply()"><option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select></div>
+    <div class="fbar-item"><span class="fbar-lbl">자원 유형</span><select class="fbar-sel" id="rf-type" onchange="rsFilterApply()"><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select></div>
     <div class="fbar-item"><span class="fbar-lbl">운전 상태</span><select class="fbar-sel" id="rf-op" onchange="rsFilterApply()"><option>전체</option><option>정상 가동</option><option>대기</option><option>정비</option><option>이상</option></select></div>
     <div class="fbar-item"><span class="fbar-lbl">충·방전 상태</span><select class="fbar-sel" id="rf-cd" onchange="rsFilterApply()" title="ESS·V2G 자원에 적용 (다른 유형은 해당 없음)"><option>전체</option><option>충전 중</option><option>방전 중</option><option>유휴</option></select></div>
     <div class="fbar-item"><span class="fbar-lbl">시간 범위</span><select class="fbar-sel" id="rf-time" onchange="rsFilterApply()"><option>실시간</option><option>최근 1시간</option><option>최근 24시간</option><option>최근 7일</option></select></div>
