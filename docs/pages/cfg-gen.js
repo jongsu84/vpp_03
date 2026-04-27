@@ -120,6 +120,30 @@ window['I_cfg-gen']=function(){
       r.style.display=(!v||r.cells[1].textContent.includes(v))?'':'none';
     });
   };
+  window.cfgGenFilterApply=function(){
+    const type=document.getElementById('cge-f-type')?.value||'';
+    const stat=document.getElementById('cge-f-stat')?.value||'';
+    const reg=document.getElementById('cge-f-reg')?.value||'';
+    const rec=document.getElementById('cge-f-rec')?.value||'';
+    const ctrl=document.getElementById('cge-f-ctrl')?.value||'';
+    let total=0;
+    document.querySelectorAll('#gen-tbody tr').forEach(tr=>{
+      const cType=tr.cells[1]?.textContent.trim();
+      const cReg=tr.cells[2]?.textContent.trim();
+      const cRec=tr.cells[5]?.textContent.trim();
+      const cCtrl=tr.cells[6]?.textContent.trim();
+      const cStat=tr.cells[7]?.textContent.trim();
+      let show=true;
+      if(type && cType!==type) show=false;
+      if(stat && cStat!==stat) show=false;
+      if(reg && cReg!==reg) show=false;
+      if(rec && cRec!==rec) show=false;
+      if(ctrl && cCtrl!==ctrl) show=false;
+      tr.style.display=show?'':'none';
+      if(show) total++;
+    });
+    const totEl=document.getElementById('gen-total'); if(totEl) totEl.firstChild.nodeValue=total;
+  };
   window.saveGen=function(){
     const name=document.getElementById('gen-name').value.trim();
     const cap=document.getElementById('gen-cap').value;

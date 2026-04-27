@@ -302,7 +302,17 @@ window['I_dsh-main']=function(){
       plugins:{legend:{display:true,position:'bottom',align:'end',labels:{font:{size:11},boxWidth:10,boxHeight:10,padding:8,usePointStyle:true}}}
     });
   }
-  window.pdSwitchRes=function(v){ _pdRender(v); };
+  window.pdSwitchRes=function(v){
+    _pdRender(v);
+    // 자원별 상세 테이블 동기화 — 선택 자원만 표시 (전체 시 모두)
+    const names=['광양항태양광','광양항4단계','해맞이','온누리','금능1호','김주풍력','백학','삼성솔라2호'];
+    const target=v==='all'?null:names[parseInt(v,10)];
+    document.querySelectorAll('#pd-detail-tbody tr').forEach(tr=>{
+      if(tr.dataset.noSort) return; // 합계 행 유지
+      const name=tr.cells[0]?.textContent.trim();
+      tr.style.display=(!target||name===target)?'':'none';
+    });
+  };
   window.pdOpenSheet=function(){
     var el=document.getElementById('pd-sheet'); if(!el) return;
     el.classList.add('open');

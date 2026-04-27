@@ -173,6 +173,46 @@ window['I_cfg-bat']=function(){
       st.textContent=ids[cur]+' 실행 중...';
     },400);
   };
+  window.cfgBatFilterApply=function(){
+    const cat=document.getElementById('cba-f-cat')?.value||'';
+    const stat=document.getElementById('cba-f-stat')?.value||'';
+    const res=document.getElementById('cba-f-res')?.value||'';
+    const pri=document.getElementById('cba-f-pri')?.value||'';
+    const cron=document.getElementById('cba-f-cron')?.value||'';
+    const catMap={RT_PRED:'예측',DA_PRED:'예측',COLLECT:'수집',SETTLE:'정산',HEALTH:'진단',MET_SYNC:'동기화',ALARM:'알람',REPORT:'리포트'};
+    const periodOf=(c)=>{
+      if(/\*\/1 \* \* \* \*/.test(c)) return 'min1';
+      if(/\*\/(5|15|30) /.test(c)) return 'min15';
+      if(/^0 \*\/\d+ /.test(c)) return 'hourly';
+      if(/^0 \d+ \* \* \*/.test(c)) return 'daily';
+      return '';
+    };
+    let total=0,running=0,fail=0;
+    document.querySelectorAll('#bat-tbody tr').forEach(tr=>{
+      const id=tr.cells[0]?.textContent.trim();
+      const cronExp=tr.cells[2]?.textContent.trim();
+      const priVal=tr.cells[3]?.textContent.trim();
+      const statBadge=tr.querySelector('.badge')?.textContent.trim()||'';
+      let show=true;
+      if(cat){
+        const prefix=Object.keys(catMap).find(p=>id&&id.startsWith(p));
+        if(catMap[prefix]!==cat) show=false;
+      }
+      if(stat && statBadge!==stat) show=false;
+      if(res==='ok' && statBadge==='실패') show=false;
+      if(res==='err' && statBadge!=='실패') show=false;
+      if(pri && priVal!==pri) show=false;
+      if(cron && periodOf(cronExp||'')!==cron) show=false;
+      tr.style.display=show?'':'none';
+      if(show){
+        total++;
+        if(statBadge==='실행중') running++;
+        if(statBadge==='실패') fail++;
+      }
+    });
+    const totEl=document.getElementById('bat-total'); if(totEl) totEl.firstChild.nodeValue=total;
+    const runEl=document.getElementById('bat-running'); if(runEl) runEl.firstChild.nodeValue=running;
+  };
   window.saveBat=function(){
     const id=document.getElementById('bat-id').value.trim();
     const name=document.getElementById('bat-name').value.trim();

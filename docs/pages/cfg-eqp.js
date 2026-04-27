@@ -96,6 +96,30 @@ window.P['cfg-eqp']=()=>`
 </div>`;
 
 window['I_cfg-eqp']=function(){
+  window.cfgEqpFilterApply=function(){
+    const type=document.getElementById('ceq-f-type')?.value||'';
+    const stat=document.getElementById('ceq-f-stat')?.value||'';
+    const plant=document.getElementById('ceq-f-plant')?.value||'';
+    const mfr=document.getElementById('ceq-f-mfr')?.value||'';
+    const prot=document.getElementById('ceq-f-prot')?.value||'';
+    let total=0;
+    document.querySelectorAll('#eqp-tbody tr').forEach(tr=>{
+      const cType=tr.cells[1]?.textContent.trim();
+      const cMfr=(tr.cells[2]?.textContent.trim()||'').split('/')[0];
+      const cPlant=tr.cells[3]?.textContent.trim();
+      const cProt=tr.cells[4]?.textContent.trim();
+      const cStat=tr.querySelector('.badge')?.textContent.trim()||'';
+      let show=true;
+      if(type && cType!==type) show=false;
+      if(stat && cStat!==stat) show=false;
+      if(plant && cPlant!==plant) show=false;
+      if(mfr && cMfr!==mfr) show=false;
+      if(prot && cProt!==prot) show=false;
+      tr.style.display=show?'':'none';
+      if(show) total++;
+    });
+    const totEl=document.getElementById('eqp-total'); if(totEl) totEl.firstChild.nodeValue=total;
+  };
   window.saveEqp=function(){
     const sn=document.getElementById('eqp-sn').value.trim();
     const maker=document.getElementById('eqp-maker').value.trim();

@@ -112,19 +112,39 @@ window._gisApplyFilter=function(){
   const vpp=document.getElementById('gis-f-vpp')?.value||'전체';
   const op=document.getElementById('gis-f-op')?.value||'전체';
   const capRange=document.getElementById('gis-f-cap')?.value||'all';
-  if(!window._gisMapInstance||!window._gisMarkers)return;
-  window._gisMarkers.forEach(m=>{
-    const r=m._rs;
-    let show=true;
-    if(type!=='all'&&r.type!==type)show=false;
-    if(vpp!=='전체'&&r.vpp!==vpp)show=false;
-    if(op!=='전체'&&r.op!==op)show=false;
-    if(capRange==='0-1'&&r.cap>=1)show=false;
-    if(capRange==='1-5'&&(r.cap<1||r.cap>=5))show=false;
-    if(capRange==='5-'&&r.cap<5)show=false;
-    if(show){if(!window._gisMapInstance.hasLayer(m))m.addTo(window._gisMapInstance);}
-    else{if(window._gisMapInstance.hasLayer(m))m.remove();}
-  });
+  const passes=(r)=>{
+    if(type!=='all'&&r.type!==type)return false;
+    if(vpp!=='전체'&&r.vpp!==vpp)return false;
+    if(op!=='전체'&&r.op!==op)return false;
+    if(capRange==='0-1'&&r.cap>=1)return false;
+    if(capRange==='1-5'&&(r.cap<1||r.cap>=5))return false;
+    if(capRange==='5-'&&r.cap<5)return false;
+    return true;
+  };
+  // 1) 지도 마커 토글
+  if(window._gisMapInstance&&window._gisMarkers){
+    window._gisMarkers.forEach(m=>{
+      const show=passes(m._rs);
+      if(show){if(!window._gisMapInstance.hasLayer(m))m.addTo(window._gisMapInstance);}
+      else{if(window._gisMapInstance.hasLayer(m))m.remove();}
+    });
+  }
+  // 2) 유형별 분포 테이블 — 필터된 리소스 기준 재집계
+  const tbl=document.querySelectorAll('.card .tbl tbody tr');
+  if(tbl.length && window.RS_ALL){
+    const filtered=window.RS_ALL.filter(passes);
+    const types=['태양광','풍력','ESS','바이오','V2G'];
+    types.forEach((t,i)=>{
+      if(!tbl[i])return;
+      const list=filtered.filter(r=>r.type===t);
+      const cnt=list.length;
+      const capSum=list.reduce((s,r)=>s+(r.cap||0),0);
+      const outSum=list.reduce((s,r)=>s+(r.now||r.cap*0.85||0),0);
+      if(tbl[i].cells[1]) tbl[i].cells[1].textContent=cnt;
+      if(tbl[i].cells[2]) tbl[i].cells[2].textContent=capSum.toFixed(2)+' MW';
+      if(tbl[i].cells[3]) tbl[i].cells[3].textContent=(outSum>=0?'+':'')+outSum.toFixed(2)+' MW';
+    });
+  }
 };
 window._gisChangeLayer=function(k){
   if(!window._gisMapInstance||!window.L)return;

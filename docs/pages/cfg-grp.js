@@ -106,6 +106,35 @@ window.P['cfg-grp']=()=>`
 
 window['I_cfg-grp']=function(){
   function escHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+  window.cfgGrpFilterApply=function(){
+    const type=document.getElementById('cgr-f-type')?.value||'';
+    const stat=document.getElementById('cgr-f-stat')?.value||'';
+    const mgr=document.getElementById('cgr-f-mgr')?.value||'';
+    const cap=document.getElementById('cgr-f-cap')?.value||'';
+    const ctrl=document.getElementById('cgr-f-ctrl')?.value||'';
+    let total=0;
+    document.querySelectorAll('#grp-tbody tr').forEach(tr=>{
+      const cType=tr.cells[1]?.textContent.trim();
+      const cCap=parseFloat((tr.cells[3]?.textContent||'').replace(/[^0-9.]/g,''))||0;
+      const cStat=tr.cells[4]?.textContent.trim();
+      const m=(tr.getAttribute('onclick')||'').match(/'([^']*)','([^']*)','([^']*)','([^']*)','([^']*)','([^']*)'/);
+      const cCtrl=m?m[5]:'';
+      const cMgr=m?m[6]:'';
+      let show=true;
+      if(type && cType!==type) show=false;
+      if(stat && cStat!==stat) show=false;
+      if(mgr && cMgr!==mgr) show=false;
+      if(ctrl && cCtrl!==ctrl) show=false;
+      if(cap){
+        if(cap==='small' && !(cCap<=5)) show=false;
+        else if(cap==='mid' && !(cCap>5 && cCap<=10)) show=false;
+        else if(cap==='big' && !(cCap>10)) show=false;
+      }
+      tr.style.display=show?'':'none';
+      if(show) total++;
+    });
+    const totEl=document.getElementById('grp-total'); if(totEl) totEl.firstChild.nodeValue=total;
+  };
   const plants=['광양항태양광','광양항4단계','온누리','해맞이','해바라기','금능1호','김주풍력','무들발전소','희정발전소'];
   const sel=document.getElementById('grp-plant-sel');
   if(sel){

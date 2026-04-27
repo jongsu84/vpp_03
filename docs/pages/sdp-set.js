@@ -162,7 +162,7 @@ window.P['sdp-set']=()=>`
 
 <!-- 정산서 미리보기 / PDF 모달 -->
 <div class="modal-backdrop" id="modal-ss-doc" style="display:none" onclick="closeModalBg(event,'modal-ss-doc')">
-  <div class="modal" style="width:760px;max-height:88vh;display:flex;flex-direction:column;overflow:hidden">
+  <div class="modal" style="width:760px;max-height:min(82vh,820px);display:flex;flex-direction:column;overflow:hidden">
     <div class="modal-hdr no-print" style="flex-shrink:0;background:var(--semantic-background-1);position:relative;z-index:2">
       <span class="modal-title">정산서 미리보기</span>
       <button class="modal-close" onclick="closeModal('modal-ss-doc')" aria-label="닫기">✕</button>

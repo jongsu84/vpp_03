@@ -193,6 +193,42 @@ window['I_cfg-usr']=function(){
     const rows=document.querySelectorAll('#usr-tbody tr');
     rows.forEach(r=>{r.style.display=r.textContent.includes(v)?'':'none';});
   };
+  window.cfgUsrFilterApply=function(){
+    const type=document.getElementById('cu-f-type')?.value||'';
+    const stat=document.getElementById('cu-f-stat')?.value||'';
+    const org=document.getElementById('cu-f-org')?.value||'';
+    const mfa=document.getElementById('cu-f-mfa')?.value||'';
+    const exp=document.getElementById('cu-f-exp')?.value||'';
+    let total=0,active=0,locked=0;
+    document.querySelectorAll('#usr-tbody tr').forEach(tr=>{
+      const cOrg=tr.cells[1]?.textContent.trim();
+      const cType=tr.cells[2]?.textContent.trim();
+      const cMfa=tr.cells[4]?.textContent.trim();
+      const cExp=tr.cells[6]?.textContent.trim();
+      const cStat=tr.cells[8]?.textContent.trim();
+      let show=true;
+      if(type && cType!==type) show=false;
+      if(stat && cStat!==stat) show=false;
+      if(org && cOrg!==org) show=false;
+      if(mfa && cMfa!==mfa) show=false;
+      if(exp){
+        if(exp==='perm' && cExp!=='무기한') show=false;
+        else if(exp==='soon'){
+          const m=cExp.match(/(\d+)일\s*내/);
+          if(!m || parseInt(m[1])>30) show=false;
+        }
+      }
+      tr.style.display=show?'':'none';
+      if(show){
+        total++;
+        if(cStat==='활성') active++;
+        if(cStat==='잠금') locked++;
+      }
+    });
+    const t=document.getElementById('usr-total'); if(t) t.firstChild.nodeValue=total;
+    const a=document.getElementById('usr-active'); if(a) a.firstChild.nodeValue=active;
+    const l=document.getElementById('usr-locked'); if(l) l.firstChild.nodeValue=locked;
+  };
   window.openEditUsr=function(name){
     document.getElementById('usr-edit-title').textContent='계정 편집 — '+name;
     openModal('modal-usr-edit');

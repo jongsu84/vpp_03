@@ -20,7 +20,8 @@ const _rsBar=(pct,color)=>`<div style="width:100%;height:4px;background:var(--se
 const _rsMetrics=(type,name)=>{
   const mkCard=(c)=>{
     const barHtml=c.bar!==undefined?_rsBar(c.bar,c.barColor):'';
-    return `<div class="card ${c.accent?'acc':''}"><div class="ct">${c.title}</div><div class="kv"${c.color?' style="color:'+c.color+'"':''}>${c.val}${c.unit?'<span class="ku">'+c.unit+'</span>':''}</div>${c.sub?'<div class="kd '+(c.subKind||'neu')+'">'+c.sub+'</div>':''}${barHtml}</div>`;
+    const tipHtml=(c.tip&&window.tip)?(' '+window.tip(c.tip[0],c.tip[1],c.tip[2],c.tip[3])):'';
+    return `<div class="card ${c.accent?'acc':''}"><div class="ct">${c.title}${tipHtml}</div><div class="kv"${c.color?' style="color:'+c.color+'"':''}>${c.val}${c.unit?'<span class="ku">'+c.unit+'</span>':''}</div>${c.sub?'<div class="kd '+(c.subKind||'neu')+'">'+c.sub+'</div>':''}${barHtml}</div>`;
   };
   const mk=(cards)=>`<div class="g4">${cards.map(mkCard).join('')}</div>`;
   const sub=(rows)=>`<div class="card mb"><div class="sh"><div class="st">부속 측정값 · 실시간</div><span class="kpi-pill" style="font-size:11px">1초 갱신</span></div>
@@ -29,42 +30,42 @@ const _rsMetrics=(type,name)=>{
     </div></div>`;
   if(type==='태양광'){
     return mk([
-      {title:'현재 출력',val:'2,147',unit:'kW',accent:true,sub:'목표 2,293kW 대비 93.6%',subKind:'up',bar:93.6,barColor:'var(--semantic-brand-primary)'},
-      {title:'인버터 효율',val:'96.8',unit:'%',sub:'평균 대비 +0.4%p',subKind:'up',bar:96.8,barColor:'var(--semantic-positive-normal)'},
-      {title:'모듈 온도',val:'42.3',unit:'°C',color:'var(--palette-yellow-40)',sub:'과열 임계 65°C',bar:65,barColor:'var(--palette-yellow-40)'},
-      {title:'일사량',val:'782',unit:'W/㎡',sub:'가동 조건 양호',subKind:'up',bar:78,barColor:'var(--palette-yellow-40)'},
+      {title:'현재 출력',val:'2,147',unit:'kW',accent:true,sub:'목표 2,293kW 대비 93.6%',subKind:'up',bar:93.6,barColor:'var(--semantic-brand-primary)',tip:['현재 출력','인버터 측정 실시간 AC 출력','RTU 1초 폴링 → AC kW 합산','정격 대비 80% 이상 정상 / 50% 미만은 일사·인버터 점검']},
+      {title:'인버터 효율',val:'96.8',unit:'%',sub:'평균 대비 +0.4%p',subKind:'up',bar:96.8,barColor:'var(--semantic-positive-normal)',tip:['인버터 효율','DC→AC 변환 효율','AC 출력 ÷ DC 입력 × 100 [%]','95% 이상 정상 / 90% 미만 시 인버터 노후·먼지 점검']},
+      {title:'모듈 온도',val:'42.3',unit:'°C',color:'var(--palette-yellow-40)',sub:'과열 임계 65°C',bar:65,barColor:'var(--palette-yellow-40)',tip:['모듈 온도','PV 셀 후면 표면 온도','백시트 온도 센서 (모듈당 1개)','25°C 기준 1°C당 -0.4% 효율 / 65°C 과열 임계 → 자동 출력 제한']},
+      {title:'일사량',val:'782',unit:'W/㎡',sub:'가동 조건 양호',subKind:'up',bar:78,barColor:'var(--palette-yellow-40)',tip:['일사량','모듈 면 단위면적당 입사 태양에너지','피라노미터(2등급) 1초 측정 [W/㎡]','600 이상 정상 발전 / 200 미만 출력 급감 / 1000 = STC 기준']},
     ])+sub([['전압 (DC)','389.4 V'],['전류 (DC)','55.2 A'],['외기 온도','21.3 °C'],['이슬점','9.8 °C'],['습도','62%'],['바람','남동 1.2 m/s'],['운량','18%'],['통신 상태','<span class="badge ok">연결 · 12ms</span>']]);
   }
   if(type==='풍력'){
     return mk([
-      {title:'현재 출력',val:'7,840',unit:'kW',accent:true,sub:'정격 10,000kW 대비 78.4%',subKind:'up',bar:78.4,barColor:'var(--semantic-brand-primary)'},
-      {title:'로터 RPM',val:'14.2',unit:'rpm',sub:'정상 범위 12~16',subKind:'up',bar:71,barColor:'var(--semantic-positive-normal)'},
-      {title:'피치각',val:'4.8',unit:'°',sub:'자동 제어 작동',bar:24,barColor:'var(--semantic-brand-primary)'},
-      {title:'Yaw 방향',val:'192',unit:'°',sub:'NNE 풍향 추종',bar:53,barColor:'#1f98ff'},
+      {title:'현재 출력',val:'7,840',unit:'kW',accent:true,sub:'정격 10,000kW 대비 78.4%',subKind:'up',bar:78.4,barColor:'var(--semantic-brand-primary)',tip:['현재 출력','발전기 단자 실시간 AC 출력','RTU 1초 폴링 → AC kW','정격 대비 70%+ 정상 / 풍속 3m/s 미만 정지(컷인) / 25m/s 초과 비상 정지']},
+      {title:'로터 RPM',val:'14.2',unit:'rpm',sub:'정상 범위 12~16',subKind:'up',bar:71,barColor:'var(--semantic-positive-normal)',tip:['로터 RPM','블레이드 회전 속도','광학 인코더 측정 [rpm]','12~16 정상 / 18 초과 시 자동 정지 / 풍속 12m/s 이상 정격 회전 유지']},
+      {title:'피치각',val:'4.8',unit:'°',sub:'자동 제어 작동',bar:24,barColor:'var(--semantic-brand-primary)',tip:['피치각','블레이드 받음각','자동 피치 제어 시스템 [°]','0~30° 자동 조정 / 풍속 12m/s 이상에서 출력 제한용 피치 증가']},
+      {title:'Yaw 방향',val:'192',unit:'°',sub:'NNE 풍향 추종',bar:53,barColor:'#1f98ff',tip:['Yaw 방향','나셀(rotor head) 방위각','풍향계 추종 자동 제어 [°]','풍향과 5° 이내 정렬 정상 / 추종 지연 시 출력 손실 발생']},
     ])+sub([['풍속 (허브 80m)','11.3 m/s'],['풍속 (10m)','9.8 m/s'],['풍향','NNE · 35°'],['기어박스 온도','58.4 °C'],['베어링 진동','0.8 mm/s'],['외기 온도','18.7 °C'],['공기 밀도','1.22 kg/㎥'],['통신 상태','<span class="badge ok">연결 · 18ms</span>']]);
   }
   if(type==='ESS'){
     return mk([
-      {title:'현재 출력',val:'+1,650',unit:'kW',accent:true,color:'var(--semantic-brand-primary)',sub:'방전 중 (정격 대비 82.5%)',subKind:'up',bar:82.5,barColor:'var(--semantic-brand-primary)'},
-      {title:'SOC',val:'72',unit:'%',sub:'충전 여유 28%',bar:72,barColor:'var(--semantic-positive-normal)'},
-      {title:'SOH',val:'96',unit:'%',sub:'교체까지 4~5년',subKind:'up',bar:96,barColor:'var(--semantic-positive-normal)'},
-      {title:'누적 사이클',val:'458',unit:'회',color:'var(--palette-yellow-40)',sub:'정격 6,000 중 7.6%',bar:7.6,barColor:'var(--palette-yellow-40)'},
+      {title:'현재 출력',val:'+1,650',unit:'kW',accent:true,color:'var(--semantic-brand-primary)',sub:'방전 중 (정격 대비 82.5%)',subKind:'up',bar:82.5,barColor:'var(--semantic-brand-primary)',tip:['현재 출력','PCS 실시간 충/방전 출력','양수 = 방전 / 음수 = 충전 [kW]','정격 대비 90% 이내 권장 / 100% 장시간 운전 시 셀 온도 상승']},
+      {title:'SOC',val:'72',unit:'%',sub:'충전 여유 28%',bar:72,barColor:'var(--semantic-positive-normal)',tip:['SOC (State of Charge)','배터리 잔여 충전량 비율','Σ(충전 - 방전) ÷ 정격용량 × 100 [%]','20~80% 권장 운전 구간 / 0% 또는 100% 장시간 유지 시 수명 단축']},
+      {title:'SOH',val:'96',unit:'%',sub:'교체까지 4~5년',subKind:'up',bar:96,barColor:'var(--semantic-positive-normal)',tip:['SOH (State of Health)','초기 대비 잔존 용량 비율','현재 가용 용량 ÷ 초기 정격 × 100 [%]','80% 미만 시 교체 검토 / 매일 자동 측정 / EOL = 70%']},
+      {title:'누적 사이클',val:'458',unit:'회',color:'var(--palette-yellow-40)',sub:'정격 6,000 중 7.6%',bar:7.6,barColor:'var(--palette-yellow-40)',tip:['누적 사이클','1 사이클 = 100% 충전 + 100% 방전','Σ(부분 사이클 등가 환산) [회]','LFP 6,000 사이클 = 약 10년 수명 / DoD 80% 운전 시 사이클 가속']},
     ])+sub([['배터리 평균 온도','28.4 °C'],['셀 온도 편차','±1.2 °C'],['DoD (금일)','48%'],['RTE (최근 7일)','93.2%'],['셀 전압 편차','0.015 V'],['컨버터 효율','98.1%'],['누적 방전량','12.4 MWh'],['통신 상태','<span class="badge ok">연결 · 10ms</span>']]);
   }
   if(type==='바이오'){
     return mk([
-      {title:'현재 출력',val:'1,380',unit:'kW',accent:true,sub:'정격 1,500kW 대비 92%',subKind:'up',bar:92,barColor:'var(--semantic-brand-primary)'},
-      {title:'연료 투입량',val:'245',unit:'Nm³/h',sub:'바이오가스 LPG 혼합',bar:68,barColor:'#925fff'},
-      {title:'연소 효율',val:'89.2',unit:'%',sub:'최적 구간',subKind:'up',bar:89.2,barColor:'var(--semantic-positive-normal)'},
-      {title:'발전기 RPM',val:'1,800',unit:'rpm',sub:'60Hz 동기 고정',bar:100,barColor:'var(--semantic-positive-normal)'},
+      {title:'현재 출력',val:'1,380',unit:'kW',accent:true,sub:'정격 1,500kW 대비 92%',subKind:'up',bar:92,barColor:'var(--semantic-brand-primary)',tip:['현재 출력','발전기 단자 실시간 AC 출력','RTU 폴링 → AC kW','정격 대비 85%+ 권장 / 베이스로드 운전 → 일정 출력 유지']},
+      {title:'연료 투입량',val:'245',unit:'Nm³/h',sub:'바이오가스 LPG 혼합',bar:68,barColor:'#925fff',tip:['연료 투입량','시간당 바이오가스 + LPG 혼합 투입','유량계 실시간 측정 [Nm³/h]','출력 비례 자동 조절 / 메탄 함량 60%+ 시 안정 연소']},
+      {title:'연소 효율',val:'89.2',unit:'%',sub:'최적 구간',subKind:'up',bar:89.2,barColor:'var(--semantic-positive-normal)',tip:['연소 효율','투입 열량 대비 발전 변환 효율','발전 출력 ÷ (연료 유량 × 발열량) × 100 [%]','85% 이상 정상 / 80% 미만 시 버너 정비 필요']},
+      {title:'발전기 RPM',val:'1,800',unit:'rpm',sub:'60Hz 동기 고정',bar:100,barColor:'var(--semantic-positive-normal)',tip:['발전기 RPM','동기 발전기 회전 속도','60Hz × 60 = 1,800 rpm 고정 [rpm]','±0.5 rpm 이내 정상 / 변동 시 계통 동기화 점검 필요']},
     ])+sub([['배기가스 온도','412 °C'],['NOx 배출','78 ppm'],['SOx 배출','11 ppm'],['CO 배출','32 ppm'],['냉각수 온도','78 °C'],['윤활유 압력','4.2 bar'],['발전기 권선 온도','92 °C'],['통신 상태','<span class="badge ok">연결 · 15ms</span>']]);
   }
   if(type==='V2G'){
     return mk([
-      {title:'현재 총 출력',val:'+720',unit:'kW',accent:true,color:'var(--semantic-brand-primary)',sub:'방전 주도 (스테이션 정격 800kW)',subKind:'up',bar:90,barColor:'var(--semantic-brand-primary)'},
-      {title:'연결 차량',val:'18',unit:'/24 대',sub:'정원 75% 활용',bar:75,barColor:'#00d4a8'},
-      {title:'가용 용량',val:'840',unit:'kWh',sub:'평균 SOC 68%',bar:68,barColor:'var(--semantic-positive-normal)'},
-      {title:'활성 세션',val:'14',unit:'건',sub:'충전 4 · 방전 10',bar:78,barColor:'#00d4a8'},
+      {title:'현재 총 출력',val:'+720',unit:'kW',accent:true,color:'var(--semantic-brand-primary)',sub:'방전 주도 (스테이션 정격 800kW)',subKind:'up',bar:90,barColor:'var(--semantic-brand-primary)',tip:['현재 총 출력','연결된 모든 차량의 충방전 합계','Σ(차량별 출력) 양수=방전, 음수=충전 [kW]','정격 800kW 이내 운영 / V2G 동의 차량만 방전 가능']},
+      {title:'연결 차량',val:'18',unit:'/24 대',sub:'정원 75% 활용',bar:75,barColor:'#00d4a8',tip:['연결 차량','동시 연결된 EV 수 / 스테이션 정원','OCPP 활성 세션 차량 수','24대 정원 75%+ 정상 / 24V 충전기 전용 8대 + V2G 16대 구성']},
+      {title:'가용 용량',val:'840',unit:'kWh',sub:'평균 SOC 68%',bar:68,barColor:'var(--semantic-positive-normal)',tip:['가용 용량','연결 차량의 방전 가능 누적 에너지','Σ(차량 SOC × 배터리 용량) [kWh]','평균 SOC 60%+ 시 충분 / 30% 미만 시 V2G 자동 중단']},
+      {title:'활성 세션',val:'14',unit:'건',sub:'충전 4 · 방전 10',bar:78,barColor:'#00d4a8',tip:['활성 세션','충전 또는 방전 중인 OCPP 세션 수','OCPP 1.6J StartTransaction 기준','대기 차량 = 연결 - 활성 / 평균 세션 시간 2~4시간']},
     ])+sub([['평균 SOC (연결 차량)','68%'],['평균 SOH','94%'],['충전 중','4대 · +180kW 흡수'],['방전 중','10대 · -900kW 방출'],['대기 (V2G 비동의)','4대'],['스테이션 효율','93.5%'],['누적 제공 에너지','154 kWh'],['통신 상태','<span class="badge ok">OCPP 1.6J</span>']]);
   }
   return '';

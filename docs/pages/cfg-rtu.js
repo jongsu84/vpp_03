@@ -136,6 +136,36 @@ window.P['cfg-rtu']=()=>`
 </div>`;
 
 window['I_cfg-rtu']=function(){
+  window.cfgRtuFilterApply=function(){
+    const plant=document.getElementById('crt-f-plant')?.value||'';
+    const stat=document.getElementById('crt-f-stat')?.value||'';
+    const vpn=document.getElementById('crt-f-vpn')?.value||'';
+    const prot=document.getElementById('crt-f-prot')?.value||'';
+    const poll=document.getElementById('crt-f-poll')?.value||'';
+    let total=0,okC=0,errC=0;
+    document.querySelectorAll('#rtu-tbody tr').forEach(tr=>{
+      const cPlant=tr.cells[1]?.textContent.trim();
+      const cProt=tr.cells[3]?.textContent.trim();
+      const cPoll=tr.cells[4]?.textContent.trim();
+      const cVpn=tr.cells[5]?.textContent.trim();
+      const cStat=tr.cells[7]?.textContent.trim();
+      let show=true;
+      if(plant && !cPlant.includes(plant)) show=false;
+      if(stat && cStat!==stat) show=false;
+      if(vpn && cVpn!==vpn) show=false;
+      if(prot && cProt!==prot) show=false;
+      if(poll && cPoll!==poll) show=false;
+      tr.style.display=show?'':'none';
+      if(show){
+        total++;
+        if(cStat==='정상') okC++;
+        if(cStat==='장애') errC++;
+      }
+    });
+    const tot=document.getElementById('rtu-total'); if(tot) tot.firstChild.nodeValue=total;
+    const ok=document.getElementById('rtu-ok'); if(ok) ok.firstChild.nodeValue=okC;
+    const er=document.getElementById('rtu-err'); if(er) er.firstChild.nodeValue=errC;
+  };
   window.saveRtu=function(){
     const id=document.getElementById('rtu-id').value.trim();
     const ip=document.getElementById('rtu-ip').value.trim();
