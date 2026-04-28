@@ -8,6 +8,20 @@ ${_mkCross('bidRT-mgmt')}
   <div style="font-size:13px;line-height:20px;color:var(--semantic-label-normal)">
     실측·RT SMP·IMBP가 반영된 <b>최종 확정 정산</b>입니다. DA 시점 예상 정산은 <span onclick="activate('bidDA-settle')" style="color:var(--semantic-brand-primary);cursor:pointer;font-weight:500">하루전 입찰 → 정산 관리 ↗</span>에서 확인하세요.
   </div>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:8px 10px;background:var(--semantic-background-1);border:1px solid var(--semantic-line-normal);border-radius:6px;font-size:12px">
+    <span style="font-size:11px;color:var(--semantic-label-alt);font-weight:600;margin-right:2px">정산 사슬</span>
+    <span style="padding:3px 8px;background:var(--semantic-tag-bg-blue);color:var(--semantic-tag-label-blue);border-radius:4px;font-weight:500">발전사</span>
+    <span style="color:var(--semantic-label-alt)">실측 발전 실적</span>
+    <span style="color:var(--semantic-label-alt)">→</span>
+    <span style="padding:3px 8px;background:var(--semantic-tag-bg-violet,#e8defa);color:#6035cc;border-radius:4px;font-weight:500">KPX</span>
+    <span style="color:var(--semantic-label-alt)">실측 × SMP 정산금 산정·명세 발행</span>
+    <span style="color:var(--semantic-label-alt)">→</span>
+    <span style="padding:3px 8px;background:var(--semantic-tag-bg-yellow);color:var(--semantic-tag-label-yellow);border-radius:4px;font-weight:500">한전</span>
+    <span style="color:var(--semantic-label-alt)">익월 10일 현금 입금</span>
+    <span style="color:var(--semantic-label-alt)">→</span>
+    <span style="padding:3px 8px;background:var(--semantic-positive-assistive,rgba(0,212,168,0.15));color:var(--semantic-positive-normal);border-radius:4px;font-weight:500">60Hz / 사업자</span>
+    <span style="color:var(--semantic-label-alt)">운영 수수료 5% 차감 후 자원별 배분</span>
+  </div>
 </div>
 ${_mkBidFilter({prefix:'brg',onChange:'bidRtMgmtApply',rightInfo:'이번 달 270.5M 배분 · 발행 38/42건 · 다음 입금 5/10'})}
 <div class="g4">

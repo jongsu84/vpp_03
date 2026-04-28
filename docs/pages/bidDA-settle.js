@@ -11,6 +11,20 @@ ${_mkCross('bidDA-settle')}
     DA 낙찰 시점에 확정된 <b>DAES + CP</b> 기반 예상 수익을 관리합니다.
     최종 확정 정산(RTES·IMBP 포함)은 <span onclick="activate('bidRT-mgmt')" style="color:var(--semantic-brand-primary);cursor:pointer;font-weight:500">실시간 입찰 → 정산 관리 ↗</span>에서 확인하세요.
   </div>
+  <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px;padding:8px 10px;background:var(--semantic-background-1);border:1px solid var(--semantic-line-normal);border-radius:6px;font-size:12px">
+    <span style="font-size:11px;color:var(--semantic-label-alt);font-weight:600;margin-right:2px">정산 사슬 (예상)</span>
+    <span style="padding:3px 8px;background:var(--semantic-tag-bg-blue);color:var(--semantic-tag-label-blue);border-radius:4px;font-weight:500">발전사</span>
+    <span style="color:var(--semantic-label-alt)">DA 낙찰 → 익일 24구간 발전</span>
+    <span style="color:var(--semantic-label-alt)">→</span>
+    <span style="padding:3px 8px;background:var(--semantic-tag-bg-violet,#e8defa);color:#6035cc;border-radius:4px;font-weight:500">KPX</span>
+    <span style="color:var(--semantic-label-alt)">DAES + CP 산정 (D+1 06:00 확정)</span>
+    <span style="color:var(--semantic-label-alt)">→</span>
+    <span style="padding:3px 8px;background:var(--semantic-tag-bg-yellow);color:var(--semantic-tag-label-yellow);border-radius:4px;font-weight:500">한전</span>
+    <span style="color:var(--semantic-label-alt)">시장가격(SMP) 대금 지급</span>
+    <span style="color:var(--semantic-label-alt)">→</span>
+    <span style="padding:3px 8px;background:var(--semantic-positive-assistive,rgba(0,212,168,0.15));color:var(--semantic-positive-normal);border-radius:4px;font-weight:500">60Hz / 사업자</span>
+    <span style="color:var(--semantic-label-alt)">자원별 예상 배분 시뮬</span>
+  </div>
 </div>
 
 <!-- VPP 그룹 · 자원 유형 · 차수 · 기간 필터 -->
