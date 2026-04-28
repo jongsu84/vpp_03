@@ -62,24 +62,47 @@ window._initForecastMockup = function(){
 };
 
 /* ===== 자동 캡처 시각 (자동 모드: 입찰설정 모달의 스케줄에서 차수별 다음 미래 시각) ===== */
-window._daNextCaptureTime = function(round){
+window._DA_DEFAULT_SCHEDULE = [
+  {time:'09:00', round:1},{time:'09:55', round:1},{time:'10:00', round:1},{time:'13:50', round:1},
+  {time:'14:00', round:2},{time:'16:00', round:2},{time:'16:55', round:2},{time:'19:50', round:2},
+];
+window._daScheduleList = window._daScheduleList || window._DA_DEFAULT_SCHEDULE.slice();
+
+window._daSyncScheduleFromDom = function(){
   const rows = document.querySelectorAll('#bid-sch-list > div');
-  const now = new Date();
-  let best = null;
+  if(rows.length === 0) return;
+  const list = [];
   rows.forEach(row => {
     const timeInp = row.querySelector('input[type="time"]');
     if(!timeInp) return;
     const radios = row.querySelectorAll('input[type="radio"]');
     if(radios.length < 2) return;
-    const sel = radios[1].checked ? 2 : 1;  // [0]=1차, [1]=2차
-    if(sel !== round) return;
+    const sel = radios[1].checked ? 2 : 1;
     const v = timeInp.value || '';
-    const [h,m] = v.split(':').map(Number);
+    if(!v) return;
+    list.push({time:v, round:sel});
+  });
+  if(list.length > 0) window._daScheduleList = list;
+};
+
+window._daNextCaptureTime = function(round){
+  const list = window._daScheduleList || window._DA_DEFAULT_SCHEDULE;
+  const now = new Date();
+  let best = null;
+  list.forEach(s => {
+    if(s.round !== round) return;
+    const [h,m] = s.time.split(':').map(Number);
     if(isNaN(h) || isNaN(m)) return;
     const d = new Date(now); d.setHours(h, m, 0, 0);
     if(d.getTime() > now.getTime() && (!best || d.getTime() < best.getTime())) best = d;
   });
   return best;
+};
+
+window._daFirstScheduleOfRound = function(round){
+  const list = window._daScheduleList || window._DA_DEFAULT_SCHEDULE;
+  const filtered = list.filter(s => s.round === round).map(s => s.time).sort();
+  return filtered[0] || (round === 1 ? '09:00' : '14:00');
 };
 
 /* ===== 카운트다운 타이머 ===== */
@@ -580,6 +603,7 @@ window.applyBidMode=function(){
   window._daSettings={
     resources: Array.from(document.querySelectorAll('.da-res-toggle')).map(el=>({name:el.dataset.resource,enabled:el.checked}))
   };
+  if(typeof window._daSyncScheduleFromDom==='function') window._daSyncScheduleFromDom();
   window.updateBidModeUI();
   window.applyDaSettings();
   const enabled=window._daSettings.resources.filter(r=>r.enabled).length;
@@ -686,18 +710,14 @@ window.updateBidModeUI=function(){
   if(isManual){
     if(meta){
       meta.textContent=window._daSubmitted
-        ?(round==1?'1차 수동 · 운영자 김운영 · 제출 완료':'2차 수동 · 운영자 김운영 · 제출 완료')
-        :(round==1?'1차 수동 · 운영자 검토 대기 · 제출 미완료':'2차 수동 · 운영자 검토 대기 · 제출 예정');
+        ?(round==1?'1차 수동 · 제출 완료':'2차 수동 · 제출 완료')
+        :(round==1?'1차 수동 · 제출 미완료':'2차 수동 · 제출 예정');
       meta.style.color=window._daSubmitted?'':'var(--palette-yellow-40)';
     }
     if(dmsg) dmsg.textContent=window._daSubmitted?' · 제출 완료 · KPX 응답 대기':(round==1?' · 1차 운영자 제출 필요':' · 2차 운영자 제출 필요');
   } else {
     if(meta){
-      const next=window._daNextCaptureTime?window._daNextCaptureTime(round):null;
-      const nextStr=next?next.toTimeString().slice(0,5):'--';
-      meta.textContent=round==1
-        ? '1차 자동 · 다음 캡처: '+nextStr+' · KPX 자동전송'
-        : '2차 자동 · 다음 캡처: '+nextStr+' · KPX 자동전송';
+      meta.textContent=round==1?'1차 자동 · KPX 자동전송':'2차 자동 · KPX 자동전송';
       meta.style.color='';
     }
     if(dmsg) dmsg.textContent=round==1?' · 1차 KPX 자동전송':' · 2차 KPX 자동전송';

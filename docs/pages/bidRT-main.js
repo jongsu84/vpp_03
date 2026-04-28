@@ -636,15 +636,13 @@ window.updateRtModeUI=function(){
   const meta=Q('rt-tbl-meta');
   if(meta){
     if(mode==='manual'){
-      meta.textContent=window._rtSubmitted?'수동 · 운영자 김운영 · 제출 완료':'수동 · 운영자 검토 대기 · 미제출';
+      meta.textContent=window._rtSubmitted?'수동 · 제출 완료':'수동 · 미제출';
       meta.style.color=window._rtSubmitted?'':'var(--palette-yellow-40)';
     } else if(mode==='off'){
       meta.textContent='실시간 입찰 중단됨';
       meta.style.color='var(--semantic-negative-normal)';
     } else {
-      const slot=window._rtNextDeadline?window._rtNextDeadline().slotStart:null;
-      const slotStr=slot?slot.toTimeString().slice(0,5):'--';
-      meta.textContent='자동 갱신 모드 · 다음 갱신 슬롯: '+slotStr+' · DA 대비 +2.1 MW';
+      meta.textContent='자동 갱신 모드 · DA 대비 +2.1 MW';
       meta.style.color='';
     }
   }
