@@ -31,16 +31,16 @@ const _mkFilterBar=(cfg)=>{
         <span class="fbar-lbl">그룹</span>
         <select class="fbar-sel"${idAttr('grp')}${oc}><option>전체</option><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
       </div>
-      ${extras}
-      ${(function(){const gId='ms_gen_fb_'+(++window._msIdCnt);return `
+      ${(function(){const gId='ms_gen_fb_'+(++window._msIdCnt);const typeOc=`onchange="window.fbTypeChange(this)${onCh?(';'+onCh+'()'):''}"`;return `
       <div class="fbar-item">
-        <span class="fbar-lbl">발전자원</span>
-        ${_mkResMulti(gId)}
+        <span class="fbar-lbl">자원 유형</span>
+        <select class="fbar-sel"${idAttr('type')} ${typeOc}><option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
       </div>
       <div class="fbar-item">
         <span class="fbar-lbl">발전기</span>
         ${_mkGenMulti(gId)}
       </div>`;})()}
+      ${extras}
       ${showLevel?`<div class="fbar-item">
         <span class="fbar-lbl">${levelLabel}</span>
         <select class="fbar-sel"${idAttr('lvl')}${oc}>${levelOptions}</select>
@@ -70,6 +70,29 @@ const _mkFilterBar=(cfg)=>{
       </div>`:''}
     </div>
   </div>`;
+};
+
+/* 자원 유형 변경 시 발전기 멀티선택 옵션 동적 필터링 */
+window.fbTypeChange=function(sel){
+  const row=sel.closest('.fbar-row');
+  if(!row) return;
+  const ms=row.querySelector('.ms[data-ms-kind="gen"]');
+  if(!ms) return;
+  const value=sel.value;
+  ms.querySelectorAll('[data-group]').forEach(el=>{
+    const show=(value==='all'||el.dataset.group===value);
+    el.style.display=show?'':'none';
+    const cb=el.querySelector?el.querySelector('input[type=checkbox]'):null;
+    if(cb && !show){
+      if(cb.checked) cb.dataset._wasAuto='1';
+      cb.checked=false;
+    }
+    if(cb && show && cb.dataset._wasAuto==='1'){
+      cb.checked=true;
+      delete cb.dataset._wasAuto;
+    }
+  });
+  if(typeof window.msUpdateLabel==='function') window.msUpdateLabel(ms);
 };
 
 /* ===== 이력: 발전이력 ===== */

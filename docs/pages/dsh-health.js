@@ -47,7 +47,7 @@ const _hfReadFilters=()=>({
   type:document.getElementById('hf-f-type')?.value||'all',
   vpp:document.getElementById('hf-f-vpp')?.value||'전체',
   sev:document.getElementById('hf-f-sev')?.value||'전체',
-  gen:document.getElementById('hf-f-gen')?.value||'all',
+  gen:document.getElementById('hf-f-gen-trig')?.dataset.value||'all',
 });
 const _hfFilterResources=(f)=>{
   if(f.gen!=='all')return (window.RS_ALL||[]).filter(r=>r.name===f.gen);
@@ -59,7 +59,13 @@ const _hfFilterResources=(f)=>{
   });
 };
 const _hfFilterBar=()=>{
-  const genOpts=Object.entries(window.GENERATORS_BY_TYPE||{}).map(([t,gens])=>`<optgroup label="${t}">${gens.map(g=>`<option>${g}</option>`).join('')}</optgroup>`).join('');
+  const groupHtml=Object.entries(window.GENERATORS_BY_TYPE||{}).map(([type,gens])=>{
+    const items=gens.map(g=>{
+      const safe=g.replace(/'/g,"\\'");
+      return `<div class="hf-gen-item" onclick="selectHfGen('${safe}','${safe}')" style="padding:7px 14px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--semantic-line-alt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onmouseover="this.style.background='var(--semantic-background-2)'" onmouseout="this.style.background=''">${g}</div>`;
+    }).join('');
+    return `<div style="background:var(--semantic-background-3);padding:6px 12px;font-size:11px;font-weight:600;color:var(--semantic-label-strong);letter-spacing:0.3px;border-top:1px solid var(--semantic-line-normal);border-bottom:1px solid var(--semantic-line-normal)">${type} <span style="color:var(--semantic-label-alt);font-weight:400;margin-left:4px">(${gens.length})</span></div>${items}`;
+  }).join('');
   return `<div class="card fbar" style="margin-bottom:10px">
     <div class="fbar-row">
       <div class="fbar-item"><span class="fbar-lbl">VPP 그룹</span>
@@ -71,8 +77,15 @@ const _hfFilterBar=()=>{
       <div class="fbar-item"><span class="fbar-lbl">심각도</span>
         <select class="fbar-sel" id="hf-f-sev" onchange="hfFilterChange()"><option>전체</option><option>위험</option><option>주의</option><option>관찰</option></select>
       </div>
-      <div class="fbar-item"><span class="fbar-lbl">개별 자원</span>
-        <select class="fbar-sel" id="hf-f-gen" onchange="hfFilterChange()"><option value="all">전체 보기</option>${genOpts}</select>
+      <div class="fbar-item" style="position:relative"><span class="fbar-lbl">개별 자원</span>
+        <div id="hf-f-gen-trig" class="fbar-sel" data-value="all" tabindex="0" onclick="toggleHfGenDropdown(event)" style="display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;overflow:hidden">
+          <span id="hf-f-gen-label" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;flex:1;min-width:0">전체 보기</span>
+          <span style="font-size:10px;color:var(--semantic-label-alt);margin-left:6px;flex-shrink:0">▼</span>
+        </div>
+        <div id="hf-f-gen-panel" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;min-width:280px;max-height:380px;overflow-y:auto;background:var(--semantic-background-1);border:1px solid var(--semantic-line-normal);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,0.08);z-index:50">
+          <div class="hf-gen-item" onclick="selectHfGen('all','전체 보기')" style="padding:9px 14px;font-size:13px;font-weight:500;cursor:pointer;border-bottom:1px solid var(--semantic-line-normal);background:var(--semantic-brand-primary-assistive);color:var(--semantic-brand-primary);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">전체 보기</div>
+          ${groupHtml}
+        </div>
       </div>
     </div>
   </div>`;
@@ -136,63 +149,80 @@ const _hfBodyFull=(filters)=>{
   const sevColor={'위험':'var(--semantic-negative-normal)','주의':'var(--palette-yellow-40)','관찰':'var(--semantic-brand-primary)'};
   const noData=(msg)=>`<div style="padding:30px;text-align:center;color:var(--semantic-label-alt);font-size:12px">${msg}</div>`;
   return `
-<div class="g65">
-  <div class="card mb"><div class="sh"><div class="st">🟢 실시간 통신 모니터 (0.5초 주기 heartbeat)</div>
-    <div style="display:flex;gap:10px;font-size:11px;align-items:center">
-      <span style="display:flex;align-items:center;gap:4px"><span class="hb-dot ok"></span>정상 ${okC}</span>
-      <span style="display:flex;align-items:center;gap:4px"><span class="hb-dot warn"></span>지연 ${warnC}</span>
-      <span style="display:flex;align-items:center;gap:4px"><span class="hb-dot err"></span>단절 ${errC}</span>
-    </div></div>
-    ${hb.length>0?`<div class="hb-grid">${hb.map(h=>`<div class="hb-cell"><span class="hb-dot ${h.state}"></span><span class="hb-name" title="${h.name}">${h.name.length>16?h.name.substring(0,15)+'…':h.name}</span><span class="hb-ms">${h.state==='err'?'— ms':h.ms+' ms'}</span></div>`).join('')}</div>`:noData('필터 조건에 맞는 자원 없음')}
-  </div>
-  <div class="card mb"><div class="sh"><div class="st">프로토콜별 상태</div></div>
-    <div class="mr"><div class="ml"><span style="display:inline-flex;align-items:center;gap:6px"><span class="hb-dot ok" style="width:6px;height:6px"></span>Modbus TCP</span></div><div class="mv mono" style="font-size:12px">11 자원 · 평균 12ms</div></div>
-    <div class="mr"><div class="ml"><span style="display:inline-flex;align-items:center;gap:6px"><span class="hb-dot ok" style="width:6px;height:6px"></span>IEC 60870-5-104</span></div><div class="mv mono" style="font-size:12px">2 자원 · 평균 18ms</div></div>
-    <div class="mr" style="border:none"><div class="ml"><span style="display:inline-flex;align-items:center;gap:6px"><span class="hb-dot warn" style="width:6px;height:6px"></span>OCPP 1.6J (V2G)</span></div><div class="mv mono" style="font-size:12px">2 자원 · 평균 42ms</div></div>
-  </div>
+<!-- 건전성 진단 탭 -->
+<div style="display:flex;gap:24px;margin:14px 0 16px 0;border-bottom:1px solid var(--semantic-line-normal)">
+  <div class="pg-tab active" onclick="pgHfTab(this,'comm')">통신 건전성</div>
+  <div class="pg-tab" onclick="pgHfTab(this,'eqp')">설비 건전성</div>
 </div>
-<div class="card mb"><div class="sh"><div class="st">자원별 응답시간 추이 (최근 60초)</div><span class="kpi-pill" style="font-size:11px">실시간 갱신</span></div>
-  <div style="height:160px;position:relative"><canvas id="c-hb-trend" role="img"></canvas></div>
-</div>
-<div class="g2">
-  <div class="card mb"><div class="sh"><div class="st">AI 고장 사전 예보${forecast.length>0?' · '+forecast.length+'건':''}</div>${forecast.filter(f=>f.risk==='critical').length>0?`<span class="kpi-pill warn" style="font-size:11px">${forecast.filter(f=>f.risk==='critical').length}건 긴급</span>`:''}</div>
-    ${forecast.length>0?`<table class="tbl"><thead><tr><th>순위</th><th>자원 · 부품</th><th>고장확률</th><th>예상 시점</th><th>조치</th></tr></thead><tbody>
-    ${forecast.map((f,i)=>`<tr style="cursor:pointer" onclick="toast('${f.res} · ${f.part}: ${f.reason}')">
-      <td><span class="badge" style="background:${riskBg[f.risk]}20;color:${riskBg[f.risk]};font-weight:600">#${i+1} ${riskLabel[f.risk]}</span></td>
-      <td style="font-size:12px"><b>${f.res}</b><br><span style="color:var(--semantic-label-alt)">${f.part}</span></td>
-      <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:5px;background:var(--semantic-background-3);border-radius:3px;max-width:70px;overflow:hidden"><div style="width:${f.prob}%;height:100%;background:${riskBg[f.risk]}"></div></div><span class="mono" style="font-weight:600;color:${riskBg[f.risk]};font-size:12px">${f.prob}%</span></div></td>
-      <td class="mono" style="font-size:12px">${f.lead}</td>
-      <td style="font-size:12px;color:var(--semantic-brand-primary);font-weight:500">${f.action}</td>
-    </tr>`).join('')}
-    </tbody></table>`:noData('예보 대상 없음')}
+
+<!-- ========== 탭 1: 통신 건전성 ========== -->
+<div id="hf-tab-comm">
+  <div style="font-size:11px;color:var(--semantic-label-alt);margin-bottom:10px;padding:8px 12px;background:var(--semantic-background-2);border-radius:6px;border-left:3px solid var(--semantic-brand-primary)">
+    네트워크 계층 · TCP/IP heartbeat 기반 연결성 측정
   </div>
-  <div class="card mb"><div class="sh"><div class="st">부품별 잔여 수명 (RUL)${rul.length>0?' · '+rul.length+'개':''}</div><button class="cb n sm" onclick="toast('부품 재고 확인')">재고 확인</button></div>
-    ${rul.length>0?rul.map(r=>`<div class="rul-row">
-      <div class="rul-label"><b style="font-weight:500">${r.eq}</b><br><span style="font-size:11px;color:var(--semantic-label-alt)">${r.part}</span></div>
-      <div class="rul-bar"><div class="rul-fill" style="width:${Math.min(100,(r.days/r.max)*100).toFixed(1)}%;background:${rulColor[r.risk]}"></div></div>
-      <div class="rul-days" style="color:${rulColor[r.risk]}">${r.days}일</div>
-    </div>`).join(''):noData('대상 부품 없음')}
+  <div class="g65">
+    <div class="card mb"><div class="sh"><div class="st">🟢 통신 상태 (Heartbeat · 0.5초)</div>
+      <div style="display:flex;gap:10px;font-size:11px;align-items:center">
+        <span style="display:flex;align-items:center;gap:4px"><span class="hb-dot ok"></span>정상 ${okC}</span>
+        <span style="display:flex;align-items:center;gap:4px"><span class="hb-dot warn"></span>지연 ${warnC}</span>
+        <span style="display:flex;align-items:center;gap:4px"><span class="hb-dot err"></span>단절 ${errC}</span>
+      </div></div>
+      ${hb.length>0?`<div class="hb-grid">${hb.map(h=>`<div class="hb-cell"><span class="hb-dot ${h.state}"></span><span class="hb-name" title="${h.name}">${h.name.length>16?h.name.substring(0,15)+'…':h.name}</span><span class="hb-ms">${h.state==='err'?'— ms':h.ms+' ms'}</span></div>`).join('')}</div>`:noData('필터 조건에 맞는 자원 없음')}
+    </div>
+    <div class="card mb"><div class="sh"><div class="st">프로토콜별 상태</div></div>
+      <div class="mr"><div class="ml"><span style="display:inline-flex;align-items:center;gap:6px"><span class="hb-dot ok" style="width:6px;height:6px"></span>Modbus TCP</span></div><div class="mv mono" style="font-size:12px">11 자원 · 평균 12ms</div></div>
+      <div class="mr"><div class="ml"><span style="display:inline-flex;align-items:center;gap:6px"><span class="hb-dot ok" style="width:6px;height:6px"></span>IEC 60870-5-104</span></div><div class="mv mono" style="font-size:12px">2 자원 · 평균 18ms</div></div>
+      <div class="mr" style="border:none"><div class="ml"><span style="display:inline-flex;align-items:center;gap:6px"><span class="hb-dot warn" style="width:6px;height:6px"></span>OCPP 1.6J (V2G)</span></div><div class="mv mono" style="font-size:12px">2 자원 · 평균 42ms</div></div>
+    </div>
   </div>
-</div>
-<div class="card mb"><div class="sh"><div class="st">이상 징후 시계열 — 광양항태양광 INV-03 (온도 drift 감지)</div>
-  <div style="display:flex;gap:10px;font-size:11px;align-items:center">
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:rgba(120,120,120,0.6);display:inline-block"></span>정상 baseline</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:#0059ff;display:inline-block"></span>현재 24시간</span>
-    <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#ff243740;display:inline-block;border-radius:2px"></span>임계 구간</span>
-  </div></div>
-  <div style="height:200px;position:relative"><canvas id="c-hb-drift" role="img"></canvas></div>
-  <div style="font-size:12px;color:var(--semantic-label-normal);margin-top:8px;padding:10px 12px;background:var(--semantic-tag-bg-red);border-radius:6px">
-    ⚠️ <b>AI 판단:</b> 최근 4시간 모듈 온도가 정상 baseline 대비 평균 +6.2°C 상승 · 동시에 인버터 전류 변동성 증가 → <b>냉각 시스템 이상 가능성</b> (고장 3일 내 예보)
+  <div class="card mb"><div class="sh"><div class="st">자원별 응답시간 추이 (최근 60초)</div><span class="kpi-pill" style="font-size:11px">실시간 갱신</span></div>
+    <div style="height:160px;position:relative"><canvas id="c-hb-trend" role="img"></canvas></div>
   </div>
-</div>
-<div class="g2">
   <div class="card mb"><div class="sh"><div class="st">통신 장애 이력 (최근 24시간)${commLog.length>0?' · '+commLog.length+'건':''}</div></div>
     ${commLog.length>0?`<table class="tbl"><thead><tr><th>시각</th><th>자원</th><th>유형</th><th>지속</th><th>복구</th></tr></thead><tbody>
       ${commLog.map(c=>`<tr><td class="mono" style="font-size:12px">${c.time}</td><td>${c.displayRes}</td><td><span class="badge ${c.type==='단절'?'err':'warn'}">${c.type}</span></td><td class="mono">${c.duration}</td><td><span class="badge ${c.recoveryCls}">${c.recovery}</span></td></tr>`).join('')}
     </tbody></table>`:noData('장애 이력 없음')}
   </div>
-  <div class="card mb"><div class="sh"><div class="st">실시간 이상 탐지 피드${anomaly.length>0?' · '+anomaly.length+'건':''}</div><span class="kpi-pill" style="font-size:11px">AI 자동 탐지</span></div>
+</div>
+
+<!-- ========== 탭 2: 설비 건전성 ========== -->
+<div id="hf-tab-eqp" style="display:none">
+  <div style="font-size:11px;color:var(--semantic-label-alt);margin-bottom:10px;padding:8px 12px;background:var(--semantic-background-2);border-radius:6px;border-left:3px solid var(--palette-yellow-40)">
+    데이터 계층 · 센서·출력 패턴 AI 분석
+  </div>
+  <div class="card mb"><div class="sh"><div class="st">운영 이상 탐지 피드 (센서·출력 패턴)${anomaly.length>0?' · '+anomaly.length+'건':''}</div><span class="kpi-pill" style="font-size:11px">AI 자동 탐지</span></div>
     ${anomaly.length>0?anomaly.map(a=>`<div class="al"><div class="ad" style="background:${sevColor[a.sev]};${a.sev==='위험'?'animation:hbPulse 1s infinite;color:'+sevColor[a.sev]:''}"></div><div class="am"><b style="color:${sevColor[a.sev]}">${a.sev}</b> ${a.res} · ${a.desc}</div><div class="at">${a.time}</div></div>`).join(''):noData('이상 징후 없음')}
+  </div>
+  <div class="g2">
+    <div class="card mb"><div class="sh"><div class="st">AI 고장 사전 예보${forecast.length>0?' · '+forecast.length+'건':''}</div>${forecast.filter(f=>f.risk==='critical').length>0?`<span class="kpi-pill warn" style="font-size:11px">${forecast.filter(f=>f.risk==='critical').length}건 긴급</span>`:''}</div>
+      ${forecast.length>0?`<table class="tbl"><thead><tr><th>순위</th><th>자원 · 부품</th><th>고장확률</th><th>예상 시점</th><th>조치</th></tr></thead><tbody>
+      ${forecast.map((f,i)=>`<tr style="cursor:pointer" onclick="toast('${f.res} · ${f.part}: ${f.reason}')">
+        <td><span class="badge" style="background:${riskBg[f.risk]}20;color:${riskBg[f.risk]};font-weight:600">#${i+1} ${riskLabel[f.risk]}</span></td>
+        <td style="font-size:12px"><b>${f.res}</b><br><span style="color:var(--semantic-label-alt)">${f.part}</span></td>
+        <td><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:5px;background:var(--semantic-background-3);border-radius:3px;max-width:70px;overflow:hidden"><div style="width:${f.prob}%;height:100%;background:${riskBg[f.risk]}"></div></div><span class="mono" style="font-weight:600;color:${riskBg[f.risk]};font-size:12px">${f.prob}%</span></div></td>
+        <td class="mono" style="font-size:12px">${f.lead}</td>
+        <td style="font-size:12px;color:var(--semantic-brand-primary);font-weight:500">${f.action}</td>
+      </tr>`).join('')}
+      </tbody></table>`:noData('예보 대상 없음')}
+    </div>
+    <div class="card mb"><div class="sh"><div class="st">부품별 잔여 수명 (RUL)${rul.length>0?' · '+rul.length+'개':''}</div><button class="cb n sm" onclick="toast('부품 재고 확인')">재고 확인</button></div>
+      ${rul.length>0?rul.map(r=>`<div class="rul-row">
+        <div class="rul-label"><b style="font-weight:500">${r.eq}</b><br><span style="font-size:11px;color:var(--semantic-label-alt)">${r.part}</span></div>
+        <div class="rul-bar"><div class="rul-fill" style="width:${Math.min(100,(r.days/r.max)*100).toFixed(1)}%;background:${rulColor[r.risk]}"></div></div>
+        <div class="rul-days" style="color:${rulColor[r.risk]}">${r.days}일</div>
+      </div>`).join(''):noData('대상 부품 없음')}
+    </div>
+  </div>
+  <div class="card mb"><div class="sh"><div class="st">이상 징후 시계열 — 광양항태양광 INV-03 (온도 drift 감지)</div>
+    <div style="display:flex;gap:10px;font-size:11px;align-items:center">
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:rgba(120,120,120,0.6);display:inline-block"></span>정상 baseline</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:2px;background:#0059ff;display:inline-block"></span>현재 24시간</span>
+      <span style="display:flex;align-items:center;gap:4px"><span style="width:10px;height:10px;background:#ff243740;display:inline-block;border-radius:2px"></span>임계 구간</span>
+    </div></div>
+    <div style="height:200px;position:relative"><canvas id="c-hb-drift" role="img"></canvas></div>
+    <div style="font-size:12px;color:var(--semantic-label-normal);margin-top:8px;padding:10px 12px;background:var(--semantic-tag-bg-red);border-radius:6px">
+      ⚠️ <b>AI 판단:</b> 최근 4시간 모듈 온도가 정상 baseline 대비 평균 +6.2°C 상승 · 동시에 인버터 전류 변동성 증가 → <b>냉각 시스템 이상 가능성</b> (고장 3일 내 예보)
+    </div>
   </div>
 </div>`;
 };
@@ -319,6 +349,17 @@ window._hfInitCharts=function(){
     ],{plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:10,padding:6}}},scales:{y:{title:{display:true,text:'온도 (°C)',color:'#666',font:{size:10}}}}});
   }
 };
+window.pgHfTab=function(el,k){
+  ['comm','eqp'].forEach(v=>{
+    const d=document.getElementById('hf-tab-'+v);
+    if(d) d.style.display=(v===k?'':'none');
+  });
+  if(el && el.parentElement){
+    el.parentElement.querySelectorAll('.pg-tab').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+  }
+  setTimeout(window._hfInitCharts,40);
+};
 window.hfFilterChange=function(){
   const f=_hfReadFilters();
   _hfCheckWarning(f);
@@ -328,10 +369,39 @@ window.hfFilterChange=function(){
   setTimeout(window._hfInitCharts,40);
 };
 window.hfReset=function(){
-  const ids={'hf-f-type':'all','hf-f-vpp':'전체','hf-f-sev':'전체','hf-f-gen':'all'};
+  const ids={'hf-f-type':'all','hf-f-vpp':'전체','hf-f-sev':'전체'};
   Object.entries(ids).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.value=val;});
+  const trig=document.getElementById('hf-f-gen-trig');
+  if(trig) trig.dataset.value='all';
+  const lbl=document.getElementById('hf-f-gen-label');
+  if(lbl) lbl.textContent='전체 보기';
   window.hfFilterChange();
 };
+window.toggleHfGenDropdown=function(e){
+  if(e) e.stopPropagation();
+  const panel=document.getElementById('hf-f-gen-panel');
+  if(!panel) return;
+  panel.style.display=(panel.style.display==='none'||!panel.style.display)?'block':'none';
+};
+window.selectHfGen=function(value,label){
+  const trig=document.getElementById('hf-f-gen-trig');
+  const lbl=document.getElementById('hf-f-gen-label');
+  if(trig) trig.dataset.value=value;
+  if(lbl) lbl.textContent=label||value;
+  const panel=document.getElementById('hf-f-gen-panel');
+  if(panel) panel.style.display='none';
+  if(typeof window.hfFilterChange==='function') window.hfFilterChange();
+};
+if(!window._hfDocClickBound){
+  document.addEventListener('click',function(e){
+    const panel=document.getElementById('hf-f-gen-panel');
+    const trig=document.getElementById('hf-f-gen-trig');
+    if(!panel||panel.style.display==='none') return;
+    if(panel.contains(e.target)||(trig&&trig.contains(e.target))) return;
+    panel.style.display='none';
+  });
+  window._hfDocClickBound=true;
+}
 window.P['dsh-health']=()=>{
   const defaultFilters={type:'all',vpp:'전체',sev:'전체',gen:'all'};
   return `

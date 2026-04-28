@@ -26,9 +26,9 @@ window.P['sdp-rev']=()=>`
     <div class="fbar-item wide">
       <span class="fbar-lbl">조회 기간</span>
       <div class="fbar-period">
-        <input class="fbar-inp" type="date" style="min-width:130px;max-width:160px" value="2026-01-01" id="sr-f-from" onchange="srFilterApply()">
+        <input class="fbar-inp" type="date" value="2026-01-01" id="sr-f-from" onchange="srFilterApply()">
         <span class="fbar-period-sep">→</span>
-        <input class="fbar-inp" type="date" style="min-width:130px;max-width:160px" value="2026-04-23" id="sr-f-to" onchange="srFilterApply()">
+        <input class="fbar-inp" type="date" value="2026-04-23" id="sr-f-to" onchange="srFilterApply()">
       </div>
     </div>
     <div class="fbar-item">
