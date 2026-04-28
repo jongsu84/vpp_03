@@ -5,6 +5,83 @@ window.P = window.P || {};
    정책 출처: [AI-VPP] 기능명세서 v0.3 · '3) 전력시장 입찰 운영 정책'
    ================================================================ */
 
+/* ===== 하루전 입찰 마감 정책 (KPX 고시) ===== */
+window._DA_DEADLINES = { 1: '11:00', 2: '15:00' };
+
+window._daMsUntilDeadline = function(round){
+  const [hh,mm] = window._DA_DEADLINES[round].split(':').map(Number);
+  const now = new Date();
+  const dl = new Date(now); dl.setHours(hh, mm, 0, 0);
+  return dl.getTime() - now.getTime();
+};
+
+window._daFmtCountdown = function(ms){
+  if(ms <= 0) return '마감';
+  const s = Math.floor(ms/1000);
+  const h = String(Math.floor(s/3600)).padStart(2,'0');
+  const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+  const sec = String(s%60).padStart(2,'0');
+  return `${h}:${m}:${sec}`;
+};
+
+/* ===== 자동 계산 골격 (실 알고리즘은 향후 엔진 모듈 연결) ===== */
+window._forecast = window._forecast || {};
+
+window.computeBidQty = function(resource, round){
+  const f = window._forecast[resource];
+  if(!f) return null;
+  return round===1 ? f.qty1 : f.qty2;  // TODO: 실엔진 연계 시 ramp-rate 제약 반영
+};
+
+window.computeBidPrice = function(resource, round){
+  const f = window._forecast[resource];
+  if(!f) return null;
+  return round===1 ? f.price1 : f.price2;  // TODO: SMP·Merit Order·전략모드 반영
+};
+
+window._initForecastMockup = function(){
+  // 입찰 도표(line ~157-170) 자원 13개를 _forecast에 채워 자동 계산 흐름 표현
+  const seed = [
+    ['광양항태양광 01단계', 2.18, 115, 2.10, 118],
+    ['광양항태양광 04단계', 2.09, 115, 2.02, 120],
+    ['해맞이 태양광',       0.95, 120, 0.91, 122],
+    ['온누리 태양광',       0.94, 120, 0.90, 122],
+    ['금능1호 태양광',      0.88, 100, 0.84, 108],
+    ['김주풍력 01단계',     3.80,  95, 3.85, 100],
+    ['김주풍력 02단계',     9.50,  98, 9.55, 102],
+    ['금능1호 ESS',         1.80, 105, 1.85, 110],
+    ['제주 ESS허브',        4.70, 108, 4.65, 112],
+    ['순천 바이오가스',     1.42, 135, 1.42, 138],
+    ['여수 바이오매스',     2.85, 140, 2.85, 142],
+    ['광주 V2G 스테이션',   0.72, 130, 0.70, 135],
+    ['전남 V2G 허브',       1.35, 128, 1.32, 132],
+  ];
+  seed.forEach(([name,q1,p1,q2,p2])=>{
+    window._forecast[name] = {qty1:q1, price1:p1, qty2:q2, price2:p2};
+  });
+};
+
+/* ===== 카운트다운 타이머 ===== */
+window._daTimerId = null;
+window.startDaCountdown = function(){
+  if(window._daTimerId){ clearInterval(window._daTimerId); window._daTimerId=null; }
+  const tick = ()=>{
+    const round = window._daRound || 1;
+    const ms = window._daMsUntilDeadline(round);
+    const cnt = document.getElementById('k-deadline-cnt');
+    if(!cnt){
+      if(window._daTimerId){ clearInterval(window._daTimerId); window._daTimerId=null; }
+      return;
+    }
+    cnt.textContent = window._daFmtCountdown(ms);
+    cnt.style.color = ms <= 0 ? 'var(--semantic-label-alt)'
+                    : ms < 5*60*1000 ? 'var(--semantic-negative-normal)'
+                    : '';
+  };
+  tick();
+  window._daTimerId = setInterval(tick, 1000);
+};
+
 /* 상단 크로스링크 스트립 — DA ↔ RT 간 빠른 이동 (입찰수익 > 이중정산 등) */
 const _mkCross=(cur)=>{
   const L=[
@@ -91,18 +168,17 @@ ${_mkCross('bidDA-main')}
   <div class="pg-tab" onclick="pgTab(this,'history')">입찰 내역</div>
 </div>
 
-<!-- 액션 버튼 바 (공통) -->
-<div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
-  <span id="bid-mode-badge" class="badge ok" style="margin-right:auto;font-size:11px">자동입찰 모드</span>
-  <button class="cb n sm" onclick="openModal('modal-bid-settings')">입찰설정</button>
-  <button class="cb n sm" onclick="openModal('modal-model-settings')">예측모델 설정</button>
-  <button class="cb p sm" onclick="openModal('modal-immediate-bid')">즉시입찰</button>
-</div>
-
 <!-- ========== VIEW 1: 금일 입찰 ========== -->
 <div id="pg-view-today">
+  <!-- 액션 버튼 바 (금일 입찰 전용) -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
+    <span id="bid-mode-badge" class="badge ok" style="margin-right:auto;font-size:11px">자동입찰 모드</span>
+    <button class="cb n sm" onclick="openModal('modal-bid-settings')">입찰설정</button>
+    <button class="cb n sm" onclick="openModal('modal-model-settings')">예측모델 설정</button>
+    <button class="cb p sm" onclick="openModal('modal-immediate-bid')">즉시입찰</button>
+  </div>
   <div class="g4">
-    <div class="card acc"><div class="ct">다음 마감 ${window.tip('다음 입찰 마감 시각','KPX 하루전 시장 입찰 제출 마감까지 남은 시간','1차: 매일 11:00 / 2차: 매일 17:00 (KPX 고시)','마감 5분 전 알람 발송 — 자동 제출 또는 수동 검토 후 제출')}</div><div class="kv" id="k-deadline">11:00</div><div class="kd neu" id="k-deadline-sub">남은 42분 · 1차 KPX 자동전송</div></div>
+    <div class="card acc"><div class="ct">다음 마감 ${window.tip('다음 입찰 마감 시각','KPX 하루전 시장 입찰 제출 마감까지 남은 시간','1차: 매일 11:00 / 2차: 매일 15:00 (KPX 고시)','마감 5분 전 알람 발송 — 자동 제출 또는 수동 검토 후 제출')}</div><div class="kv" id="k-deadline">11:00</div><div class="kd neu" id="k-deadline-sub"><span id="k-deadline-cnt" class="mono">--:--:--</span><span id="k-deadline-msg"> · 1차 KPX 자동전송</span></div></div>
     <div class="card"><div class="ct">차수별 낙찰용량 ${window.tip('차수별 낙찰용량','선택한 차수(1차/2차)에서 낙찰된 시간대별 평균 입찰량','Σ(시간대별 낙찰 MWh) ÷ 24 [MW]','입찰량 대비 낙찰률 = 낙찰용량 ÷ 제출용량 × 100')}</div><div class="kv" id="k-won">145.2<span class="ku">MW</span></div><div class="kd up">낙찰가 평균 122원</div></div>
     <div class="card"><div class="ct">예측 상태 ${window.tip('예측 상태','입찰에 사용된 예측 모델의 실행 상태','완료: 모든 시간대 예측 OK / 진행: 일부 누락 / 오류: 모델 실패','오류 시 fallback 모델(persistence) 자동 적용 — 정확도 ~30% 하락')}</div><div class="kv" style="color:var(--semantic-positive-normal)">완료</div><div class="kd up">NMAE 6.8% · 정상</div></div>
     <div class="card"><div class="ct">예상 MEP ${window.tip('예상 MEP (Market Expected Profit)','현재 입찰 조건으로 예상되는 시장 수익','Σ(낙찰량 × 시간대별 SMP) [백만원]','확정 정산은 익일 06:00 KPX 발표 — ±5% 변동 가능')}</div><div class="kv">17.7<span class="ku">백만원</span></div><div class="kd neu">하루전 SMP 기준</div></div>
@@ -125,6 +201,9 @@ ${_mkCross('bidDA-main')}
       <span class="mono" style="color:var(--semantic-label-alt)">⏸ 15:00 <span id="tl-da2-desc">자동 제출</span></span>
       <span class="badge off" id="tl-da2-badge" style="font-size:10px">대기</span>
     </div>
+  </div>
+  <div id="manual-submit-warning" class="card mb" style="display:none;background:var(--semantic-tag-bg-yellow);border-left:3px solid var(--palette-yellow-40);padding:10px 14px;font-size:12px;line-height:18px;color:var(--semantic-label-strong)">
+    ⚠ <b>수동입찰 모드 안내</b> — [수정 → 저장]만으로는 KPX 제출이 완료되지 않습니다. 반드시 우측 상단의 <b>[KPX 제출]</b> 버튼을 클릭해야 입찰이 KPX로 전송됩니다.
   </div>
   <div class="card mb">
     <div class="sh">
@@ -169,13 +248,14 @@ ${_mkCross('bidDA-main')}
         ['여수바이오','fgbio02','여수 바이오매스','2106','바이오','전남',3.00,2.85,140,2.85,142,'낙찰'],
         ['광주V2G','fgv2g01','광주 V2G 스테이션','3201','V2G','전남',0.80,0.72,130,0.70,135,'낙찰'],
         ['전남V2G','fgv2g02','전남 V2G 허브','3203','V2G','전남',1.50,1.35,128,1.32,132,'낙찰'],
-      ].map((r,i)=>`<tr><td class="mono">${i+1}</td><td>${r[0]}</td><td class="mono">${r[1]}</td><td>${r[2]}</td><td class="mono">${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td class="mono">${r[6]}MW</td><td class="mono da-bid-qty" data-round="1" style="color:var(--semantic-brand-primary)">${r[7]}MW</td><td class="mono da-bid-price" data-round="1">${r[8]}</td><td class="mono da-bid-qty" data-round="2" style="color:var(--palette-yellow-40)">${r[9]}MW</td><td class="mono da-bid-price" data-round="2">${r[10]}</td><td class="da-status-cell"><span class="badge ${r[11]==='낙찰'?'ok':'off'}">${r[11]}</span></td></tr>`).join('')}
+      ].map((r,i)=>{
+        const vppMap={'전남':'VPP-전남권','제주':'VPP-제주권','경북':'VPP-경북권'};
+        const vpp=vppMap[r[5]]||'';
+        return `<tr class="da-bid-row" data-resource="${r[2]}" data-vpp="${vpp}" data-type="${r[4]}"><td class="mono">${i+1}</td><td>${r[0]}</td><td class="mono">${r[1]}</td><td>${r[2]}</td><td class="mono">${r[3]}</td><td>${r[4]}</td><td>${r[5]}</td><td class="mono">${r[6]}MW</td><td class="mono da-bid-qty" data-round="1" style="color:var(--semantic-brand-primary)">${r[7]}MW</td><td class="mono da-bid-price" data-round="1">${r[8]}</td><td class="mono da-bid-qty" data-round="2" style="color:var(--palette-yellow-40)">${r[9]}MW</td><td class="mono da-bid-price" data-round="2">${r[10]}</td><td class="da-status-cell"><span class="badge ${r[11]==='낙찰'?'ok':'off'}">${r[11]}</span></td></tr>`;
+      }).join('')}
       </tbody>
     </table>
     </div>
-  </div>
-  <div class="card"><div class="sh"><div class="st">시간대별 입찰량 곡선 (보조 뷰)</div><span class="sa" onclick="activate('bidDA-price')">가격 전략 ↗</span></div>
-    <div style="height:170px;position:relative"><canvas id="c-bidcurve" role="img" aria-label="시간대별 입찰량"></canvas></div>
   </div>
 </div>
 
@@ -254,12 +334,17 @@ ${_mkCross('bidDA-main')}
 
 <!-- ============ 모달 ① 입찰설정 ============ -->
 <div class="modal-backdrop" id="modal-bid-settings" style="display:none" onclick="closeModalBg(event,'modal-bid-settings')">
-  <div class="modal">
-    <div class="modal-hdr">
+  <div class="modal" style="max-height:min(78vh,720px);display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-hdr" style="flex-shrink:0">
       <span class="modal-title">입찰 설정</span>
       <button class="modal-close" onclick="closeModal('modal-bid-settings')">✕</button>
     </div>
-    <div class="modal-body">
+    <div class="modal-body" style="overflow-y:auto;flex:1 1 auto;min-height:0">
+      <div style="padding:10px 12px;background:var(--semantic-brand-primary-assistive);border-radius:6px;margin-bottom:14px;font-size:12px;line-height:18px;color:var(--semantic-label-normal);border-left:3px solid var(--semantic-brand-primary)">
+        📅 <b>하루전 시장 구조</b> &nbsp; <span class="mono">1시간 × 24구간/일</span> &nbsp;
+        <span style="color:var(--semantic-label-alt)">(00시~23시 각 구간별 평균 발전량 MWh 입찰)</span><br>
+        <span style="font-size:11px;color:var(--semantic-label-alt)">※ 아래 <b>입찰 시간 스케줄</b>은 KPX 제출 시각(1차/2차)을 의미하며, 24구간 데이터 단위와는 별개입니다.</span>
+      </div>
       <div class="form-section">입찰 모드</div>
       <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="bid-mode" value="manual"> 수동입찰 모드</label>
@@ -270,8 +355,32 @@ ${_mkCross('bidDA-main')}
         <span>입찰 시간 스케줄</span>
         <span style="font-size:11px;color:var(--semantic-label-alt);font-weight:400">시간 + 차수를 추가해 KPX 제출 스케줄을 구성합니다.</span>
       </div>
-      <div id="bid-sch-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px"></div>
+      <div id="bid-sch-list" style="display:flex;flex-direction:column;gap:8px;margin-bottom:10px;max-height:240px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:8px"></div>
       <button class="cb n sm" onclick="addBidSchedule()">+ 스케줄 추가</button>
+      <hr class="form-divider">
+      <div class="form-section">참여 자원 선택 <span id="da-res-count" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">13/13 활성</span></div>
+      <div style="font-size:11px;color:var(--semantic-label-alt);margin-bottom:8px">선택 해제된 자원은 입찰 도표에서 제외 처리되며 KPX 제출 시 합계에서 제외됩니다.</div>
+      <div style="max-height:180px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:8px 12px;margin-bottom:12px">
+        ${[
+          ['광양항태양광 01단계','태양광',true],
+          ['광양항태양광 04단계','태양광',true],
+          ['해맞이 태양광','태양광',true],
+          ['온누리 태양광','태양광',true],
+          ['금능1호 태양광','태양광',true],
+          ['김주풍력 01단계','풍력',true],
+          ['김주풍력 02단계','풍력',true],
+          ['금능1호 ESS','ESS',true],
+          ['제주 ESS허브','ESS',true],
+          ['순천 바이오가스','바이오',true],
+          ['여수 바이오매스','바이오',true],
+          ['광주 V2G 스테이션','V2G',true],
+          ['전남 V2G 허브','V2G',true],
+        ].map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--semantic-line-alt)">
+          <label class="toggle"><input type="checkbox" class="da-res-toggle" data-resource="${r[0]}" ${r[2]?'checked':''} onchange="updateDaResCount()"><div class="ts"></div></label>
+          <span style="font-size:13px;flex:1">${r[0]}</span>
+          <span class="badge ${r[1]==='태양광'?'inf':'ok'}">${r[1]}</span>
+        </div>`).join('')}
+      </div>
       <hr class="form-divider">
       <div class="form-section">제출 결과 통지</div>
       <div class="form-row">
@@ -370,26 +479,21 @@ ${_mkCross('bidDA-main')}
 window.bidDaMainApply=function(){
   const vpp=document.getElementById('bdm-vpp')?.value||'전체';
   const type=document.getElementById('bdm-type')?.value||'all';
+  // 입찰 내역 탭 (VPP 기준)
   document.querySelectorAll('#da-recent-tbody tr').forEach(tr=>{
     let show=true;
     if(vpp!=='전체' && tr.dataset.vpp!==vpp) show=false;
     tr.style.display=show?'':'none';
   });
-  // 자원유형 변경 시 헤더 정보 업데이트
-  const info=document.getElementById('bidda-round-info');
-  if(info){
-    const parts=[];
-    if(vpp!=='전체') parts.push(vpp);
-    if(type!=='all') parts.push(type);
-    info.textContent=parts.length?parts.join(' · ')+' 필터 적용':'1차 마감 11:00 · 익일 00~24시 선입찰';
-  }
+  // 금일 입찰 도표 (VPP + 자원유형 보기 필터)
+  document.querySelectorAll('.da-bid-row').forEach(tr=>{
+    let show=true;
+    if(vpp!=='전체' && tr.dataset.vpp!==vpp) show=false;
+    if(type!=='all' && tr.dataset.type!==type) show=false;
+    tr.style.display=show?'':'none';
+  });
 };
 window['I_bidDA-main']=function(){
-  const h=['00','02','04','06','08','10','12','14','16','18','20','22'];
-  mkChart('c-bidcurve','line',h,[
-    {label:'1차 입찰량(MW)',data:[0,0,0.2,2.1,6.4,9.8,10.7,10.2,8.5,4.2,1.0,0],borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,89,255,0.08)'},
-    {label:'2차 갱신(MW)',data:[0,0,0.2,2.3,6.7,10.1,10.9,10.0,8.2,3.9,0.9,0],borderColor:'#ffca42',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},
-  ],{});
   const list=document.getElementById('bid-sch-list');
   if(list && !list.dataset.init){
     list.dataset.init='1';
@@ -400,29 +504,71 @@ window['I_bidDA-main']=function(){
   }
   if(!window._bidMode) window._bidMode='auto';
   if(!window._daRound) window._daRound=1;
+  if(!window._daSettings){
+    window._daSettings={resources:[
+      '광양항태양광 01단계','광양항태양광 04단계','해맞이 태양광','온누리 태양광','금능1호 태양광',
+      '김주풍력 01단계','김주풍력 02단계','금능1호 ESS','제주 ESS허브',
+      '순천 바이오가스','여수 바이오매스','광주 V2G 스테이션','전남 V2G 허브'
+    ].map(n=>({name:n,enabled:true}))};
+  }
   if(typeof window.updateBidModeUI==='function') window.updateBidModeUI();
+  if(typeof window.applyDaSettings==='function') window.applyDaSettings();
+  if(typeof window._initForecastMockup==='function') window._initForecastMockup();
+  if(typeof window.startDaCountdown==='function') window.startDaCountdown();
 };
 window.selRound=function(n,el){
   document.querySelectorAll('.rd-tab').forEach(e=>e.classList.remove('active'));
   el.classList.add('active');
   window._daRound=n;
   const Q=id=>document.getElementById(id);
+  const isManual=(window._bidMode==='manual');
   if(n==1){
     if(Q('k-deadline'))Q('k-deadline').textContent='11:00';
     if(Q('k-won'))Q('k-won').innerHTML='145.2<span class="ku">MW</span>';
+    if(Q('k-deadline-msg'))Q('k-deadline-msg').textContent=isManual?' · 1차 운영자 제출 필요':' · 1차 KPX 자동전송';
   } else {
     if(Q('k-deadline'))Q('k-deadline').textContent='15:00';
     if(Q('k-won'))Q('k-won').innerHTML='142.7<span class="ku">MW</span>';
+    if(Q('k-deadline-msg'))Q('k-deadline-msg').textContent=isManual?' · 2차 운영자 제출 필요':' · 2차 KPX 자동전송';
   }
   if(typeof window.updateBidModeUI==='function') window.updateBidModeUI();
+  if(typeof window.startDaCountdown==='function') window.startDaCountdown();
 };
 window.applyBidMode=function(){
   const sel=document.querySelector('input[name="bid-mode"]:checked');
   window._bidMode=sel?sel.value:'auto';
   window._daSubmitted=false;
+  window._daSettings={
+    resources: Array.from(document.querySelectorAll('.da-res-toggle')).map(el=>({name:el.dataset.resource,enabled:el.checked}))
+  };
   window.updateBidModeUI();
-  toast('입찰 설정을 저장했습니다. ('+(window._bidMode==='manual'?'수동':'자동')+')');
+  window.applyDaSettings();
+  const enabled=window._daSettings.resources.filter(r=>r.enabled).length;
+  const total=window._daSettings.resources.length;
+  const modeTxt=window._bidMode==='manual'?'수동':'자동';
+  toast('입찰 설정 저장 — '+modeTxt+' · '+enabled+'/'+total+'개 자원 활성');
   closeModal('modal-bid-settings');
+};
+window.applyDaSettings=function(){
+  const s=window._daSettings;
+  if(!s) return;
+  const enabledSet=new Set(s.resources.filter(r=>r.enabled).map(r=>r.name));
+  document.querySelectorAll('.da-bid-row').forEach(tr=>{
+    const name=tr.dataset.resource;
+    if(!name) return;
+    const active=enabledSet.has(name);
+    tr.style.opacity=active?'':'0.4';
+    if(!active){
+      const cell=tr.querySelector('.da-status-cell');
+      if(cell) cell.innerHTML='<span class="badge off">제외</span>';
+    }
+  });
+};
+window.updateDaResCount=function(){
+  const total=document.querySelectorAll('.da-res-toggle').length;
+  const checked=document.querySelectorAll('.da-res-toggle:checked').length;
+  const el=document.getElementById('da-res-count');
+  if(el) el.textContent=checked+'/'+total+' 활성';
 };
 window.updateBidModeUI=function(){
   const mode=window._bidMode||'auto';
@@ -442,9 +588,9 @@ window.updateBidModeUI=function(){
     btn.disabled=!!window._daSubmitted;
     btn.textContent=window._daSubmitted?'제출 완료':'KPX 제출';
   }
-  // Meta + deadline sub
+  // Meta + deadline sub message (카운트다운 DOM은 보존, 메시지 자식만 갱신)
   const meta=Q('tbl-meta');
-  const ds=Q('k-deadline-sub');
+  const dmsg=Q('k-deadline-msg');
   if(isManual){
     if(meta){
       meta.textContent=window._daSubmitted
@@ -452,13 +598,13 @@ window.updateBidModeUI=function(){
         :(round==1?'1차 수동 · 운영자 검토 대기 · 제출 미완료':'2차 수동 · 운영자 검토 대기 · 제출 예정');
       meta.style.color=window._daSubmitted?'':'var(--palette-yellow-40)';
     }
-    if(ds) ds.textContent=window._daSubmitted?'제출 완료 · KPX 응답 대기':(round==1?'남은 42분 · 운영자 제출 필요':'남은 4시간 32분 · 운영자 제출 필요');
+    if(dmsg) dmsg.textContent=window._daSubmitted?' · 제출 완료 · KPX 응답 대기':(round==1?' · 1차 운영자 제출 필요':' · 2차 운영자 제출 필요');
   } else {
     if(meta){
       meta.textContent=round==1?'1차 자동 · 2026-04-23 09:57 · 2회 입찰':'2차 자동 · 대기 · 제출 예정 15:00';
       meta.style.color='';
     }
-    if(ds) ds.textContent=round==1?'남은 42분 · 1차 KPX 자동전송':'남은 4시간 32분 · 2차 갱신';
+    if(dmsg) dmsg.textContent=round==1?' · 1차 KPX 자동전송':' · 2차 KPX 자동전송';
   }
   // Timeline labels (compact)
   const d1d=Q('tl-da1-desc'),d1b=Q('tl-da1-badge'),d2d=Q('tl-da2-desc'),d2b=Q('tl-da2-badge');
@@ -483,15 +629,30 @@ window.updateBidModeUI=function(){
       c.innerHTML='<span class="badge ok">낙찰</span>';
     }
   });
+  // 수동모드 경고 배너 (제출 전에만 노출)
+  const warn=document.getElementById('manual-submit-warning');
+  if(warn) warn.style.display=(isManual && !window._daSubmitted)?'':'none';
 };
 window.submitDaBid=function(){
   const round=window._daRound||1;
+  // 마감 시간 가드 (Hard Block)
+  const ms=window._daMsUntilDeadline(round);
+  if(ms<=0){
+    toast((round===1?'1차':'2차')+' 마감되어 제출할 수 없습니다.','err');
+    return;
+  }
   const cells=document.querySelectorAll('.da-bid-qty[data-round="'+round+'"]');
-  let total=0;
-  cells.forEach(c=>{ const v=parseFloat(c.textContent.replace('MW','').trim()); if(!isNaN(v)) total+=v; });
-  if(!confirm((round==1?'1차':'2차')+' 입찰을 KPX로 제출하시겠습니까?\n총 '+cells.length+'개 자원 · 합계 '+total.toFixed(2)+' MW')) return;
+  let total=0,count=0;
+  cells.forEach(c=>{
+    const tr=c.closest('tr');
+    if(tr && (tr.style.display==='none' || tr.style.opacity==='0.4')) return;
+    const v=parseFloat(c.textContent.replace('MW','').trim());
+    if(!isNaN(v)){ total+=v; count++; }
+  });
+  if(!confirm((round==1?'1차':'2차')+' 입찰을 KPX로 제출하시겠습니까?\n총 '+count+'개 자원 · 합계 '+total.toFixed(2)+' MW')) return;
   window._daSubmitted=true;
   window.updateBidModeUI();
+  window.applyDaSettings();
   toast('KPX '+(round==1?'1차':'2차')+' 입찰이 제출되었습니다.');
 };
 window.daToggleEdit=function(){
@@ -499,6 +660,13 @@ window.daToggleEdit=function(){
   const cancelBtn=document.getElementById('btn-da-cancel');
   const submitBtn=document.getElementById('btn-submit-da');
   if(!window._daEditMode){
+    // 마감 시간 가드 (Hard Block) — 진입 시점에만 검증, 저장은 항상 허용
+    const round=window._daRound||1;
+    const ms=window._daMsUntilDeadline(round);
+    if(ms<=0){
+      toast((round===1?'1차':'2차')+' 마감되어 수정할 수 없습니다.','warn');
+      return;
+    }
     // Enter edit mode
     document.querySelectorAll('.da-bid-qty').forEach(td=>{
       const v=td.textContent.replace('MW','').trim();
