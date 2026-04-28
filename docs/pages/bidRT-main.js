@@ -1,5 +1,104 @@
 // AUTO-GENERATED FROM index.html — page module: bidRT-main
 window.P = window.P || {};
+
+/* ===== 실시간 마감 정책 (KPX 고시: T-75분 / 15분 슬롯) ===== */
+window._rtNextDeadline = function(){
+  const now = Date.now();
+  let cand = new Date(now + 75*60*1000);
+  cand.setSeconds(0, 0);
+  const m = cand.getMinutes();
+  if(m % 15 !== 0) cand.setMinutes(Math.ceil(m/15)*15);
+  let dl = new Date(cand.getTime() - 75*60*1000);
+  if(dl.getTime() <= now){
+    cand.setMinutes(cand.getMinutes() + 15);
+    dl = new Date(cand.getTime() - 75*60*1000);
+  }
+  return {slotStart: cand, deadline: dl};
+};
+window._rtMsUntilDeadline = function(){
+  return window._rtNextDeadline().deadline.getTime() - Date.now();
+};
+
+/* ===== Imbalance 실시간 시뮬레이션 (자동 갱신 트리거 표현) ===== */
+window._rtImbCurrent = 1.8;
+window._rtImbAlertedAt = 0;
+window._rtImbTimerId = null;
+window.startRtImbalanceSim = function(){
+  if(window._rtImbTimerId){ clearInterval(window._rtImbTimerId); window._rtImbTimerId=null; }
+  const tick = ()=>{
+    const mode = window._rtMode || 'auto';
+    if(mode === 'off') return;
+    const kv = document.getElementById('rt-kpi-imb');
+    if(!kv){
+      if(window._rtImbTimerId){ clearInterval(window._rtImbTimerId); window._rtImbTimerId=null; }
+      return;
+    }
+    const noise = (Math.random()-0.5)*0.8;
+    const spike = Math.random()<0.08 ? (Math.random()*4+2) : 0;
+    window._rtImbCurrent = Math.max(0.5, Math.min(12, window._rtImbCurrent + noise + spike));
+    const t = window._rtSettings?.threshold || 5;
+    kv.innerHTML = window._rtImbCurrent.toFixed(1)+'<span class="ku">%</span>';
+    kv.style.color = window._rtImbCurrent>t
+      ? 'var(--semantic-negative-normal)'
+      : (window._rtImbCurrent>3 ? 'var(--palette-yellow-40)' : 'var(--semantic-positive-normal)');
+    const sub = document.getElementById('rt-kpi-imb-sub');
+    if(sub){
+      sub.textContent = (window._rtImbCurrent<=t ? '허용 범위 내' : '⚠ 임계 초과 — 갱신 필요')+' (임계 '+t+'%)';
+      sub.style.color = window._rtImbCurrent>t ? 'var(--semantic-negative-normal)' : '';
+    }
+    if(window._rtImbCurrent>t && Date.now()-window._rtImbAlertedAt>30000){
+      window._rtImbAlertedAt = Date.now();
+      const head = 'Imbalance '+window._rtImbCurrent.toFixed(1)+'% — 임계('+t+'%) 초과';
+      if(mode==='auto') toast(head+' · 자동 갱신 트리거','warn');
+      else if(mode==='manual') toast(head+' · [현재 슬롯 제출] 권장','warn');
+    }
+  };
+  tick();
+  window._rtImbTimerId = setInterval(tick, 5000);
+};
+
+/* ===== T-75 카운트다운 ===== */
+window._rtCountdownTimerId = null;
+window.startRtCountdown = function(){
+  if(window._rtCountdownTimerId){ clearInterval(window._rtCountdownTimerId); window._rtCountdownTimerId=null; }
+  const fmt = (ms)=>{
+    if(ms <= 0) return '마감';
+    const s = Math.floor(ms/1000);
+    const h = String(Math.floor(s/3600)).padStart(2,'0');
+    const m = String(Math.floor((s%3600)/60)).padStart(2,'0');
+    const sec = String(s%60).padStart(2,'0');
+    return `${h}:${m}:${sec}`;
+  };
+  const tick = ()=>{
+    const cnt = document.getElementById('rt-kpi-deadline-cnt');
+    if(!cnt){
+      if(window._rtCountdownTimerId){ clearInterval(window._rtCountdownTimerId); window._rtCountdownTimerId=null; }
+      return;
+    }
+    const mode = window._rtMode || 'auto';
+    if(mode === 'off'){
+      cnt.textContent = '중단';
+      cnt.style.color = 'var(--semantic-negative-normal)';
+      const sub = document.getElementById('rt-kpi-deadline-sub');
+      if(sub) sub.textContent = '실시간 입찰 OFF';
+      return;
+    }
+    const {slotStart, deadline} = window._rtNextDeadline();
+    const ms = deadline.getTime() - Date.now();
+    cnt.textContent = fmt(ms);
+    cnt.style.color = ms <= 0 ? 'var(--semantic-label-alt)'
+                    : ms < 5*60*1000 ? 'var(--semantic-negative-normal)' : '';
+    const sub = document.getElementById('rt-kpi-deadline-sub');
+    if(sub){
+      const slotStr = slotStart.toTimeString().slice(0,5);
+      const alertMin = (window._rtSettings && window._rtSettings.alert) || '10';
+      sub.textContent = '슬롯 ' + slotStr + ' · ' + alertMin + '분 전 알림';
+    }
+  };
+  tick();
+  window._rtCountdownTimerId = setInterval(tick, 1000);
+};
+
 /* ===== 실시간입찰: 입찰 운영 (T-75분) ===== */
 window.P['bidRT-main']=()=>`
 ${_mkCross('bidRT-main')}
@@ -12,21 +111,20 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
   <div class="pg-tab" onclick="pgRtTab(this,'history')">실시간 내역</div>
 </div>
 
-<!-- 액션 버튼 바 (공통) -->
-<div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
-  <span id="rt-mode-badge" class="badge ok" style="margin-right:auto;font-size:11px">자동 갱신 모드</span>
-  <button class="cb n sm" onclick="openModal('modal-rt-settings')">실시간 설정</button>
-  <button class="cb n sm" onclick="openModal('modal-model-settings-rt')">예측모델 설정</button>
-  <button class="cb p sm" onclick="openModal('modal-rt-refresh')">즉시 갱신</button>
-</div>
-
 <!-- ========== VIEW 1: 실시간 현황 ========== -->
 <div id="pg-rt-view-today">
+  <!-- 액션 버튼 바 (실시간 현황 전용) -->
+  <div style="display:flex;gap:8px;margin-bottom:16px;justify-content:flex-end;flex-wrap:wrap;align-items:center">
+    <span id="rt-mode-badge" class="badge ok" style="margin-right:auto;font-size:11px">자동 갱신 모드</span>
+    <button class="cb n sm" onclick="openModal('modal-rt-settings')">실시간 설정</button>
+    <button class="cb n sm" onclick="openModal('modal-model-settings-rt')">예측모델 설정</button>
+    <button class="cb p sm" onclick="openRtRefresh()">즉시 갱신</button>
+  </div>
   <div class="g4">
-    <div class="card acc"><div class="ct">다음 마감 ${window.tip('실시간 입찰 다음 마감','T-75 (실시간 75분 전) 입찰 제출 마감까지 남은 시간','15분 단위 96회/일 입찰 — 매시 00·15·30·45분 마감','자동 제출 기본 — 마감 5분 전 수동 개입 가능')}</div><div class="kv">T-75<span class="ku">분</span></div><div class="kd neu" id="rt-kpi-deadline-sub">10분 전 알림 · 15:15 제출</div></div>
+    <div class="card acc"><div class="ct">다음 마감 ${window.tip('실시간 입찰 다음 마감','T-75 (실시간 75분 전) 입찰 제출 마감까지 남은 시간','15분 단위 96회/일 입찰 — 매시 00·15·30·45분 마감','자동 제출 기본 — 마감 5분 전 수동 개입 가능')}</div><div class="kv"><span id="rt-kpi-deadline-cnt" class="mono">--:--:--</span></div><div class="kd neu" id="rt-kpi-deadline-sub">슬롯 -- · 10분 전 알림</div></div>
     <div class="card"><div class="ct">현재 입찰 상태 ${window.tip('현재 입찰 상태','금회 차수의 입찰 진행 상태','진행중: 예측 갱신 중 / 제출완료: KPX 전송 완료 / 낙찰: 결과 확정','오류 발생 시 직전 차수 입찰값 재사용 (fallback)')}</div><div class="kv" id="rt-kpi-state" style="color:var(--semantic-brand-primary)">진행중</div><div class="kd neu" id="rt-kpi-state-sub">초단기 예보 반영</div></div>
     <div class="card"><div class="ct">DA 대비 갱신폭 ${window.tip('DA 대비 갱신폭','전일 하루전(DA) 입찰량 대비 실시간 갱신량의 차이','RT 입찰량 - DA 입찰량 [MW]','±5MW 이내 정상 / ±10MW 초과 시 IMBP 위험 — 사유 점검 필요')}</div><div class="kv">+2.1<span class="ku">MW</span></div><div class="kd up">실측 상향 반영</div></div>
-    <div class="card"><div class="ct">현재 Imbalance ${window.tip('현재 Imbalance','입찰량 대비 실측 발전량의 절대 편차율','|실측 - 입찰| ÷ 입찰 × 100 [%]','5% 이하 정상 / 5~10% 주의 / 10% 초과 IMBP 페널티 발생 (kWh당 SMP의 1.2배)')}</div><div class="kv" style="color:var(--palette-yellow-40)">1.8<span class="ku">%</span></div><div class="kd neu" id="rt-kpi-imb-sub">허용 범위 내 (임계 5%)</div></div>
+    <div class="card"><div class="ct">현재 Imbalance ${window.tip('현재 Imbalance','입찰량 대비 실측 발전량의 절대 편차율','|실측 - 입찰| ÷ 입찰 × 100 [%]','5% 이하 정상 / 5~10% 주의 / 10% 초과 IMBP 페널티 발생 (kWh당 SMP의 1.2배)')}</div><div class="kv" id="rt-kpi-imb" style="color:var(--palette-yellow-40)">1.8<span class="ku">%</span></div><div class="kd neu" id="rt-kpi-imb-sub">허용 범위 내 (임계 5%)</div></div>
   </div>
   <div class="card mb" id="rt-tl-card"><div class="sh"><div class="st">RT 갱신 로직</div><div style="display:flex;gap:6px;align-items:center"><span class="kpi-pill" id="rt-tl-cycle">15분 갱신</span><span class="kpi-pill">T-75분 마감</span></div></div>
     <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-size:12px;padding:6px 2px;line-height:24px">
@@ -42,8 +140,14 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
     </div>
   </div>
 
+  <div id="manual-submit-warning-rt" class="card mb" style="display:none;background:var(--semantic-tag-bg-yellow);border-left:3px solid var(--palette-yellow-40);padding:10px 14px;font-size:12px;line-height:18px;color:var(--semantic-label-strong)">
+    ⚠ <b>수동 모드 안내</b> — [수정 → 저장]만으로는 KPX 제출이 완료되지 않습니다. 반드시 우측 상단의 <b>[현재 슬롯 제출]</b> 버튼을 클릭해야 RT 입찰이 KPX로 전송됩니다.
+  </div>
+  <div id="off-mode-warning-rt" class="card mb" style="display:none;background:var(--semantic-tag-bg-red, rgba(255,36,55,0.08));border-left:3px solid var(--semantic-negative-normal);padding:10px 14px;font-size:12px;line-height:18px;color:var(--semantic-label-strong)">
+    ⛔ <b>실시간 입찰 OFF 상태</b> — 갱신·제출이 모두 중단되며, DA 확정 입찰값으로만 운영됩니다. <b style="color:var(--semantic-negative-normal)">Imbalance 임계 초과 시 IMBP 페널티</b>가 부과될 수 있습니다.
+  </div>
   <!-- 금회 슬롯 자원별 입찰 도표 -->
-  <div class="card mb">
+  <div class="card mb" id="rt-bid-card">
     <div class="sh">
       <div class="st">금회 슬롯 자원별 입찰 <span style="font-size:12px;color:var(--semantic-label-alt);font-weight:400;margin-left:8px">15:15 슬롯 · T-75 제출</span></div>
       <div style="display:flex;gap:10px;align-items:center">
@@ -52,6 +156,9 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
         <button class="cb n sm" id="btn-rt-edit" onclick="rtToggleEdit()">수정</button>
         <button class="cb p sm" id="btn-submit-rt" onclick="submitRtBid()" style="display:none">현재 슬롯 제출</button>
       </div>
+    </div>
+    <div style="font-size:11px;color:var(--semantic-label-alt);padding:0 0 8px 2px;line-height:18px">
+      ※ <b>입찰가</b>는 D-1 확정값을 그대로 사용합니다. 실시간 갱신은 <b>입찰량(MW)만</b> 변경됩니다.
     </div>
     <div style="overflow-x:auto">
     <table class="tbl">
@@ -88,16 +195,6 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
       }).join('')}
       </tbody>
     </table>
-    </div>
-  </div>
-  <div class="g2">
-    <div class="card mb"><div class="sh"><div class="st">DA 입찰값 vs RT 갱신값 · 금일</div><span class="sa" onclick="activate('bidRT-dual')">편차 관리 ↗</span></div><div style="height:180px;position:relative"><canvas id="c-rtbid" role="img" aria-label="DA vs RT"></canvas></div></div>
-    <div class="card mb"><div class="sh"><div class="st">초단기 예보 입력</div></div>
-      <div class="mr"><div class="ml">일사량 (15분)</div><div class="mv mono">782 W/㎡</div></div>
-      <div class="mr"><div class="ml">운량</div><div class="mv mono">32%</div></div>
-      <div class="mr"><div class="ml">기온</div><div class="mv mono">22.4 ℃</div></div>
-      <div class="mr"><div class="ml">풍속</div><div class="mv mono">3.2 m/s</div></div>
-      <div class="mr" style="border:none"><div class="ml">모델 신뢰도</div><div class="mv"><span class="badge ok">96.4%</span></div></div>
     </div>
   </div>
 </div>
@@ -149,7 +246,7 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
     <div class="card"><div class="ct">재입찰률</div><div class="kv">18<span class="ku">%</span></div><div class="kd neu">11/62회 임계 초과 갱신</div></div>
     <div class="card"><div class="ct">누적 RTES</div><div class="kv" style="color:var(--semantic-brand-primary)">+4.2<span class="ku">백만원</span></div><div class="kd up">금일 실시간 편차정산</div></div>
   </div>
-  <div class="card mb"><div class="sh"><div class="st">금일 Imbalance 시계열 (15분 단위)</div><span class="kpi-pill warn" style="font-size:11px">임계 5% 초과 2건</span></div>
+  <div class="card mb"><div class="sh"><div class="st">금일 Imbalance 시계열 (15분 단위 × 96구간)</div><span class="kpi-pill warn" style="font-size:11px">임계 5% 초과 6건</span></div>
     <div style="height:200px;position:relative"><canvas id="c-rt-imb-series" role="img" aria-label="Imbalance 시계열"></canvas></div>
   </div>
   <div class="card"><div class="sh"><div class="st">금일 T-75 제출 이력</div><div style="display:flex;gap:8px;align-items:center"><span class="sa" onclick="activate('bidRT-dual')">편차 관리 ↗</span>${window.csvBtn('rt-t75-tbody','rt_t75_history','금일 T-75 제출 이력')}</div></div>
@@ -185,6 +282,11 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
       <button class="modal-close" onclick="closeModal('modal-rt-settings')">✕</button>
     </div>
     <div class="modal-body" style="overflow-y:auto;flex:1 1 auto;min-height:0">
+      <div style="padding:10px 12px;background:var(--semantic-tag-bg-yellow);border-radius:6px;margin-bottom:14px;font-size:12px;line-height:18px;color:var(--semantic-label-normal);border-left:3px solid var(--palette-yellow-40)">
+        ⚡ <b>실시간 시장 구조</b> &nbsp; <span class="mono">15분 × 96구간/일</span> &nbsp;
+        <span style="color:var(--semantic-label-alt)">(DA 1시간 평균을 4분할하여 정밀 갱신 · T-75분 마감)</span><br>
+        <span style="font-size:11px;color:var(--semantic-label-alt)">※ 갱신 주기를 30분/60분으로 늘리면 구간 수가 비례해 줄어들며 (48/24구간), 정밀도는 낮아지지만 운영 부담은 감소합니다.</span>
+      </div>
       <div class="form-section">실시간 모드</div>
       <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
         <label style="display:flex;align-items:center;gap:10px;cursor:pointer"><input type="radio" name="rt-mode" value="auto" checked> 자동 갱신 모드 (기본)</label>
@@ -195,7 +297,7 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
       <div class="form-section">갱신 주기 · 임계값</div>
       <div class="form-row">
         <div class="form-item"><label>갱신 주기</label>
-          <select class="sel" id="rt-cycle"><option value="15" selected>15분 (권장)</option><option value="30">30분</option><option value="60">60분</option></select>
+          <select class="sel" id="rt-cycle"><option value="15" selected>15분 단위 × 96구간/일 (권장)</option><option value="30">30분 단위 × 48구간/일</option><option value="60">60분 단위 × 24구간/일 (DA 동기)</option></select>
         </div>
         <div class="form-item"><label>T-75 사전 알림</label>
           <select class="sel" id="rt-alert"><option value="5">5분 전</option><option value="10" selected>10분 전</option><option value="15">15분 전</option></select>
@@ -219,6 +321,16 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
       </div>
       <hr class="form-divider">
       <div class="form-section">참여 자원 선택 <span id="rt-res-count" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">12/13 활성</span></div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:11px;color:var(--semantic-label-alt)">
+        <span>일괄 토글:</span>
+        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('all')">전체</button>
+        <span style="color:var(--semantic-line-normal)">|</span>
+        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('태양광')">태양광</button>
+        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('풍력')">풍력</button>
+        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('ESS')">ESS</button>
+        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('바이오')">바이오</button>
+        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('V2G')">V2G</button>
+      </div>
       <div style="max-height:180px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:8px 12px;margin-bottom:12px">
         ${[
           ['광양항태양광 01단계','태양광',true],
@@ -313,8 +425,14 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
       <button class="modal-close" onclick="closeModal('modal-rt-refresh')">✕</button>
     </div>
     <div class="modal-body">
-      <div style="padding:12px 14px;background:var(--semantic-tag-bg-yellow);border-radius:6px;font-size:13px;line-height:20px;color:var(--semantic-label-strong);margin-bottom:16px">
+      <div style="padding:12px 14px;background:var(--semantic-tag-bg-yellow);border-radius:6px;font-size:13px;line-height:20px;color:var(--semantic-label-strong);margin-bottom:14px">
         ⚠ 갱신 주기(15분)를 기다리지 않고 즉시 초단기 예보를 재수집하여 RT 입찰을 다시 계산·제출합니다.
+      </div>
+      <div id="rtref-preview" style="background:var(--semantic-background-2);border:1px solid var(--semantic-line-alt);border-radius:6px;padding:10px 14px;margin-bottom:14px;font-size:12px;line-height:22px">
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--semantic-label-alt)">대상 슬롯</span><b id="rtref-prev-slot">--</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--semantic-label-alt)">대상 자원</span><b id="rtref-prev-count">--</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--semantic-label-alt)">RT 합계</span><b id="rtref-prev-qty">--</b></div>
+        <div style="display:flex;justify-content:space-between"><span style="color:var(--semantic-label-alt)">DA 대비</span><b id="rtref-prev-delta">--</b></div>
       </div>
       <div class="form-item">
         <label>실행하시려면 <b style="color:var(--semantic-brand-primary)">[즉시갱신]</b>을 입력해주세요.</label>
@@ -323,7 +441,7 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
     </div>
     <div class="modal-footer">
       <button class="cb n" onclick="closeModal('modal-rt-refresh')">취소</button>
-      <button class="cb p" id="btn-rtref" disabled onclick="toast('즉시 갱신이 실행되었습니다.');closeModal('modal-rt-refresh');document.getElementById('confirm-rtref').value=''">즉시 갱신</button>
+      <button class="cb p" id="btn-rtref" disabled onclick="execRtRefresh()">즉시 갱신</button>
     </div>
   </div>
 </div>`;
@@ -335,11 +453,6 @@ window.bidRtMainApply=function(){
   });
 };
 window['I_bidRT-main']=function(){
-  const h=['09','10','11','12','13','14','15','16','17'];
-  mkChart('c-rtbid','line',h,[
-    {label:'DA 입찰',data:[5.8,8.1,9.8,10.7,10.9,10.5,10,10.1,9.6],borderColor:'rgba(120,120,120,0.6)',borderWidth:1.5,pointRadius:0,tension:0.4,borderDash:[4,2],fill:false},
-    {label:'RT 갱신',data:[6.1,8.4,10.1,10.9,11.0,10.4,9.8,10.3,9.7],borderColor:'#0059ff',borderWidth:2,pointRadius:0,tension:0.4,fill:true,backgroundColor:'rgba(0,89,255,0.08)'},
-  ],{});
   if(!window._rtMode) window._rtMode='auto';
   if(!window._rtSettings){
     window._rtSettings={
@@ -353,6 +466,8 @@ window['I_bidRT-main']=function(){
   }
   if(typeof window.updateRtModeUI==='function') window.updateRtModeUI();
   if(typeof window.applyRtSettings==='function') window.applyRtSettings();
+  if(typeof window.startRtImbalanceSim==='function') window.startRtImbalanceSim();
+  if(typeof window.startRtCountdown==='function') window.startRtCountdown();
 };
 window.applyRtMode=function(){
   const Q=id=>document.getElementById(id);
@@ -407,6 +522,20 @@ window.applyRtSettings=function(){
     const name=tr.dataset.resource;
     if(name) tr.style.display=enabledSet.has(name)?'':'none';
   });
+};
+window.bulkToggleRtRes=function(filter){
+  const toggles=document.querySelectorAll('.rt-res-toggle');
+  const targets=[];
+  toggles.forEach(el=>{
+    const row=el.closest('div');
+    const badge=row?row.querySelector('.badge'):null;
+    const type=badge?badge.textContent.trim():'';
+    if(filter==='all' || filter===type) targets.push(el);
+  });
+  if(targets.length===0) return;
+  const allOn=targets.every(t=>t.checked);
+  targets.forEach(t=>{ t.checked = !allOn; });
+  if(typeof window.updateRtResCount==='function') window.updateRtResCount();
 };
 window.updateRtResCount=function(){
   const total=document.querySelectorAll('.rt-res-toggle').length;
@@ -472,7 +601,9 @@ window.updateRtModeUI=function(){
       meta.textContent='실시간 입찰 중단됨';
       meta.style.color='var(--semantic-negative-normal)';
     } else {
-      meta.textContent='자동 갱신 · 14:25:08 · DA 대비 +2.1 MW';
+      const slot=window._rtNextDeadline?window._rtNextDeadline().slotStart:null;
+      const slotStr=slot?slot.toTimeString().slice(0,5):'--';
+      meta.textContent='자동 갱신 모드 · 다음 갱신 슬롯: '+slotStr+' · DA 대비 +2.1 MW';
       meta.style.color='';
     }
   }
@@ -482,11 +613,29 @@ window.updateRtModeUI=function(){
     else if(mode==='manual' && window._rtSubmitted) c.innerHTML='<span class="badge inf">제출 완료</span>';
     else c.innerHTML='<span class="badge ok">제출완료</span>';
   });
-  // OFF: dim timeline card
+  // OFF: dim timeline card + bid table card
   const tlCard=Q('rt-tl-card');
   if(tlCard) tlCard.style.opacity=(mode==='off')?'0.55':'';
+  const bidCard=Q('rt-bid-card');
+  if(bidCard) bidCard.style.opacity=(mode==='off')?'0.55':'';
+  // 수동/OFF 모드 경고 배너
+  const wManual=Q('manual-submit-warning-rt');
+  if(wManual) wManual.style.display=(mode==='manual' && !window._rtSubmitted)?'':'none';
+  const wOff=Q('off-mode-warning-rt');
+  if(wOff) wOff.style.display=(mode==='off')?'':'none';
 };
 window.submitRtBid=function(){
+  // OFF 모드 가드
+  if(window._rtMode==='off'){
+    toast('실시간 입찰이 OFF 상태이므로 제출할 수 없습니다.','err');
+    return;
+  }
+  // T-75 마감 가드
+  const ms=window._rtMsUntilDeadline();
+  if(ms<=0){
+    toast('현재 슬롯 T-75 마감되어 제출할 수 없습니다.','err');
+    return;
+  }
   const cells=document.querySelectorAll('.rt-bid-qty');
   let total=0,count=0;
   cells.forEach(c=>{
@@ -505,6 +654,17 @@ window.rtToggleEdit=function(){
   const cancelBtn=document.getElementById('btn-rt-cancel');
   const submitBtn=document.getElementById('btn-submit-rt');
   if(!window._rtEditMode){
+    // OFF 모드 가드
+    if(window._rtMode==='off'){
+      toast('실시간 입찰이 OFF 상태입니다. 설정에서 모드를 변경하세요.','warn');
+      return;
+    }
+    // T-75 마감 가드 (Hard Block)
+    const ms=window._rtMsUntilDeadline();
+    if(ms<=0){
+      toast('현재 슬롯 T-75 마감되어 수정할 수 없습니다.','warn');
+      return;
+    }
     document.querySelectorAll('.rt-bid-qty').forEach(td=>{
       const v=td.textContent.replace('MW','').trim();
       td.dataset.orig=v;
@@ -564,6 +724,52 @@ window.chkRtRef=function(v){
   const b=document.getElementById('btn-rtref');
   if(b)b.disabled=(v!=='즉시갱신');
 };
+window.openRtRefresh=function(){
+  if(window._rtMode==='off'){
+    toast('실시간 입찰이 OFF 상태이므로 즉시 갱신할 수 없습니다.','warn');
+    return;
+  }
+  const ms=window._rtMsUntilDeadline();
+  if(ms<=0){
+    toast('현재 슬롯 T-75 마감되어 즉시 갱신할 수 없습니다.','warn');
+    return;
+  }
+  // 미리보기 채우기
+  let totalRt=0, totalDa=0, count=0;
+  document.querySelectorAll('.rt-res-row').forEach(tr=>{
+    if(tr.style.display==='none') return;
+    const tds=tr.querySelectorAll('td');
+    if(tds.length<7) return;
+    const da=parseFloat((tds[5].textContent||'').replace('MW','').trim());
+    const rt=parseFloat((tds[6].textContent||'').replace('MW','').trim());
+    if(!isNaN(da)) totalDa+=da;
+    if(!isNaN(rt)){ totalRt+=rt; count++; }
+  });
+  const delta=totalRt-totalDa;
+  const slot=window._rtNextDeadline?window._rtNextDeadline().slotStart.toTimeString().slice(0,5):'--';
+  const Q=id=>document.getElementById(id);
+  if(Q('rtref-prev-slot')) Q('rtref-prev-slot').textContent = slot + ' 슬롯';
+  if(Q('rtref-prev-count')) Q('rtref-prev-count').textContent = count + '개';
+  if(Q('rtref-prev-qty')) Q('rtref-prev-qty').textContent = totalRt.toFixed(2) + ' MW';
+  if(Q('rtref-prev-delta')){
+    const sign = delta>=0 ? '+' : '';
+    Q('rtref-prev-delta').textContent = sign + delta.toFixed(2) + ' MW';
+    Q('rtref-prev-delta').style.color = delta>0 ? 'var(--semantic-positive-normal)' : (delta<0 ? 'var(--semantic-negative-normal)' : 'var(--semantic-label-alt)');
+  }
+  openModal('modal-rt-refresh');
+};
+window.execRtRefresh=function(){
+  if(window._rtMode==='off'){
+    toast('OFF 상태에서는 즉시 갱신할 수 없습니다.','err');
+    return;
+  }
+  toast('즉시 갱신이 실행되었습니다.');
+  closeModal('modal-rt-refresh');
+  const inp=document.getElementById('confirm-rtref');
+  if(inp) inp.value='';
+  const btn=document.getElementById('btn-rtref');
+  if(btn) btn.disabled=true;
+};
 window.pgRtTab=function(el,k){
   ['today','forecast','history'].forEach(v=>{
     const d=document.getElementById('pg-rt-view-'+v);
@@ -586,12 +792,30 @@ window.pgRtTab=function(el,k){
     },50);
   } else if(k==='history'){
     setTimeout(()=>{
-      const labels=['06:00','07:00','08:00','09:00','10:00','11:00','12:00','13:00','14:00','15:00'];
-      const imb=[1.1,1.8,2.4,2.1,1.9,2.3,3.1,6.1,5.8,1.8];
+      // 15분 단위 96구간 중 운영시간(06:00~15:00) 37구간 표시
+      const labels=[];
+      for(let h=6;h<=15;h++){
+        for(let m=0;m<60;m+=15){
+          if(h===15&&m>0)break;
+          labels.push((h<10?'0':'')+h+':'+(m<10?'0':'')+m);
+        }
+      }
+      const imb=[
+        1.1,1.3,1.5,1.6,  // 06:00~06:45
+        1.8,1.9,2.1,2.3,  // 07:00~07:45
+        2.4,2.3,2.2,2.1,  // 08:00~08:45
+        2.1,2.0,1.9,1.9,  // 09:00~09:45
+        1.9,2.0,2.1,2.2,  // 10:00~10:45
+        2.3,2.5,2.7,2.9,  // 11:00~11:45
+        3.1,3.6,4.4,5.3,  // 12:00~12:45 (마지막 슬롯 임계 초과)
+        6.1,6.3,6.0,5.9,  // 13:00~13:45 (4개 임계 초과)
+        5.8,5.0,3.8,2.5,  // 14:00~14:45 (1개 임계 초과)
+        1.8              // 15:00
+      ];
       mkChart('c-rt-imb-series','line',labels,[
-        {label:'Imbalance(%)',data:imb,borderColor:'#0059ff',borderWidth:2,pointRadius:3,pointBackgroundColor:imb.map(v=>v>5?'#ff2437':'#0059ff'),tension:0.3,fill:true,backgroundColor:'rgba(0,89,255,0.08)'},
+        {label:'Imbalance(%)',data:imb,borderColor:'#0059ff',borderWidth:2,pointRadius:imb.map(v=>v>5?3:1),pointBackgroundColor:imb.map(v=>v>5?'#ff2437':'#0059ff'),tension:0.3,fill:true,backgroundColor:'rgba(0,89,255,0.08)'},
         {label:'임계값 5%',data:Array(labels.length).fill(5),borderColor:'#ff2437',borderWidth:1,pointRadius:0,borderDash:[4,4],fill:false},
-      ],{plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:10,padding:8}}},scales:{y:{title:{display:true,text:'%',color:'#666',font:{size:10}}}}});
+      ],{plugins:{legend:{display:true,position:'bottom',labels:{font:{size:11},boxWidth:10,padding:8}}},scales:{y:{title:{display:true,text:'%',color:'#666',font:{size:10}}},x:{ticks:{maxRotation:0,autoSkip:true,maxTicksLimit:10,font:{size:10}}}}});
     },50);
   }
 };
