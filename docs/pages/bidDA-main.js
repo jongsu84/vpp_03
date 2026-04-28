@@ -382,14 +382,14 @@ ${_mkCross('bidDA-main')}
       <div class="form-section">참여 자원 선택 <span id="da-res-count" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">13/13 활성</span></div>
       <div style="font-size:11px;color:var(--semantic-label-alt);margin-bottom:8px">선택 해제된 자원은 입찰 도표에서 제외 처리되며 KPX 제출 시 합계에서 제외됩니다.</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:11px;color:var(--semantic-label-alt)">
-        <span>일괄 토글:</span>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleDaRes('all')">전체</button>
+        <span>유형 필터:</span>
+        <button class="cb p sm da-chip" data-filter="all" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleDaChip('all')">전체</button>
         <span style="color:var(--semantic-line-normal)">|</span>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleDaRes('태양광')">태양광</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleDaRes('풍력')">풍력</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleDaRes('ESS')">ESS</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleDaRes('바이오')">바이오</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleDaRes('V2G')">V2G</button>
+        <button class="cb p sm da-chip" data-filter="태양광" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleDaChip('태양광')">태양광</button>
+        <button class="cb p sm da-chip" data-filter="풍력" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleDaChip('풍력')">풍력</button>
+        <button class="cb p sm da-chip" data-filter="ESS" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleDaChip('ESS')">ESS</button>
+        <button class="cb p sm da-chip" data-filter="바이오" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleDaChip('바이오')">바이오</button>
+        <button class="cb p sm da-chip" data-filter="V2G" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleDaChip('V2G')">V2G</button>
       </div>
       <div style="max-height:180px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:8px 12px;margin-bottom:12px">
         ${[
@@ -407,7 +407,7 @@ ${_mkCross('bidDA-main')}
           ['광주 V2G 스테이션','V2G',true],
           ['전남 V2G 허브','V2G',true],
         ].map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--semantic-line-alt)">
-          <label class="toggle"><input type="checkbox" class="da-res-toggle" data-resource="${r[0]}" ${r[2]?'checked':''} onchange="updateDaResCount()"><div class="ts"></div></label>
+          <label class="toggle"><input type="checkbox" class="da-res-toggle" data-resource="${r[0]}" ${r[2]?'checked':''} onchange="updateDaResCount();syncDaChips()"><div class="ts"></div></label>
           <span style="font-size:13px;flex:1">${r[0]}</span>
           <span class="badge ${r[1]==='태양광'?'inf':'ok'}">${r[1]}</span>
         </div>`).join('')}
@@ -424,7 +424,7 @@ ${_mkCross('bidDA-main')}
     </div>
     <div class="modal-footer">
       <button class="cb n" onclick="closeModal('modal-bid-settings')">취소</button>
-      <button class="cb p" onclick="applyBidMode()">적용</button>
+      <button class="cb p" id="btn-apply-da" onclick="applyBidMode()">적용</button>
     </div>
   </div>
 </div>
@@ -552,6 +552,8 @@ window['I_bidDA-main']=function(){
   if(typeof window.applyDaSettings==='function') window.applyDaSettings();
   if(typeof window._initForecastMockup==='function') window._initForecastMockup();
   if(typeof window.startDaCountdown==='function') window.startDaCountdown();
+  if(typeof window.syncDaChips==='function') window.syncDaChips();
+  if(typeof window.updateDaResCount==='function') window.updateDaResCount();
 };
 window.selRound=function(n,el){
   document.querySelectorAll('.rd-tab').forEach(e=>e.classList.remove('active'));
@@ -601,25 +603,64 @@ window.applyDaSettings=function(){
     }
   });
 };
-window.bulkToggleDaRes=function(filter){
-  const toggles=document.querySelectorAll('.da-res-toggle');
-  const targets=[];
-  toggles.forEach(el=>{
-    const row=el.closest('div');
-    const badge=row?row.querySelector('.badge'):null;
-    const type=badge?badge.textContent.trim():'';
-    if(filter==='all' || filter===type) targets.push(el);
-  });
-  if(targets.length===0) return;
-  const allOn=targets.every(t=>t.checked);
-  targets.forEach(t=>{ t.checked = !allOn; });
+window.toggleDaChip=function(filter){
+  if(filter==='all'){
+    const allChip=document.querySelector('.da-chip[data-filter="all"]');
+    const wasActive=!!(allChip && allChip.classList.contains('p'));
+    const next=!wasActive;
+    document.querySelectorAll('.da-chip').forEach(c=>{ c.className='cb '+(next?'p':'n')+' sm da-chip'; });
+    document.querySelectorAll('.da-res-toggle').forEach(t=>{ t.checked=next; });
+  } else {
+    const chip=document.querySelector('.da-chip[data-filter="'+filter+'"]');
+    if(!chip) return;
+    const wasActive=chip.classList.contains('p');
+    const next=!wasActive;
+    chip.className='cb '+(next?'p':'n')+' sm da-chip';
+    document.querySelectorAll('.da-res-toggle').forEach(t=>{
+      const row=t.closest('div');
+      const badge=row?row.querySelector('.badge'):null;
+      const type=badge?badge.textContent.trim():'';
+      if(type===filter) t.checked=next;
+    });
+  }
+  if(typeof window.syncDaChips==='function') window.syncDaChips();
   if(typeof window.updateDaResCount==='function') window.updateDaResCount();
+};
+window.syncDaChips=function(){
+  const types=['태양광','풍력','ESS','바이오','V2G'];
+  types.forEach(type=>{
+    let anyOn=false;
+    document.querySelectorAll('.da-res-toggle').forEach(t=>{
+      const row=t.closest('div');
+      const badge=row?row.querySelector('.badge'):null;
+      const tt=badge?badge.textContent.trim():'';
+      if(tt===type && t.checked) anyOn=true;
+    });
+    const chip=document.querySelector('.da-chip[data-filter="'+type+'"]');
+    if(chip) chip.className='cb '+(anyOn?'p':'n')+' sm da-chip';
+  });
+  const typeChips=document.querySelectorAll('.da-chip[data-filter]:not([data-filter="all"])');
+  const allActive=Array.from(typeChips).every(c=>c.classList.contains('p'));
+  const allChip=document.querySelector('.da-chip[data-filter="all"]');
+  if(allChip) allChip.className='cb '+(allActive?'p':'n')+' sm da-chip';
 };
 window.updateDaResCount=function(){
   const total=document.querySelectorAll('.da-res-toggle').length;
   const checked=document.querySelectorAll('.da-res-toggle:checked').length;
   const el=document.getElementById('da-res-count');
-  if(el) el.textContent=checked+'/'+total+' 활성';
+  if(el){
+    el.textContent=checked+'/'+total+' 활성';
+    el.style.color = (checked===0) ? 'var(--semantic-negative-normal)' : '';
+  }
+  const apply=document.getElementById('btn-apply-da');
+  if(apply){
+    const off=(checked===0);
+    apply.disabled=off;
+    apply.style.opacity=off?'0.4':'';
+    apply.style.cursor=off?'not-allowed':'';
+    apply.style.pointerEvents=off?'none':'';
+    apply.title=off?'참여 자원을 1개 이상 선택해야 적용할 수 있습니다':'';
+  }
 };
 window.updateBidModeUI=function(){
   const mode=window._bidMode||'auto';

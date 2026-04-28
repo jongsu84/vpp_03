@@ -322,14 +322,14 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
       <hr class="form-divider">
       <div class="form-section">참여 자원 선택 <span id="rt-res-count" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">12/13 활성</span></div>
       <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:8px;font-size:11px;color:var(--semantic-label-alt)">
-        <span>일괄 토글:</span>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('all')">전체</button>
+        <span>유형 필터:</span>
+        <button class="cb p sm rt-chip" data-filter="all" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleRtChip('all')">전체</button>
         <span style="color:var(--semantic-line-normal)">|</span>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('태양광')">태양광</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('풍력')">풍력</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('ESS')">ESS</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('바이오')">바이오</button>
-        <button class="cb n sm" style="padding:3px 10px;font-size:11px;height:auto" onclick="bulkToggleRtRes('V2G')">V2G</button>
+        <button class="cb p sm rt-chip" data-filter="태양광" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleRtChip('태양광')">태양광</button>
+        <button class="cb p sm rt-chip" data-filter="풍력" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleRtChip('풍력')">풍력</button>
+        <button class="cb p sm rt-chip" data-filter="ESS" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleRtChip('ESS')">ESS</button>
+        <button class="cb p sm rt-chip" data-filter="바이오" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleRtChip('바이오')">바이오</button>
+        <button class="cb p sm rt-chip" data-filter="V2G" style="padding:3px 10px;font-size:11px;height:auto" onclick="toggleRtChip('V2G')">V2G</button>
       </div>
       <div style="max-height:180px;overflow-y:auto;border:1px solid var(--semantic-line-alt);border-radius:6px;padding:8px 12px;margin-bottom:12px">
         ${[
@@ -347,7 +347,7 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
           ['광주 V2G 스테이션','V2G',true],
           ['전남 V2G 허브','V2G',true],
         ].map(r=>`<div style="display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid var(--semantic-line-alt)">
-          <label class="toggle"><input type="checkbox" class="rt-res-toggle" data-resource="${r[0]}" ${r[2]?'checked':''} onchange="updateRtResCount()"><div class="ts"></div></label>
+          <label class="toggle"><input type="checkbox" class="rt-res-toggle" data-resource="${r[0]}" ${r[2]?'checked':''} onchange="updateRtResCount();syncRtChips()"><div class="ts"></div></label>
           <span style="font-size:13px;flex:1">${r[0]}</span>
           <span class="badge ${r[1]==='태양광'?'inf':'ok'}">${r[1]}</span>
         </div>`).join('')}
@@ -361,7 +361,7 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
     </div>
     <div class="modal-footer">
       <button class="cb n" onclick="closeModal('modal-rt-settings')">취소</button>
-      <button class="cb p" onclick="applyRtMode()">적용</button>
+      <button class="cb p" id="btn-apply-rt" onclick="applyRtMode()">적용</button>
     </div>
   </div>
 </div>
@@ -468,6 +468,8 @@ window['I_bidRT-main']=function(){
   if(typeof window.applyRtSettings==='function') window.applyRtSettings();
   if(typeof window.startRtImbalanceSim==='function') window.startRtImbalanceSim();
   if(typeof window.startRtCountdown==='function') window.startRtCountdown();
+  if(typeof window.syncRtChips==='function') window.syncRtChips();
+  if(typeof window.updateRtResCount==='function') window.updateRtResCount();
 };
 window.applyRtMode=function(){
   const Q=id=>document.getElementById(id);
@@ -523,25 +525,64 @@ window.applyRtSettings=function(){
     if(name) tr.style.display=enabledSet.has(name)?'':'none';
   });
 };
-window.bulkToggleRtRes=function(filter){
-  const toggles=document.querySelectorAll('.rt-res-toggle');
-  const targets=[];
-  toggles.forEach(el=>{
-    const row=el.closest('div');
-    const badge=row?row.querySelector('.badge'):null;
-    const type=badge?badge.textContent.trim():'';
-    if(filter==='all' || filter===type) targets.push(el);
-  });
-  if(targets.length===0) return;
-  const allOn=targets.every(t=>t.checked);
-  targets.forEach(t=>{ t.checked = !allOn; });
+window.toggleRtChip=function(filter){
+  if(filter==='all'){
+    const allChip=document.querySelector('.rt-chip[data-filter="all"]');
+    const wasActive=!!(allChip && allChip.classList.contains('p'));
+    const next=!wasActive;
+    document.querySelectorAll('.rt-chip').forEach(c=>{ c.className='cb '+(next?'p':'n')+' sm rt-chip'; });
+    document.querySelectorAll('.rt-res-toggle').forEach(t=>{ t.checked=next; });
+  } else {
+    const chip=document.querySelector('.rt-chip[data-filter="'+filter+'"]');
+    if(!chip) return;
+    const wasActive=chip.classList.contains('p');
+    const next=!wasActive;
+    chip.className='cb '+(next?'p':'n')+' sm rt-chip';
+    document.querySelectorAll('.rt-res-toggle').forEach(t=>{
+      const row=t.closest('div');
+      const badge=row?row.querySelector('.badge'):null;
+      const type=badge?badge.textContent.trim():'';
+      if(type===filter) t.checked=next;
+    });
+  }
+  if(typeof window.syncRtChips==='function') window.syncRtChips();
   if(typeof window.updateRtResCount==='function') window.updateRtResCount();
+};
+window.syncRtChips=function(){
+  const types=['태양광','풍력','ESS','바이오','V2G'];
+  types.forEach(type=>{
+    let anyOn=false;
+    document.querySelectorAll('.rt-res-toggle').forEach(t=>{
+      const row=t.closest('div');
+      const badge=row?row.querySelector('.badge'):null;
+      const tt=badge?badge.textContent.trim():'';
+      if(tt===type && t.checked) anyOn=true;
+    });
+    const chip=document.querySelector('.rt-chip[data-filter="'+type+'"]');
+    if(chip) chip.className='cb '+(anyOn?'p':'n')+' sm rt-chip';
+  });
+  const typeChips=document.querySelectorAll('.rt-chip[data-filter]:not([data-filter="all"])');
+  const allActive=Array.from(typeChips).every(c=>c.classList.contains('p'));
+  const allChip=document.querySelector('.rt-chip[data-filter="all"]');
+  if(allChip) allChip.className='cb '+(allActive?'p':'n')+' sm rt-chip';
 };
 window.updateRtResCount=function(){
   const total=document.querySelectorAll('.rt-res-toggle').length;
   const checked=document.querySelectorAll('.rt-res-toggle:checked').length;
   const el=document.getElementById('rt-res-count');
-  if(el) el.textContent=checked+'/'+total+' 활성';
+  if(el){
+    el.textContent=checked+'/'+total+' 활성';
+    el.style.color = (checked===0) ? 'var(--semantic-negative-normal)' : '';
+  }
+  const apply=document.getElementById('btn-apply-rt');
+  if(apply){
+    const off=(checked===0);
+    apply.disabled=off;
+    apply.style.opacity=off?'0.4':'';
+    apply.style.cursor=off?'not-allowed':'';
+    apply.style.pointerEvents=off?'none':'';
+    apply.title=off?'참여 자원을 1개 이상 선택해야 적용할 수 있습니다':'';
+  }
 };
 window.updateRtModeUI=function(){
   const mode=window._rtMode||'auto';
