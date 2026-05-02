@@ -45,12 +45,8 @@ ${_mkCross('bidDA-settle')}
       <button class="rd-tab" onclick="selStlRound('2',this)">2차</button>
     </div>
   </div>
-  <div class="fbar-item">
-    <span class="fbar-lbl">기간</span>
-    <select class="fbar-sel" id="bds-period" onchange="stlUpdateInfo()"><option>2026년 4월</option><option>2026년 3월</option><option>2026년 2월</option></select>
-  </div>
-  <div class="fbar-item" style="margin-left:auto;justify-content:flex-end">
-    <span class="fbar-lbl" id="stl-filter-info" style="text-align:right">통합 · 금일 + 월누계</span>
+  <div class="fbar-item" style="margin-left:auto;justify-content:flex-end;min-width:0;flex-shrink:1">
+    <span class="fbar-lbl" id="stl-filter-info" style="text-align:right;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%">통합 · 금일 + 월누계</span>
   </div>
 </div></div>
 
@@ -118,7 +114,6 @@ window.stlUpdateInfo=function(){
   const r=window._stlRound||'all';
   const vpp=document.getElementById('bds-vpp')?.value||'전체';
   const type=document.getElementById('bds-type')?.value||'all';
-  const period=document.getElementById('bds-period')?.value||'2026년 4월';
   const Q=id=>document.getElementById(id);
   const info=Q('stl-filter-info');
   // 차수 + VPP·자원유형별 정산금액 (시뮬레이션 — 그룹별 가중치 적용)
@@ -136,7 +131,6 @@ window.stlUpdateInfo=function(){
     const parts=[base];
     if(vpp!=='전체') parts.push(vpp);
     if(type!=='all') parts.push(type);
-    if(period!=='2026년 4월') parts.push(period);
     info.textContent=parts.join(' · ');
   }
 };
