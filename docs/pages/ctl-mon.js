@@ -59,7 +59,7 @@ window.P['ctl-mon']=()=>`
 <!-- 종단간 지연 추이 차트 -->
 <div class="card mb">
   <div class="sh">
-    <div class="st">종단간 지연 추이 (최근 30분) <span class="tip">ⓘ 500ms SLA 기준선 · 명령 송신 → ACK 수신까지</span></div>
+    <div class="st">종단간 지연 추이 (최근 30분) ${window.tip('종단간(E2E) 지연 추이','SCADA 명령 송신 → Gateway → RTU → 장비 → ACK 수신까지의 왕복 시간 추이','샘플링 주기 1분 / 표시 구간 최근 30분','파란선 = E2E 지연(s) / 빨간 점선 = 500ms SLA 기준선 — SLA 초과 구간은 IMBP 페널티 위험')}</div>
     <div style="display:flex;gap:12px;font-size:10px;color:#666">
       <span><span style="display:inline-block;width:10px;height:3px;background:#0059ff;vertical-align:middle"></span> E2E 지연</span>
       <span><span style="display:inline-block;width:10px;height:3px;background:#d32;vertical-align:middle;border-top:2px dashed #d32"></span> 500ms SLA</span>
@@ -68,30 +68,31 @@ window.P['ctl-mon']=()=>`
   <div style="height:160px;position:relative"><canvas id="c-latency" role="img" aria-label="지연 추이"></canvas></div>
 </div>
 
-<!-- 활성 제어 세션 (상세) + 패킷 무결성 -->
+<!-- 제어 세션 추적 (풀 폭) -->
+<div class="card mb">
+  <div class="sh"><div class="st">제어 세션 추적 (최근 20건) ${window.tip('제어 세션 추적','운영자 제어 명령의 송신 → 응답 → ACK → 도달 전 과정을 세션 단위로 추적','상태(진행중/완료/지연/실패) · 응답시간(s) · CRC 무결성 · ACK 수신 · 도달 확인','세션당 SLA: 응답 ≤ 500ms / CRC 일치 / ACK 수신 / 도달 확인 — 4종 모두 OK 시 ✓ 도달')}</div>${window.csvBtn('cm2-sess-tbody','control_signal_sessions','제어 세션 추적 (최근 20건)')}</div>
+  <div style="overflow-x:auto"><table class="tbl" id="cm2-sess-tbl">
+    <thead><tr><th>세션 ID</th><th>자원</th><th>프로토콜</th><th>상태</th><th>응답</th><th>CRC</th><th>ACK</th><th>도달</th></tr></thead>
+    <tbody id="cm2-sess-tbody">
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0089</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">진행중</span></td><td class="mono">0.12s</td><td>✓</td><td>⏳</td><td>—</td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0088</td><td>광양항4단계</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge warn">진행중</span></td><td class="mono">0.08s</td><td>✓</td><td>⏳</td><td>—</td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0087</td><td>전체 VPP-전남</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.31s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0086</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.28s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="warn" data-lat="over" data-int="ok"><td class="mono" style="font-size:9px">CTL-0085</td><td>금능1호 ESS</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">지연</span></td><td class="mono" style="color:#e80">1.20s</td><td>✓</td><td>✓</td><td><span class="badge warn">△</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="OCPP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0084</td><td>제주V2G</td><td class="mono" style="font-size:10px">OCPP 1.6J</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.19s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0083</td><td>온누리</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.24s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="err" data-lat="over" data-int="err"><td class="mono" style="font-size:9px">CTL-0082</td><td>신안풍력</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge err">실패</span></td><td class="mono" style="color:#d32">Timeout</td><td><span style="color:#d32">✗</span></td><td><span style="color:#d32">✗</span></td><td><span class="badge err">✗</span></td></tr>
+      <tr data-vpp="VPP-경북권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0081</td><td>포항S1</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.22s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0080</td><td>무안바이오</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.35s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+    </tbody>
+  </table></div>
+</div>
+
+<!-- 패킷 무결성 + 패킷 실패/재전송 이력 -->
 <div class="g2">
   <div class="card mb">
-    <div class="sh"><div class="st">제어 세션 추적 (최근 20건)</div>${window.csvBtn('cm2-sess-tbody','control_signal_sessions','제어 세션 추적 (최근 20건)')}</div>
-    <table class="tbl" id="cm2-sess-tbl">
-      <thead><tr><th>세션 ID</th><th>자원</th><th>프로토콜</th><th>상태</th><th>응답</th><th>CRC</th><th>ACK</th><th>도달</th></tr></thead>
-      <tbody id="cm2-sess-tbody">
-        <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0089</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">진행중</span></td><td class="mono">0.12s</td><td>✓</td><td>⏳</td><td>—</td></tr>
-        <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0088</td><td>광양항4단계</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge warn">진행중</span></td><td class="mono">0.08s</td><td>✓</td><td>⏳</td><td>—</td></tr>
-        <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0087</td><td>전체 VPP-전남</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.31s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-        <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0086</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.28s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-        <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="warn" data-lat="over" data-int="ok"><td class="mono" style="font-size:9px">CTL-0085</td><td>금능1호 ESS</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">지연</span></td><td class="mono" style="color:#e80">1.20s</td><td>✓</td><td>✓</td><td><span class="badge warn">△</span></td></tr>
-        <tr data-vpp="VPP-제주권" data-proto="OCPP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0084</td><td>제주V2G</td><td class="mono" style="font-size:10px">OCPP 1.6J</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.19s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-        <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0083</td><td>온누리</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.24s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-        <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="err" data-lat="over" data-int="err"><td class="mono" style="font-size:9px">CTL-0082</td><td>신안풍력</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge err">실패</span></td><td class="mono" style="color:#d32">Timeout</td><td><span style="color:#d32">✗</span></td><td><span style="color:#d32">✗</span></td><td><span class="badge err">✗</span></td></tr>
-        <tr data-vpp="VPP-경북권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0081</td><td>포항S1</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.22s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-        <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0080</td><td>무안바이오</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.35s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-      </tbody>
-    </table>
-  </div>
-
-  <div class="card mb">
     <div class="sh"><div class="st">패킷 무결성 & ACK 모니터 (실시간)</div></div>
-    <table class="tbl" style="margin-bottom:10px">
+    <div style="overflow-x:auto"><table class="tbl" style="margin-bottom:10px">
       <thead><tr><th>항목</th><th>값</th><th>상태</th></tr></thead>
       <tbody>
         <tr><td>송신 패킷 (24h)</td><td class="mono">3,842</td><td><span class="badge ok">정상</span></td></tr>
@@ -103,7 +104,7 @@ window.P['ctl-mon']=()=>`
         <tr><td>평균 ACK 지연</td><td class="mono">0.18s</td><td><span class="badge ok">SLA 이내</span></td></tr>
         <tr><td>최대 ACK 지연</td><td class="mono">1.45s</td><td><span class="badge warn">SLA 초과</span></td></tr>
       </tbody>
-    </table>
+    </table></div>
     <div class="form-section" style="font-size:11px;color:#555">채널 상태</div>
     <div class="mr"><div class="ml">VPN 터널</div><div class="mv"><span class="badge ok">정상</span></div></div>
     <div class="mr"><div class="ml">LTE 신호 (평균)</div><div class="mv mono">-72 dBm</div></div>
@@ -112,20 +113,19 @@ window.P['ctl-mon']=()=>`
     <div class="mr"><div class="ml">MQTT 브로커</div><div class="mv"><span class="badge ok">연결</span></div></div>
     <div class="mr" style="border:none"><div class="ml">DMZ 프록시</div><div class="mv"><span class="badge ok">정상</span></div></div>
   </div>
-</div>
 
-<!-- 실패/재전송 이력 -->
-<div class="card mb">
-  <div class="sh"><div class="st">패킷 실패 · 재전송 이력 (24h)</div></div>
-  <table class="tbl" data-no-sort="1">
-    <thead><tr><th>시각</th><th>세션</th><th>자원</th><th>실패 원인</th><th>재전송</th><th>최종 결과</th><th>조치</th></tr></thead>
-    <tbody>
-      <tr><td class="mono">14:18:22</td><td class="mono">CTL-0082</td><td>신안풍력</td><td><span class="badge err">ACK 타임아웃 (3s)</span></td><td class="mono">3회</td><td><span class="badge err">실패</span></td><td>현장 점검 요청</td></tr>
-      <tr><td class="mono">11:42:08</td><td class="mono">CTL-0073</td><td>금능1호 ESS</td><td><span class="badge warn">응답 지연 (1.2s)</span></td><td class="mono">1회</td><td><span class="badge ok">복구</span></td><td>자동 재전송</td></tr>
-      <tr><td class="mono">09:05:41</td><td class="mono">CTL-0059</td><td>광양항4단계</td><td><span class="badge warn">패킷 지연</span></td><td class="mono">1회</td><td><span class="badge ok">복구</span></td><td>자동 재전송</td></tr>
-      <tr><td class="mono">04:28:19</td><td class="mono">CTL-0031</td><td>김주풍력</td><td><span class="badge warn">LTE 신호 저하</span></td><td class="mono">2회</td><td><span class="badge ok">복구</span></td><td>재라우팅</td></tr>
-    </tbody>
-  </table>
+  <div class="card mb">
+    <div class="sh"><div class="st">패킷 실패 · 재전송 이력 (24h)</div></div>
+    <div style="overflow-x:auto"><table class="tbl" data-no-sort="1">
+      <thead><tr><th>시각</th><th>세션</th><th>자원</th><th>실패 원인</th><th>재전송</th><th>최종 결과</th><th>조치</th></tr></thead>
+      <tbody>
+        <tr><td class="mono">14:18:22</td><td class="mono">CTL-0082</td><td>신안풍력</td><td><span class="badge err">ACK 타임아웃 (3s)</span></td><td class="mono">3회</td><td><span class="badge err">실패</span></td><td>현장 점검 요청</td></tr>
+        <tr><td class="mono">11:42:08</td><td class="mono">CTL-0073</td><td>금능1호 ESS</td><td><span class="badge warn">응답 지연 (1.2s)</span></td><td class="mono">1회</td><td><span class="badge ok">복구</span></td><td>자동 재전송</td></tr>
+        <tr><td class="mono">09:05:41</td><td class="mono">CTL-0059</td><td>광양항4단계</td><td><span class="badge warn">패킷 지연</span></td><td class="mono">1회</td><td><span class="badge ok">복구</span></td><td>자동 재전송</td></tr>
+        <tr><td class="mono">04:28:19</td><td class="mono">CTL-0031</td><td>김주풍력</td><td><span class="badge warn">LTE 신호 저하</span></td><td class="mono">2회</td><td><span class="badge ok">복구</span></td><td>재라우팅</td></tr>
+      </tbody>
+    </table></div>
+  </div>
 </div>`;
 window.cmonFilterApply=function(){
   var vpp=(document.getElementById('cm2-f-vpp')||{}).value||'';
