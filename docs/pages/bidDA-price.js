@@ -430,24 +430,14 @@ window.bdpClearOverride=function(){
 window.bidPriceApply=function(){
   var vppSel=document.getElementById('bdp-vpp');
   var typeSel=document.getElementById('bdp-type');
-  var vppVal=vppSel?vppSel.value:'전체';
+  var vppVal=vppSel?vppSel.value:'VPP-전남권';
   var typeVal=typeSel?typeSel.value:'all';
-  // VPP 그룹 변경
-  if(vppVal && vppVal!=='전체' && window.MARKET_RULES[vppVal]){
-    if(window._bdpCurrentVPP!==vppVal){
-      window._bdpCurrentVPP=vppVal;
-      window.bdpRenderContext();
-      window.bdpRenderTypeCards();
-      window.bdpRenderMeritPrices();
-    }
-  } else if(vppVal==='전체'){
-    // 전체는 첫 번째 그룹으로 fallback
-    if(window._bdpCurrentVPP!=='VPP-전남권'){
-      window._bdpCurrentVPP='VPP-전남권';
-      window.bdpRenderContext();
-      window.bdpRenderTypeCards();
-      window.bdpRenderMeritPrices();
-    }
+  // VPP 그룹 변경 (옵션 4개 모두 유효한 그룹 — 전체 옵션 제거됨)
+  if(window.MARKET_RULES[vppVal] && window._bdpCurrentVPP!==vppVal){
+    window._bdpCurrentVPP=vppVal;
+    window.bdpRenderContext();
+    window.bdpRenderTypeCards();
+    window.bdpRenderMeritPrices();
   }
   // 자원 유형 필터 (Merit Order 추가 좁히기)
   document.querySelectorAll('#bdp-merit-tbody tr[data-name]').forEach(function(tr){
@@ -467,6 +457,14 @@ window.bidPriceApply=function(){
 };
 
 window['I_bidDA-price']=function(){
+  // VPP 그룹 필터에서 "전체" 옵션 제거 (페이지가 그룹 컨텍스트 단위로 동작)
+  var vppSel=document.getElementById('bdp-vpp');
+  if(vppSel){
+    Array.from(vppSel.options).forEach(function(o){
+      if(o.text==='전체'||o.value==='전체') o.remove();
+    });
+    vppSel.value=window._bdpCurrentVPP;
+  }
   // 정책 카드 입력 변경 시 미리보기 갱신
   ['sol','win','ess','bio','v2g'].forEach(function(p){
     ['cost','w','max'].forEach(function(f){
@@ -474,7 +472,6 @@ window['I_bidDA-price']=function(){
       if(el) el.addEventListener('input',window.bdpUpdatePreview);
     });
   });
-  // VPP 그룹 필터에 'VPP-' 접두사가 매칭되도록 보정 (_mkBidFilter는 'VPP-전남권' 사용)
   // 초기 렌더
   window.bdpRenderContext();
   window.bdpRenderTypeCards();
