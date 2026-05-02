@@ -51,7 +51,7 @@ window.P['ctl-mon']=()=>`
   <div class="card acc"><div class="ct">활성 세션 ${window.tip('활성 제어 세션','현재 처리 중인 제어 명령 세션 수','진행중 + 완료 미확인 세션 합계','동시 다중 세션 정상 — 평균 1~3개 / 5개 이상은 부하 점검 필요')}</div><div class="kv">3<span class="ku">개</span></div><div class="kd neu">진행중 2 · 미확인 1</div></div>
   <div class="card"><div class="ct">평균 응답 지연 ${window.tip('평균 응답 지연 + 500ms SLA 준수율','SCADA 명령 송신 → ACK 수신까지의 평균 왕복 시간 + SLA 준수 비율','평균 = Σ(ACK 시각 - 송신 시각) ÷ N · SLA = COUNT(지연 ≤ 500ms) ÷ COUNT(*)','중앙값(p50): 0.28s / p95: 0.42s / p99: 0.85s · 준중앙급전 SLA 99% 이상 필수 (미달 시 보상금 차감)')}</div><div class="kv" style="color:#0a7">0.31<span class="ku">s</span></div><div class="kd up">SLA 99.4% · p50 0.28s</div></div>
   <div class="card"><div class="ct">패킷 무결성 (CRC) ${window.tip('패킷 무결성 (CRC)','CRC 검증을 통과한 패킷 비율','CRC 일치 패킷 ÷ 전체 패킷 × 100 [%]','100% 정상 / 99% 미만 시 통신 라인 노이즈 또는 RTU 펌웨어 점검')}</div><div class="kv" style="color:#0a7">100<span class="ku">%</span></div><div class="kd neu">3,842 / 3,842</div></div>
-  <div class="card"><div class="ct">ACK 응답률 ${window.tip('ACK 응답률','명령 송신 후 정상 ACK를 받은 비율','ACK 수신 ÷ 송신 패킷 × 100 [%]','99.5% 이상 정상 / 미수신 시 자동 재전송 (최대 3회)')}</div><div class="kv" style="color:#0a7">99.7<span class="ku">%</span></div><div class="kd neu">재전송 2건</div></div>
+  <div class="card"><div class="ct">ACK 응답률 ${window.tip('ACK 응답률 + 재전송 성공률','명령 송신 후 정상 ACK를 받은 비율 + 재전송 시도 성공률','ACK = 수신 ÷ 송신 × 100 / 재전송 = 성공 ÷ 시도 × 100','99.5% 이상 정상 / 미수신 시 자동 재전송 최대 3회 / 평균 ACK 0.18s · 최대 1.45s')}</div><div class="kv" style="color:#0a7">99.7<span class="ku">%</span></div><div class="kd neu">평균 ACK 0.18s · 재전송 10/12</div></div>
   <div class="card"><div class="ct">제어 실패 (24h) ${window.tip('24시간 제어 실패 건수','3회 재전송에도 실패한 제어 명령 건수','COUNT(*) WHERE 최종 결과 = 실패','즉시 현장 점검 — 통신 단절·장비 오프라인·전원 장애 가능성')}</div><div class="kv" style="color:#d32">1<span class="ku">건</span></div><div class="kd down">CTL-0085 타임아웃</div></div>
 </div>
 
@@ -75,44 +75,13 @@ window.P['ctl-mon']=()=>`
   </table></div>
 </div>
 
-<!-- 패킷 무결성 + 패킷 실패/재전송 이력 -->
-<div class="g2">
-  <div class="card mb">
-    <div class="sh"><div class="st">패킷 무결성 & ACK 모니터 (실시간)</div></div>
-    <div style="overflow-x:auto"><table class="tbl" style="margin-bottom:10px">
-      <thead><tr><th>항목</th><th>값</th><th>상태</th></tr></thead>
-      <tbody>
-        <tr><td>송신 패킷 (24h)</td><td class="mono">3,842</td><td><span class="badge ok">정상</span></td></tr>
-        <tr><td>CRC 검증 성공</td><td class="mono" style="color:#0a7">3,842 / 3,842</td><td><span class="badge ok">100%</span></td></tr>
-        <tr><td>CRC 오류</td><td class="mono">0</td><td><span class="badge ok">정상</span></td></tr>
-        <tr><td>ACK 수신</td><td class="mono" style="color:#0a7">3,830 / 3,842</td><td><span class="badge ok">99.69%</span></td></tr>
-        <tr><td>ACK 타임아웃</td><td class="mono" style="color:#d32">2 / 3,842</td><td><span class="badge err">0.05%</span></td></tr>
-        <tr><td>재전송 성공</td><td class="mono">10 / 12</td><td><span class="badge ok">83.3%</span></td></tr>
-        <tr><td>평균 ACK 지연</td><td class="mono">0.18s</td><td><span class="badge ok">SLA 이내</span></td></tr>
-        <tr><td>최대 ACK 지연</td><td class="mono">1.45s</td><td><span class="badge warn">SLA 초과</span></td></tr>
-      </tbody>
-    </table></div>
-    <div class="form-section" style="font-size:11px;color:#555">채널 상태</div>
-    <div class="mr"><div class="ml">VPN 터널</div><div class="mv"><span class="badge ok">정상</span></div></div>
-    <div class="mr"><div class="ml">LTE 신호 (평균)</div><div class="mv mono">-72 dBm</div></div>
-    <div class="mr"><div class="ml">포트 502 (Modbus)</div><div class="mv"><span class="badge ok">열림</span></div></div>
-    <div class="mr"><div class="ml">포트 2404 (IEC-104)</div><div class="mv"><span class="badge ok">열림</span></div></div>
-    <div class="mr"><div class="ml">MQTT 브로커</div><div class="mv"><span class="badge ok">연결</span></div></div>
-    <div class="mr" style="border:none"><div class="ml">DMZ 프록시</div><div class="mv"><span class="badge ok">정상</span></div></div>
+<!-- 감사이력 페이지 안내 -->
+<div class="card mb" style="border-left:3px solid var(--semantic-brand-primary);background:var(--semantic-brand-primary-assistive);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:2px">통신 장애·재전송 이력은 감사이력 페이지에서 확인할 수 있습니다</div>
+    <div style="font-size:12px;color:var(--semantic-label-alt);line-height:18px">SHA-256 무결성 해시로 5년간 영구 보관 · 시각·세션 ID·자원·실패 원인·재전송·최종 결과 통합 추적. 채널 인프라 상태(VPN·LTE·MQTT·DMZ)는 운영관제 알람 시스템에서 별도 통보됩니다.</div>
   </div>
-
-  <div class="card mb">
-    <div class="sh"><div class="st">패킷 실패 · 재전송 이력 (24h)</div></div>
-    <div style="overflow-x:auto"><table class="tbl" data-no-sort="1">
-      <thead><tr><th>시각</th><th>세션</th><th>자원</th><th>실패 원인</th><th>재전송</th><th>최종 결과</th><th>조치</th></tr></thead>
-      <tbody>
-        <tr><td class="mono">14:18:22</td><td class="mono">CTL-0082</td><td>신안풍력</td><td><span class="badge err">ACK 타임아웃 (3s)</span></td><td class="mono">3회</td><td><span class="badge err">실패</span></td><td>현장 점검 요청</td></tr>
-        <tr><td class="mono">11:42:08</td><td class="mono">CTL-0073</td><td>금능1호 ESS</td><td><span class="badge warn">응답 지연 (1.2s)</span></td><td class="mono">1회</td><td><span class="badge ok">복구</span></td><td>자동 재전송</td></tr>
-        <tr><td class="mono">09:05:41</td><td class="mono">CTL-0059</td><td>광양항4단계</td><td><span class="badge warn">패킷 지연</span></td><td class="mono">1회</td><td><span class="badge ok">복구</span></td><td>자동 재전송</td></tr>
-        <tr><td class="mono">04:28:19</td><td class="mono">CTL-0031</td><td>김주풍력</td><td><span class="badge warn">LTE 신호 저하</span></td><td class="mono">2회</td><td><span class="badge ok">복구</span></td><td>재라우팅</td></tr>
-      </tbody>
-    </table></div>
-  </div>
+  <button class="cb p sm" onclick="activate('his-aud')" style="white-space:nowrap;flex-shrink:0">감사이력 ↗</button>
 </div>`;
 window.cmonFilterApply=function(){
   var vpp=(document.getElementById('cm2-f-vpp')||{}).value||'';
