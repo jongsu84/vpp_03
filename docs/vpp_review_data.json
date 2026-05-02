@@ -1,0 +1,50 @@
+{
+  "summary": [
+    {"권고번호":1,"권고항목":"dispatch_type ↔ OpenADR signalName 매핑","대상장":"5장","핵심내용":"4종 dispatch_type에 OpenADR 표준 signalName 매핑 컬럼 추가, 비표준은 x- 접두 정책 명시","근거(OpenADR)":"2.0b §8.2.2 Table 1, custom signal rule (line 5535-5537)","심각도":"High"},
+    {"권고번호":2,"권고항목":"내부 status ↔ OpenADR eventStatus 매핑 표 추가","대상장":"7장","핵심내용":"REQUESTED/OPTIMIZING/DISPATCHED/ACTIVE/COMPLETED/FAILED와 far/near/active/cancelled/completed 매핑. completed 수신 후 modification 금지 룰 반영","근거(OpenADR)":"2.0b 3652-3655 (state transition), 4069 (completed immutability)","심각도":"High"},
+    {"권고번호":3,"권고항목":"병행 ACTIVE에 marketContext 분리 단서 추가","대상장":"8장","핵심내용":"‘병행 가능’은 동일 marketContext에서는 표준상 금지. marketContext 다를 때만 중첩 허용 명시","근거(OpenADR)":"2.0b Rule 18 (line 3705-3721)","심각도":"High"},
+    {"권고번호":4,"권고항목":"정산·임밸런스의 표준 범위 외 표기","대상장":"11장","핵심내용":"OpenADR은 시그널/리포팅 프로토콜이므로 정산·페널티는 표준 범위 밖. 11장에 ‘국내 시장 운영규정 근거’ 주석 추가","근거(OpenADR)":"2.0a/2.0b 본문에 settlement·penalty·imbalance 용어 미존재(검색 0건)","심각도":"Medium"},
+    {"권고번호":5,"권고항목":"target_p_mw 필드의 element 매핑 구체화","대상장":"12장","핵심내용":"‘유효전력 지시값 매핑’ → signalName=LOAD_DISPATCH, signalType=setpoint, itemBase=powerReal로 구체 element 명시","근거(OpenADR)":"2.0b §8.2.2 Table 1 (line 1519-1545)","심각도":"Medium"},
+    {"권고번호":6,"권고항목":"REDAS / KPX OpenADR 2.0b 표기 분리","대상장":"1·12장","핵심내용":"‘KPX OpenADR 2.0b’ → ‘OpenADR 2.0b 기반 KPX REDAS 사양’으로 변경. REDAS 약어는 표준에 미정의","근거(OpenADR)":"OpenADR Alliance 2013 (line 1185 © 표기), REDAS 검색 0건","심각도":"Low"},
+    {"권고번호":7,"권고항목":"VEN/VTN 다층 역할 분리 표기","대상장":"12장","핵심내용":"VPP는 KPX 대상 VEN, 하위 RTU/DER 대상 자체 VTN으로 동작. aggregator-VEN 모델 명시","근거(OpenADR)":"2.0b 425-426 (VTN/VEN 정의), 1280-1286 (aggregator)","심각도":"Low"}
+  ],
+  "dispatch": [
+    {"내부 dispatch_type":"MANDATORY_LIMIT","의미":"계통 과잉 공급 시 강제 출력 제한(의무)","OpenADR signalName":"LOAD_DISPATCH (또는 x-VPP-MANDATORY_LIMIT)","signalType":"setpoint","itemBase(units)":"powerReal","비고":"상한 제약을 절대 출력값(setpoint)으로 송출. 강제성은 marketContext priority로 표현"},
+    {"내부 dispatch_type":"IMBALANCE_DEFENSE","의미":"예측 오차 보정용 실시간 출력 조정","OpenADR signalName":"LOAD_DISPATCH (또는 x-VPP-IMBALANCE_DEFENSE)","signalType":"delta","itemBase(units)":"powerReal","비고":"베이스라인 대비 증감(delta) 송출이 자연스러움. 정산 페널티 산식은 OpenADR 외 영역"},
+    {"내부 dispatch_type":"FLEX_ABSORPTION","의미":"유연성 자원으로 잉여 전력 흡수(충전)","OpenADR signalName":"CHARGE_STATE (또는 x-VPP-FLEX_ABSORPTION)","signalType":"setpoint","itemBase(units)":"energyReal","비고":"ESS 충전·방전을 표준 신호로 표현. 9.1 SOC 분기는 운영정책 영역"},
+    {"내부 dispatch_type":"MARKET_BIDDING","의미":"실시간 시장 낙찰량 이행","OpenADR signalName":"BID_LOAD / BID_ENERGY (또는 x-VPP-MARKET_BIDDING)","signalType":"setpoint","itemBase(units)":"powerReal / energyReal","비고":"입찰량을 setpoint로 명시. modificationNumber로 15분 단위 변경 추적"}
+  ],
+  "status": [
+    {"내부 vpp_status":"REQUESTED","설명":"KPX 지시 수신 직후","OpenADR eventStatus":"far / near","비고":"dtstart 기준 시간 거리에 따라 far→near 자동 전이"},
+    {"내부 vpp_status":"OPTIMIZING","설명":"AI-OPF/GNN 자원 배분 연산 중","OpenADR eventStatus":"far / near (내부 단계)","비고":"OpenADR 표준 상태에 직접 대응 없음. 내부 처리 단계로 별도 관리"},
+    {"내부 vpp_status":"DISPATCHED","설명":"RTU로 제어 신호 송출 완료","OpenADR eventStatus":"near (또는 active 진입 직전)","비고":"x-eiRampUp 진입 직전·시점에 해당"},
+    {"내부 vpp_status":"ACTIVE","설명":"자원 응동 및 목표 추종 중","OpenADR eventStatus":"active","비고":"2.0b 3652: far→near→active 필수 전이"},
+    {"내부 vpp_status":"COMPLETED","설명":"정상 종료, 실증 데이터 확정","OpenADR eventStatus":"completed","비고":"2.0b 4069: completed 수신은 modificationNumber 증가를 유발하면 안 됨"},
+    {"내부 vpp_status":"FAILED","설명":"통신 장애·Ramp-rate 미달","OpenADR eventStatus":"cancelled (VTN 송출 시) / 내부 표시","비고":"cancelled는 modificationNumber 증가 예외(2.0b 3603)"}
+  ],
+  "matrix": [
+    {"설계서 항목":"eventID 1:1 매핑 원칙","판정":"적합","근거":"2.0b 1198, 2.0a 883","조치":"없음"},
+    {"설계서 항목":"modificationNumber 버전 관리","판정":"적합","근거":"2.0b 1199-1200, 2.0a 884","조치":"없음"},
+    {"설계서 항목":"oadrResponseRequired 응답 기록","판정":"적합","근거":"2.0b 1190-1193, 2.0a 866-878","조치":"없음"},
+    {"설계서 항목":"qualifiedEventID 매칭(ID+modNum)","판정":"적합","근거":"2.0b 1294, 2.0a 919-920","조치":"없음"},
+    {"설계서 항목":"상태 전이(far→near→active)","판정":"적합","근거":"2.0b 3652-3655","조치":"권고2 매핑표 추가"},
+    {"설계서 항목":"Ramp Up / Recovery 구간","판정":"적합","근거":"2.0b 1229-1253, x-eiRampUp","조치":"없음"},
+    {"설계서 항목":"중첩 이벤트 우선순위","판정":"적합","근거":"2.0b 3665-3673 Rule 15","조치":"권고3 단서 추가"},
+    {"설계서 항목":"marketContext 분리","판정":"적합","근거":"2.0b 1205-1206, 4347-4349","조치":"없음"},
+    {"설계서 항목":"Fast DR(초~1분 응동)","판정":"부분 적합","근거":"2.0b 663-667 (4초 응동 사례)","조치":"‘1분 주기’는 운영 결정임을 명시"},
+    {"설계서 항목":"텔레메트리 보고(실측)","판정":"적합(2.0b만)","근거":"2.0b 1738-1744 TELEMETRY_USAGE/STATUS","조치":"2.0a 호환 시 제약 명시"},
+    {"설계서 항목":"dispatch_type 4종(MANDATORY_LIMIT 등)","판정":"표준 범위 외(custom)","근거":"2.0b Table 1에 미존재, 5535-5537 x- 접두 허용","조치":"권고1 매핑 컬럼 추가"},
+    {"설계서 항목":"target_p_mw → 유효전력 매핑","판정":"보강 필요","근거":"2.0b 1519-1545 LOAD_DISPATCH/setpoint/powerReal","조치":"권고5 element명 명시"},
+    {"설계서 항목":"VEN(VPP) 표기","판정":"보강 필요","근거":"2.0b 425-426, 1280-1286","조치":"권고7 다층 역할 분리"},
+    {"설계서 항목":"이중 정산(IMBP 등)","판정":"표준 범위 외","근거":"2.0a/2.0b 본문에 settlement 용어 없음","조치":"권고4 주석 추가"},
+    {"설계서 항목":"9.1 SOC 95% 분기 / 9.2 통신단절 재배분","판정":"표준 범위 외(운영정책)","근거":"OpenADR 본문 미규정","조치":"운영정책임을 명시"},
+    {"설계서 항목":"REDAS 용어 사용","판정":"보강 필요","근거":"OpenADR 본문 0건","조치":"권고6 표기 분리"}
+  ],
+  "meta": [
+    {"항목":"문서명","내용":"VPP 이벤트 모델 상세 설계서 v0.1 — OpenADR 표준 적합성 검토 결과"},
+    {"항목":"검토일","내용":"2026-04-28"},
+    {"항목":"검토 근거","내용":"OpenADR 2.0a Profile Specification v1.0 / OpenADR 2.0b Profile Specification v1.0 (본문 텍스트만 대조)"},
+    {"항목":"판정 요약","내용":"OpenADR 핵심 매핑은 정합. 단, dispatch_type 4종은 custom signal로 명시 필요, 정산·운영정책은 표준 범위 외임을 분리 표기 필요"},
+    {"항목":"시트 구성","내용":"①검토메타 ②종합권고 ③dispatch_type 매핑 ④status 매핑 ⑤적합성 매트릭스"}
+  ]
+}

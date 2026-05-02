@@ -1,0 +1,57 @@
+{
+  "paragraphs": [
+    {"text": "", "heading": false},
+    {"text": "13. OpenADR 표준 적합성 검증 보강 (v0.2)", "heading": true},
+    {"text": "검증 근거: OpenADR 2.0a Profile Specification v1.0 / OpenADR 2.0b Profile Specification v1.0 (OpenADR Alliance, 2013) 본문 텍스트 대조. 검증일 2026-04-28.", "heading": false},
+
+    {"text": "13.1 표기 정정 (표지 및 4장)", "heading": true},
+    {"text": "표지 「검토 기준: KPX OpenADR 2.0b」 → 「OpenADR 2.0b 기반 KPX REDAS 사양」으로 정정한다. OpenADR 2.0a/b는 OpenADR Alliance(2013) 사양이며 KPX가 발행한 표준이 아니다(2.0b PDF 1185행 © OpenADR Alliance 표기).", "heading": false},
+    {"text": "4.1 kpx_event_id 설명을 「VTN(KPX REDAS 구현체)이 송신하는 표준 eventID」로 보강한다. REDAS는 한국 구현 명칭이며 OpenADR 표준에는 정의되어 있지 않다(검색 결과 0건).", "heading": false},
+
+    {"text": "13.2 dispatch_type ↔ OpenADR signalName 매핑 (5장 보강)", "heading": true},
+    {"text": "본 설계의 4종 dispatch_type 명칭은 OpenADR 2.0b Table 1의 표준 signalName 목록(SIMPLE, ELECTRICITY_PRICE, ENERGY_PRICE, DEMAND_CHARGE, BID_PRICE, BID_LOAD, BID_ENERGY, CHARGE_STATE, LOAD_DISPATCH 등)에 포함되지 않는다. 표준은 비표준 signalName을 사용할 경우 「x-」 접두를 붙이도록 허용한다(2.0b §11.1, 5535-5537행).", "heading": false},
+    {"text": "MANDATORY_LIMIT → signalName: LOAD_DISPATCH 또는 x-VPP-MANDATORY_LIMIT, signalType: setpoint, itemBase: powerReal. 절대 출력값으로 송출하고 강제성은 marketContext priority로 표현한다.", "heading": false},
+    {"text": "IMBALANCE_DEFENSE → signalName: LOAD_DISPATCH 또는 x-VPP-IMBALANCE_DEFENSE, signalType: delta, itemBase: powerReal. 베이스라인 대비 증감(delta)으로 송출하는 것이 자연스럽다. 정산 페널티 산식은 OpenADR 표준 외 영역이다.", "heading": false},
+    {"text": "FLEX_ABSORPTION → signalName: CHARGE_STATE 또는 x-VPP-FLEX_ABSORPTION, signalType: setpoint, itemBase: energyReal. ESS 충·방전을 표준 신호로 표현한다. 9.1의 SOC 95% 분기는 운영정책 영역이다.", "heading": false},
+    {"text": "MARKET_BIDDING → signalName: BID_LOAD 또는 BID_ENERGY (또는 x-VPP-MARKET_BIDDING), signalType: setpoint, itemBase: powerReal/energyReal. 입찰량을 setpoint로 명시하고, modificationNumber로 15분 단위 변경을 추적한다.", "heading": false},
+
+    {"text": "13.3 내부 status ↔ OpenADR eventStatus 매핑 (7장 보강)", "heading": true},
+    {"text": "OpenADR 표준 eventStatus는 far / near / active / cancelled / completed의 5종으로 정의된다(2.0b 1211-1212행). 본 설계 내부 status를 표준값과 다음과 같이 매핑한다.", "heading": false},
+    {"text": "REQUESTED ↔ far / near. dtstart 기준 시간 거리에 따라 표준 자동 전이(2.0b 3652-3655행: EventStatus MUST always transition from far to near to active).", "heading": false},
+    {"text": "OPTIMIZING ↔ far / near (내부 처리 단계로 표준 상태에 직접 대응 없음). AI-OPF/GNN 연산 중인 단계이며 외부 응답에는 표준 상태로 대체 표기.", "heading": false},
+    {"text": "DISPATCHED ↔ near (또는 active 진입 직전). x-eiRampUp 진입 시점에 해당.", "heading": false},
+    {"text": "ACTIVE ↔ active. 자원 응동 및 목표 추종 중 단계.", "heading": false},
+    {"text": "COMPLETED ↔ completed. 단, 2.0b 4069행에 따라 completed eventStatus 수신은 modificationNumber 증가를 유발해서는 안 된다(불변 룰).", "heading": false},
+    {"text": "FAILED ↔ cancelled (VTN 송출 시) 또는 내부 표시. 2.0b 3603행: cancelled로의 전이는 modificationNumber 증가의 예외에 해당.", "heading": false},
+
+    {"text": "13.4 8장 병행 관계 단서 추가 (marketContext)", "heading": true},
+    {"text": "OpenADR 2.0b Rule 18(3705-3721행)에 따라 동일 marketContext 내 중첩 active 이벤트는 표준상 금지된다. 「병행 관계: ‘발전량 예측 입찰’ 이벤트와 ‘실시간 급전 지시’는 병행 ACTIVE 가능」 조항은 두 이벤트가 서로 다른 marketContext에 속할 때만 성립한다.", "heading": false},
+    {"text": "동일 marketContext일 경우, priority 또는 시작시각 기준으로 단일 이벤트만 active 상태를 유지하여야 한다(2.0b Rule 15, 3665-3673행).", "heading": false},
+
+    {"text": "13.5 12장 target_p_mw element 매핑 구체화", "heading": true},
+    {"text": "12장의 「OpenADR 원문 payload 중 유효전력 지시값을 매핑」 표현을 다음 표준 element 조합으로 구체화한다.", "heading": false},
+    {"text": "signalName = LOAD_DISPATCH, signalType = setpoint, itemBase = powerReal (또는 powerXXX), 단위 = MW(또는 kW), 값 형식 = 절대 출력값. 근거: 2.0b §8.2.2 Table 1, 1519-1545행.", "heading": false},
+    {"text": "제약 또는 증감 송출이 필요한 경우 signalType은 delta 또는 multiplier로 변경할 수 있으며, 표준 itemBase 값(power/energy 계열)을 그대로 사용한다.", "heading": false},
+
+    {"text": "13.6 11장 정산 구조 — OpenADR 표준 범위 외", "heading": true},
+    {"text": "OpenADR 2.0a/2.0b 본문에는 settlement, penalty, imbalance 용어가 등장하지 않는다(텍스트 검색 결과 0건). 11장의 IMBP(임밸런스 페널티) 산정 및 이중 정산 규칙은 KPX 제주 시범사업 운영 규정 및 실시간 시장 정산 규칙을 근거로 하며, OpenADR 표준 범위 외의 사업자/시장 운영 영역임을 본 보강에서 명시한다.", "heading": false},
+    {"text": "OpenADR 표준은 정산을 위한 실측 데이터 송수신 메커니즘으로 텔레메트리(TELEMETRY_USAGE, TELEMETRY_STATUS, 2.0b 1738-1744행)와 이벤트 응답 기록(oadrCreatedEvent, qualifiedEventID, 1294행)을 제공할 뿐, 정산 산식 자체는 사양 범위 밖이다.", "heading": false},
+
+    {"text": "13.7 9장 운영정책의 표준 범위 외 표기", "heading": true},
+    {"text": "9.1(ESS SOC 95% 분기) 및 9.2(통신단절 후 자원 재배분)는 OpenADR 본문에 직접 근거가 없는 사업자/플랫폼 운영정책 영역이다. 상기 정책은 본 설계서의 운영 의사결정 사항으로, OpenADR 표준 호환성 평가와 분리하여 검토한다.", "heading": false},
+
+    {"text": "13.8 VTN/VEN 다층 역할 표기", "heading": true},
+    {"text": "VPP 통합 플랫폼은 KPX(상위 VTN)에 대해 VEN으로 동작하면서, 동시에 하위 RTU/DER 자원 집합에 대해서는 자체 VTN처럼 동작하는 다층(aggregator-VEN) 구조이다(2.0b 425-426행 VTN/VEN 정의, 1280-1286행 aggregator with multiple resources behind it 정의).", "heading": false},
+    {"text": "본 설계서 12장의 「VEN(VPP) 응답 기록」 표현은 KPX-대 VPP 인터페이스 한정으로 해석하며, 하위 RTU 인터페이스는 별도의 내부 통신 프로토콜로 처리됨을 명시한다.", "heading": false},
+
+    {"text": "13.9 1분 주기 응동의 표준 근거", "heading": true},
+    {"text": "표준은 lead time을 「초~수일」까지 폭넓게 허용하며, Fast DR의 예시로 4초 응동을 명시한다(2.0b 663-667행: lead times of seconds (e.g., 4 second response time) used for load balancing and frequency stabilization). 본 설계의 「1분 주기 제어」는 Fast DR 범주 내에서의 운영 결정값이며, 표준이 명시한 고정값은 아니다.", "heading": false},
+    {"text": "1분보다 짧은 응동(예: 4초·1초 단위)을 표준이 허용하므로, TVPP 실증에서 더 빠른 제어 주기 도입 시에도 OpenADR 호환성은 유지된다.", "heading": false},
+
+    {"text": "13.10 검증 결과 종합", "heading": true},
+    {"text": "OpenADR 2.0a/2.0b 본문 대조 결과, 본 설계서 v0.1의 핵심 매핑(eventID, modificationNumber, oadrResponseRequired, qualifiedEventID, eventStatus 전이, Ramp Up/Recovery, marketContext, 텔레메트리)은 표준과 정합한다.", "heading": false},
+    {"text": "보강이 필요한 영역(dispatch_type 명칭, target_p_mw element 매핑, 병행 ACTIVE 단서, 정산·운영정책의 표준 외 영역 표기, VEN/VTN 다층 역할, REDAS/OpenADR 표기 분리)은 본 13장에 모두 반영하였다.", "heading": false},
+    {"text": "최종 판단: 13장 보강 사항을 적용한 v0.2는 OpenADR 2.0a/2.0b 본문과 정합성 충돌이 없는 것으로 평가한다.", "heading": false},
+    {"text": "", "heading": false}
+  ]
+}

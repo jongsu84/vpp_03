@@ -1,0 +1,89 @@
+﻿[0] VPP 이벤트 모델 상세 설계서
+[1] 최종 수정일: 2026-04-17
+[2] 검토 기준: KPX OpenADR 2.0b, KPX 제주 시범사업 VPP 운영 규정, 실시간 시장 정산 규칙
+[3] 
+[4] 1. 설계 방향
+[5] 본 설계는 VPP 통합 플랫폼이 KPX로부터 수신하는 급전 지시(Dispatch Instruction) 및 시장 참여 이벤트를 내부 시스템 엔티티와 1:1로 매핑하여 관리하는 것을 원칙으로 한다.
+[6] TVPP(Technical VPP) 기능 대응: 단순 상업적 입찰뿐 아니라 물리적 계통 안정을 위한 초고속(1분 주기) 제어 이력을 추적한다.
+[7] 이기종 자원 통합 관리: 태양광, 풍력, ESS, V2G 등 서로 다른 응동 특성을 가진 자원별 수행 실적을 이벤트 단위로 통합한다.
+[8] 2. Event ID 중심 모델 선택 이유
+[9] 계통 운영 가시성 확보: 1분 단위 급전 지시(Set-point)가 어떤 시장 요구(이벤트)에 의해 발생했는지 직관적으로 추적한다.
+[10] 정밀 KPI 검증: Precision Score(정확도) 및 응답 지연 시간 계산 시 특정 Event ID를 기준으로 실측 데이터를 매칭하여 공인시험성적서 증빙을 자동화한다.
+[11] 복합 제어 이력 정산: 동일 시간대 발생한 '임밸런스 보정'과 '출력 제한' 이벤트를 분리하여 각각의 정산 가중치를 적용한다.
+[12] 3. 핵심 설계 원칙
+[13] 1:1 대응: 내부 event 레코드는 KPX로부터 수신한 개별 eventID와 1:1로 대응한다.
+[14] 초고속 상태 전이: VPP 특성상 1분 단위 제어가 빈번하므로, 스케줄러 기반 상태 전이의 주기를 초 단위로 고도화한다.
+[15] 우회 제어 관계 설정: 자원 고장/통신 단절 시 '대체 자원 투입' 정보를 관계 필드로 기록하여 최종 제어 오차율 방어 로직을 소명한다.
+[16] 4. 엔티티 구조
+[17] 4.1 vpp_event (기본 엔티티)
+[18] 필드
+[19] 설명
+[20] event_id
+[21] 내부 생성 고유 식별자
+[22] kpx_event_id
+[23] KPX REDAS/VTN 송신 eventID
+[24] dispatch_type
+[25] VPP 거래 유형 (MANDATORY_LIMIT, IMBALANCE_DEFENSE 등)
+[26] target_p_mw
+[27] 이벤트 목표 합계 출력량 (Set-point 합계)
+[28] vpp_status
+[29] 내부 처리 상태 (READY, OPTIMIZING, DISPATCHED, COMPLETED 등)
+[30] ramp_rate_limit
+[31] 본 이벤트에 적용될 최대 증감발률 제약
+[32] overridden_by_id
+[33] 제어권 상실 시 원인이 된 상위 이벤트 ID
+[34] 4.2 vpp_event_execution (실행 및 제어 단위)
+[35] VPP는 짧은 주기로 실행되므로, 1분/5분 단위의 '제어 슬롯' 단위로 기록한다.
+[36] 필드
+[37] 설명
+[38] execution_id
+[39] 제어 실행 유닛 ID
+[40] asset_id
+[41] 제어 대상 개별 분산자원(DER) ID
+[42] ordered_p_mw
+[43] AI 알고리즘이 할당한 개별 자원 목표치
+[44] actual_p_mw
+[45] RTU를 통해 수집된 실시간 실제 출력량
+[46] precision_score
+[47] 지시치 대비 실측치 정확도 점수
+[48] response_latency
+[49] 지시 발령 후 응동 시작까지의 지연 시간(sec)
+[50] 5. dispatch_type정의(VPP 특화)
+[51] 값
+[52] 설명
+[53] MANDATORY_LIMIT
+[54] 계통 과잉 공급에 따른 강제 출력 제한 (의무)
+[55] IMBALANCE_DEFENSE
+[56] 예측 오차 발생 시 실시간SMP 페널티 방어를 위한 보정 제어
+[57] FLEX_ABSORPTION
+[58] 플러스DR/유연성 자원을 활용한 남는 전력 흡수(충전)
+[59] MARKET_BIDDING
+[60] 실시간 시장 낙찰량 이행을 위한 발전량 조절
+[61] 6. status 정의 (VPP 라이프사이클)
+[62] REQUESTED: KPX 지시 수신
+[63] OPTIMIZING: AI-OPF/GNN 알고리즘이 자원별 배분량 계산 중
+[64] DISPATCHED: 현장 RTU로 제어 신호 송출 완료
+[65] ACTIVE: 자원 응동 및 목표 궤적 추종 중
+[66] COMPLETED: 정상 종료 및 결과 보고 완료
+[67] FAILED: 통신 장애 또는 Ramp-rate 미달로 인한 제어 실패
+[68] 7. 상태 머신 (VPP 제어 흐름)
+[69] 급전 지시 유입: REQUESTED → AI 연산 → OPTIMIZING → 명령 전송 → DISPATCHED
+[70] 실시간 모니터링: ACTIVE 상태에서 1분마다 precision_score가 기준(0.75) 미달 시 status_reason 기록 후 백업 자원 투입.
+[71] 종료 처리: 종료 시각 도달 시 COMPLETED 전이 및 최종 실증 데이터(MWh) 확정.
+[72] 8. 이벤트 간 관계 모델
+[73] 병행 관계: '발전량 예측 입찰' 이벤트와 '실시간 급전 지시'는 병행 ACTIVE 가능하다.
+[74] 우선순위 관계: MANDATORY_LIMIT(출력 제한) 수신 시, 모든 MARKET_BIDDING(상업 발전) 수익 최적화 로직은 무시(Override)된다.
+[75] 9. 충돌 및 참여 제한 로직
+[76] 9.1 물리적 제약 충돌 (Physical Constraint)
+[77] ESS 충전 지시(FLEX_ABSORPTION) 중 방전 입찰(MARKET_BIDDING) 수신 시: ESS의 SOC(충전상태)가 95% 이상이면 충전 이벤트를 우선 종료하고 방전 준비 상태로 전이한다.
+[78] 9.2 통신 단절 시나리오
+[79] 특정 태양광 단지가 통신 단절(status = FAILED)되면, 해당 이벤트의 부족분을 즉시 동해 바이오매스 등 제어 확실성이 높은 자원으로 재배분(overridden_by_id 기록).
+[80] 10. modificationNumber 수신 처리 전략
+[81] VPP 2.0 대응: 실시간 시장은 15분 단위로 낙찰량이 변경되므로, 동일 eventID 내에서 modificationNumber 상승 시 AI 알고리즘을 즉시 재가동(Re-optimization)하여 현장 제어값을 갱신한다.
+[82] 11. 정산 구조 (VPP 이중 정산)
+[83] 하루전 정산: planned_amount 기반 정산.
+[84] 실시간 정산: executed_amount와 지시치(ordered_p_mw) 간의 오차를 계산하여 임밸런스 페널티(IMBP) 차감 후 최종 정산금 확정.
+[85] 12. OpenADR/REDAS 규격 적합성 검토
+[86] 적합: eventID 기반 추적, modificationNumber 버전 관리, oadrResponseRequired에 따른 VEN(VPP) 응답 기록.
+[87] 확장: target_p_mw 필드는 OpenADR 원문의 payload 중 유효전력 지시값을 매핑하여 TVPP 실증 규격에 맞춤.
+[88] 

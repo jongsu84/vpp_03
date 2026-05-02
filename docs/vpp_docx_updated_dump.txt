@@ -1,0 +1,132 @@
+﻿[0] VPP 이벤트 모델 상세 설계서
+[1] 최종 수정일: 2026-04-17
+[2] 검토 기준: OpenADR 2.0b 기반 KPX REDAS 사양, KPX 제주 시범사업 VPP 운영 규정, 실시간 시장 정산 규칙
+[3] 
+[4] 1. 설계 방향
+[5] 본 설계는 VPP 통합 플랫폼이 KPX로부터 수신하는 급전 지시(Dispatch Instruction) 및 시장 참여 이벤트를 내부 시스템 엔티티와 1:1로 매핑하여 관리하는 것을 원칙으로 한다.
+[6] TVPP(Technical VPP) 기능 대응: 단순 상업적 입찰뿐 아니라 물리적 계통 안정을 위한 초고속(1분 주기) 제어 이력을 추적한다.
+[7] 이기종 자원 통합 관리: 태양광, 풍력, ESS, V2G 등 서로 다른 응동 특성을 가진 자원별 수행 실적을 이벤트 단위로 통합한다.
+[8] 2. Event ID 중심 모델 선택 이유
+[9] 계통 운영 가시성 확보: 1분 단위 급전 지시(Set-point)가 어떤 시장 요구(이벤트)에 의해 발생했는지 직관적으로 추적한다.
+[10] 정밀 KPI 검증: Precision Score(정확도) 및 응답 지연 시간 계산 시 특정 Event ID를 기준으로 실측 데이터를 매칭하여 공인시험성적서 증빙을 자동화한다.
+[11] 복합 제어 이력 정산: 동일 시간대 발생한 '임밸런스 보정'과 '출력 제한' 이벤트를 분리하여 각각의 정산 가중치를 적용한다.
+[12] 3. 핵심 설계 원칙
+[13] 1:1 대응: 내부 event 레코드는 KPX로부터 수신한 개별 eventID와 1:1로 대응한다.
+[14] 초고속 상태 전이: VPP 특성상 1분 단위 제어가 빈번하므로, 스케줄러 기반 상태 전이의 주기를 초 단위로 고도화한다.
+[15] 우회 제어 관계 설정: 자원 고장/통신 단절 시 '대체 자원 투입' 정보를 관계 필드로 기록하여 최종 제어 오차율 방어 로직을 소명한다.
+[16] 4. 엔티티 구조
+[17] 4.1 vpp_event (기본 엔티티)
+[18] 필드
+[19] 설명
+[20] event_id
+[21] 내부 생성 고유 식별자
+[22] kpx_event_id
+[23] VTN(KPX REDAS 구현체) 송신 표준 eventID (OpenADR 2.0b §1198)
+[24] dispatch_type
+[25] VPP 거래 유형 (MANDATORY_LIMIT, IMBALANCE_DEFENSE 등), OpenADR signalName 매핑은 §13.2 참조
+[26] target_p_mw
+[27] 이벤트 목표 합계 출력량 (Set-point 합계)
+[28] vpp_status
+[29] 내부 처리 상태 (REQUESTED, OPTIMIZING, DISPATCHED, ACTIVE, COMPLETED, FAILED — 표준 eventStatus 매핑은 §13.3 참조)
+[30] ramp_rate_limit
+[31] 본 이벤트에 적용될 최대 증감발률 제약
+[32] overridden_by_id
+[33] 제어권 상실 시 원인이 된 상위 이벤트 ID
+[34] 4.2 vpp_event_execution (실행 및 제어 단위)
+[35] VPP는 짧은 주기로 실행되므로, 1분/5분 단위의 '제어 슬롯' 단위로 기록한다.
+[36] 필드
+[37] 설명
+[38] execution_id
+[39] 제어 실행 유닛 ID
+[40] asset_id
+[41] 제어 대상 개별 분산자원(DER) ID
+[42] ordered_p_mw
+[43] AI 알고리즘이 할당한 개별 자원 목표치
+[44] actual_p_mw
+[45] RTU를 통해 수집된 실시간 실제 출력량
+[46] precision_score
+[47] 지시치 대비 실측치 정확도 점수
+[48] response_latency
+[49] 지시 발령 후 응동 시작까지의 지연 시간(sec)
+[50] 5. dispatch_type정의(VPP 특화)
+[51] 값
+[52] 설명
+[53] MANDATORY_LIMIT
+[54] 계통 과잉 공급에 따른 강제 출력 제한 (의무) [OpenADR: LOAD_DISPATCH/setpoint/powerReal 또는 x-VPP-MANDATORY_LIMIT]
+[55] IMBALANCE_DEFENSE
+[56] 예측 오차 발생 시 실시간SMP 페널티 방어를 위한 보정 제어 [OpenADR: LOAD_DISPATCH/delta/powerReal]
+[57] FLEX_ABSORPTION
+[58] 플러스DR/유연성 자원을 활용한 남는 전력 흡수(충전) [OpenADR: CHARGE_STATE/setpoint/energyReal]
+[59] MARKET_BIDDING
+[60] 실시간 시장 낙찰량 이행을 위한 발전량 조절 [OpenADR: BID_LOAD 또는 BID_ENERGY/setpoint]
+[61] 6. status 정의 (VPP 라이프사이클)
+[62] REQUESTED: KPX 지시 수신 ↔ OpenADR eventStatus: far/near
+[63] OPTIMIZING: AI-OPF/GNN 알고리즘이 자원별 배분량 계산 중 ↔ OpenADR eventStatus: far/near (내부 단계)
+[64] DISPATCHED: 현장 RTU로 제어 신호 송출 완료 ↔ OpenADR eventStatus: near (active 진입 직전)
+[65] ACTIVE: 자원 응동 및 목표 궤적 추종 중 ↔ OpenADR eventStatus: active
+[66] COMPLETED: 정상 종료 및 결과 보고 완료 ↔ OpenADR eventStatus: completed (modificationNumber 증가 금지)
+[67] FAILED: 통신 장애 또는 Ramp-rate 미달로 인한 제어 실패 ↔ OpenADR eventStatus: cancelled
+[68] 7. 상태 머신 (VPP 제어 흐름)
+[69] 급전 지시 유입: REQUESTED → AI 연산 → OPTIMIZING → 명령 전송 → DISPATCHED
+[70] 실시간 모니터링: ACTIVE 상태에서 1분마다 precision_score가 기준(0.75) 미달 시 status_reason 기록 후 백업 자원 투입.
+[71] 종료 처리: 종료 시각 도달 시 COMPLETED 전이 및 최종 실증 데이터(MWh) 확정 (OpenADR 2.0b §4069: completed eventStatus 수신은 modificationNumber 증가 금지).
+[72] 8. 이벤트 간 관계 모델
+[73] 병행 관계: '발전량 예측 입찰' 이벤트와 '실시간 급전 지시'는 병행 ACTIVE 가능하다 (단, 두 이벤트가 서로 다른 marketContext에 속해야 함 — OpenADR 2.0b Rule 18, §3705-3721).
+[74] 우선순위 관계: MANDATORY_LIMIT(출력 제한) 수신 시, 모든 MARKET_BIDDING(상업 발전) 수익 최적화 로직은 무시(Override)된다.
+[75] 9. 충돌 및 참여 제한 로직 (※ OpenADR 표준 범위 외 운영정책)
+[76] 9.1 물리적 제약 충돌 (Physical Constraint)
+[77] ESS 충전 지시(FLEX_ABSORPTION) 중 방전 입찰(MARKET_BIDDING) 수신 시: ESS의 SOC(충전상태)가 95% 이상이면 충전 이벤트를 우선 종료하고 방전 준비 상태로 전이한다.
+[78] 9.2 통신 단절 시나리오
+[79] 특정 태양광 단지가 통신 단절(status = FAILED)되면, 해당 이벤트의 부족분을 즉시 동해 바이오매스 등 제어 확실성이 높은 자원으로 재배분(overridden_by_id 기록).
+[80] 10. modificationNumber 수신 처리 전략
+[81] VPP 2.0 대응: 실시간 시장은 15분 단위로 낙찰량이 변경되므로, 동일 eventID 내에서 modificationNumber 상승 시 AI 알고리즘을 즉시 재가동(Re-optimization)하여 현장 제어값을 갱신한다 (OpenADR 2.0b §1199-1200 표준 정의).
+[82] 11. 정산 구조 (VPP 이중 정산) — ※ OpenADR 표준 범위 외, KPX 운영 규정 근거
+[83] 하루전 정산: planned_amount 기반 정산.
+[84] 실시간 정산: executed_amount와 지시치(ordered_p_mw) 간의 오차를 계산하여 임밸런스 페널티(IMBP) 차감 후 최종 정산금 확정.
+[85] 12. OpenADR/REDAS 규격 적합성 검토
+[86] 적합: eventID 기반 추적, modificationNumber 버전 관리, oadrResponseRequired에 따른 VEN(VPP) 응답 기록.
+[87] 확장: target_p_mw 필드는 OpenADR signalName=LOAD_DISPATCH, signalType=setpoint, itemBase=powerReal로 매핑되어 TVPP 실증 규격에 부합한다 (2.0b §1519-1545).
+[88] 
+[89] 
+[90] 13. OpenADR 표준 적합성 검증 보강 (v0.2)
+[91] 검증 근거: OpenADR 2.0a Profile Specification v1.0 / OpenADR 2.0b Profile Specification v1.0 (OpenADR Alliance, 2013) 본문 텍스트 대조. 검증일 2026-04-28.
+[92] 13.1 표기 정정 (표지 및 4장)
+[93] 표지 「검토 기준: KPX OpenADR 2.0b」 → 「OpenADR 2.0b 기반 KPX REDAS 사양」으로 정정한다. OpenADR 2.0a/b는 OpenADR Alliance(2013) 사양이며 KPX가 발행한 표준이 아니다(2.0b PDF 1185행 © OpenADR Alliance 표기).
+[94] 4.1 kpx_event_id 설명을 「VTN(KPX REDAS 구현체)이 송신하는 표준 eventID」로 보강한다. REDAS는 한국 구현 명칭이며 OpenADR 표준에는 정의되어 있지 않다(검색 결과 0건).
+[95] 13.2 dispatch_type ↔ OpenADR signalName 매핑 (5장 보강)
+[96] 본 설계의 4종 dispatch_type 명칭은 OpenADR 2.0b Table 1의 표준 signalName 목록(SIMPLE, ELECTRICITY_PRICE, ENERGY_PRICE, DEMAND_CHARGE, BID_PRICE, BID_LOAD, BID_ENERGY, CHARGE_STATE, LOAD_DISPATCH 등)에 포함되지 않는다. 표준은 비표준 signalName을 사용할 경우 「x-」 접두를 붙이도록 허용한다(2.0b §11.1, 5535-5537행).
+[97] MANDATORY_LIMIT → signalName: LOAD_DISPATCH 또는 x-VPP-MANDATORY_LIMIT, signalType: setpoint, itemBase: powerReal. 절대 출력값으로 송출하고 강제성은 marketContext priority로 표현한다.
+[98] IMBALANCE_DEFENSE → signalName: LOAD_DISPATCH 또는 x-VPP-IMBALANCE_DEFENSE, signalType: delta, itemBase: powerReal. 베이스라인 대비 증감(delta)으로 송출하는 것이 자연스럽다. 정산 페널티 산식은 OpenADR 표준 외 영역이다.
+[99] FLEX_ABSORPTION → signalName: CHARGE_STATE 또는 x-VPP-FLEX_ABSORPTION, signalType: setpoint, itemBase: energyReal. ESS 충·방전을 표준 신호로 표현한다. 9.1의 SOC 95% 분기는 운영정책 영역이다.
+[100] MARKET_BIDDING → signalName: BID_LOAD 또는 BID_ENERGY (또는 x-VPP-MARKET_BIDDING), signalType: setpoint, itemBase: powerReal/energyReal. 입찰량을 setpoint로 명시하고, modificationNumber로 15분 단위 변경을 추적한다.
+[101] 13.3 내부 status ↔ OpenADR eventStatus 매핑 (7장 보강)
+[102] OpenADR 표준 eventStatus는 far / near / active / cancelled / completed의 5종으로 정의된다(2.0b 1211-1212행). 본 설계 내부 status를 표준값과 다음과 같이 매핑한다.
+[103] REQUESTED ↔ far / near. dtstart 기준 시간 거리에 따라 표준 자동 전이(2.0b 3652-3655행: EventStatus MUST always transition from far to near to active).
+[104] OPTIMIZING ↔ far / near (내부 처리 단계로 표준 상태에 직접 대응 없음). AI-OPF/GNN 연산 중인 단계이며 외부 응답에는 표준 상태로 대체 표기.
+[105] DISPATCHED ↔ near (또는 active 진입 직전). x-eiRampUp 진입 시점에 해당.
+[106] ACTIVE ↔ active. 자원 응동 및 목표 추종 중 단계.
+[107] COMPLETED ↔ completed. 단, 2.0b 4069행에 따라 completed eventStatus 수신은 modificationNumber 증가를 유발해서는 안 된다(불변 룰).
+[108] FAILED ↔ cancelled (VTN 송출 시) 또는 내부 표시. 2.0b 3603행: cancelled로의 전이는 modificationNumber 증가의 예외에 해당.
+[109] 13.4 8장 병행 관계 단서 추가 (marketContext)
+[110] OpenADR 2.0b Rule 18(3705-3721행)에 따라 동일 marketContext 내 중첩 active 이벤트는 표준상 금지된다. 「병행 관계: ‘발전량 예측 입찰’ 이벤트와 ‘실시간 급전 지시’는 병행 ACTIVE 가능」 조항은 두 이벤트가 서로 다른 marketContext에 속할 때만 성립한다.
+[111] 동일 marketContext일 경우, priority 또는 시작시각 기준으로 단일 이벤트만 active 상태를 유지하여야 한다(2.0b Rule 15, 3665-3673행).
+[112] 13.5 12장 target_p_mw element 매핑 구체화
+[113] 12장의 「OpenADR 원문 payload 중 유효전력 지시값을 매핑」 표현을 다음 표준 element 조합으로 구체화한다.
+[114] signalName = LOAD_DISPATCH, signalType = setpoint, itemBase = powerReal (또는 powerXXX), 단위 = MW(또는 kW), 값 형식 = 절대 출력값. 근거: 2.0b §8.2.2 Table 1, 1519-1545행.
+[115] 제약 또는 증감 송출이 필요한 경우 signalType은 delta 또는 multiplier로 변경할 수 있으며, 표준 itemBase 값(power/energy 계열)을 그대로 사용한다.
+[116] 13.6 11장 정산 구조 — OpenADR 표준 범위 외
+[117] OpenADR 2.0a/2.0b 본문에는 settlement, penalty, imbalance 용어가 등장하지 않는다(텍스트 검색 결과 0건). 11장의 IMBP(임밸런스 페널티) 산정 및 이중 정산 규칙은 KPX 제주 시범사업 운영 규정 및 실시간 시장 정산 규칙을 근거로 하며, OpenADR 표준 범위 외의 사업자/시장 운영 영역임을 본 보강에서 명시한다.
+[118] OpenADR 표준은 정산을 위한 실측 데이터 송수신 메커니즘으로 텔레메트리(TELEMETRY_USAGE, TELEMETRY_STATUS, 2.0b 1738-1744행)와 이벤트 응답 기록(oadrCreatedEvent, qualifiedEventID, 1294행)을 제공할 뿐, 정산 산식 자체는 사양 범위 밖이다.
+[119] 13.7 9장 운영정책의 표준 범위 외 표기
+[120] 9.1(ESS SOC 95% 분기) 및 9.2(통신단절 후 자원 재배분)는 OpenADR 본문에 직접 근거가 없는 사업자/플랫폼 운영정책 영역이다. 상기 정책은 본 설계서의 운영 의사결정 사항으로, OpenADR 표준 호환성 평가와 분리하여 검토한다.
+[121] 13.8 VTN/VEN 다층 역할 표기
+[122] VPP 통합 플랫폼은 KPX(상위 VTN)에 대해 VEN으로 동작하면서, 동시에 하위 RTU/DER 자원 집합에 대해서는 자체 VTN처럼 동작하는 다층(aggregator-VEN) 구조이다(2.0b 425-426행 VTN/VEN 정의, 1280-1286행 aggregator with multiple resources behind it 정의).
+[123] 본 설계서 12장의 「VEN(VPP) 응답 기록」 표현은 KPX-대 VPP 인터페이스 한정으로 해석하며, 하위 RTU 인터페이스는 별도의 내부 통신 프로토콜로 처리됨을 명시한다.
+[124] 13.9 1분 주기 응동의 표준 근거
+[125] 표준은 lead time을 「초~수일」까지 폭넓게 허용하며, Fast DR의 예시로 4초 응동을 명시한다(2.0b 663-667행: lead times of seconds (e.g., 4 second response time) used for load balancing and frequency stabilization). 본 설계의 「1분 주기 제어」는 Fast DR 범주 내에서의 운영 결정값이며, 표준이 명시한 고정값은 아니다.
+[126] 1분보다 짧은 응동(예: 4초·1초 단위)을 표준이 허용하므로, TVPP 실증에서 더 빠른 제어 주기 도입 시에도 OpenADR 호환성은 유지된다.
+[127] 13.10 검증 결과 종합
+[128] OpenADR 2.0a/2.0b 본문 대조 결과, 본 설계서 v0.1의 핵심 매핑(eventID, modificationNumber, oadrResponseRequired, qualifiedEventID, eventStatus 전이, Ramp Up/Recovery, marketContext, 텔레메트리)은 표준과 정합한다.
+[129] 보강이 필요한 영역(dispatch_type 명칭, target_p_mw element 매핑, 병행 ACTIVE 단서, 정산·운영정책의 표준 외 영역 표기, VEN/VTN 다층 역할, REDAS/OpenADR 표기 분리)은 본 13장에 모두 반영하였다.
+[130] 최종 판단: 13장 보강 사항을 적용한 v0.2는 OpenADR 2.0a/2.0b 본문과 정합성 충돌이 없는 것으로 평가한다.
+[131] 

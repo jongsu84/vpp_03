@@ -1,0 +1,24 @@
+{
+  "edits": [
+    {"index": 2,  "newText": "검토 기준: OpenADR 2.0b 기반 KPX REDAS 사양, KPX 제주 시범사업 VPP 운영 규정, 실시간 시장 정산 규칙"},
+    {"index": 23, "newText": "VTN(KPX REDAS 구현체) 송신 표준 eventID (OpenADR 2.0b §1198)"},
+    {"index": 25, "newText": "VPP 거래 유형 (MANDATORY_LIMIT, IMBALANCE_DEFENSE 등), OpenADR signalName 매핑은 §13.2 참조"},
+    {"index": 29, "newText": "내부 처리 상태 (REQUESTED, OPTIMIZING, DISPATCHED, ACTIVE, COMPLETED, FAILED — 표준 eventStatus 매핑은 §13.3 참조)"},
+    {"index": 54, "newText": "계통 과잉 공급에 따른 강제 출력 제한 (의무) [OpenADR: LOAD_DISPATCH/setpoint/powerReal 또는 x-VPP-MANDATORY_LIMIT]"},
+    {"index": 56, "newText": "예측 오차 발생 시 실시간SMP 페널티 방어를 위한 보정 제어 [OpenADR: LOAD_DISPATCH/delta/powerReal]"},
+    {"index": 58, "newText": "플러스DR/유연성 자원을 활용한 남는 전력 흡수(충전) [OpenADR: CHARGE_STATE/setpoint/energyReal]"},
+    {"index": 60, "newText": "실시간 시장 낙찰량 이행을 위한 발전량 조절 [OpenADR: BID_LOAD 또는 BID_ENERGY/setpoint]"},
+    {"index": 62, "newText": "REQUESTED: KPX 지시 수신 ↔ OpenADR eventStatus: far/near"},
+    {"index": 63, "newText": "OPTIMIZING: AI-OPF/GNN 알고리즘이 자원별 배분량 계산 중 ↔ OpenADR eventStatus: far/near (내부 단계)"},
+    {"index": 64, "newText": "DISPATCHED: 현장 RTU로 제어 신호 송출 완료 ↔ OpenADR eventStatus: near (active 진입 직전)"},
+    {"index": 65, "newText": "ACTIVE: 자원 응동 및 목표 궤적 추종 중 ↔ OpenADR eventStatus: active"},
+    {"index": 66, "newText": "COMPLETED: 정상 종료 및 결과 보고 완료 ↔ OpenADR eventStatus: completed (modificationNumber 증가 금지)"},
+    {"index": 67, "newText": "FAILED: 통신 장애 또는 Ramp-rate 미달로 인한 제어 실패 ↔ OpenADR eventStatus: cancelled"},
+    {"index": 71, "newText": "종료 처리: 종료 시각 도달 시 COMPLETED 전이 및 최종 실증 데이터(MWh) 확정 (OpenADR 2.0b §4069: completed eventStatus 수신은 modificationNumber 증가 금지)."},
+    {"index": 73, "newText": "병행 관계: '발전량 예측 입찰' 이벤트와 '실시간 급전 지시'는 병행 ACTIVE 가능하다 (단, 두 이벤트가 서로 다른 marketContext에 속해야 함 — OpenADR 2.0b Rule 18, §3705-3721)."},
+    {"index": 75, "newText": "9. 충돌 및 참여 제한 로직 (※ OpenADR 표준 범위 외 운영정책)"},
+    {"index": 81, "newText": "VPP 2.0 대응: 실시간 시장은 15분 단위로 낙찰량이 변경되므로, 동일 eventID 내에서 modificationNumber 상승 시 AI 알고리즘을 즉시 재가동(Re-optimization)하여 현장 제어값을 갱신한다 (OpenADR 2.0b §1199-1200 표준 정의)."},
+    {"index": 82, "newText": "11. 정산 구조 (VPP 이중 정산) — ※ OpenADR 표준 범위 외, KPX 운영 규정 근거"},
+    {"index": 87, "newText": "확장: target_p_mw 필드는 OpenADR signalName=LOAD_DISPATCH, signalType=setpoint, itemBase=powerReal로 매핑되어 TVPP 실증 규격에 부합한다 (2.0b §1519-1545)."}
+  ]
+}
