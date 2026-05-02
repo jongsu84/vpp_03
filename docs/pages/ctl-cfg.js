@@ -74,7 +74,7 @@ window.P['ctl-cfg']=()=>`
   </div>
 
   <div class="card mb">
-    <div class="sh"><div class="st">제약 조건 & 정책 파라미터 <span class="tip">ⓘ 운영자 결정 항목만 표시 — 시스템 파라미터(피드백·통신단절 등)는 시스템 관리자 영역</span></div></div>
+    <div class="sh"><div class="st">제약 조건 & 정책 파라미터 ${window.tip('제약 조건 & 정책 파라미터','운영자가 결정해야 하는 정책 변수 (5종)','우선순위 모드 / 최소·최대 감발률 / ESS SoC 하한 / 재계산 주기','시스템 파라미터(피드백 주기·통신 단절 허용·비상 정지 온도 등)는 시스템 관리자 영역으로 분리')}</div></div>
     <div class="fg"><label class="fl">제어 우선순위 모드</label><select class="sel" id="cg-mode"><option>자동 우선 (KPX → VPP 알고리즘)</option><option>수동 우선 (운영자 → 알고리즘)</option><option>혼합 (비상시 수동)</option></select></div>
     <div class="fg" style="display:flex;gap:8px">
       <div style="flex:1"><label class="fl">최소 감발률 %</label><input class="inp" value="10" type="number" id="cg-min"></div>
@@ -89,7 +89,7 @@ window.P['ctl-cfg']=()=>`
 <!-- 수익성 기반 제어 순서 (Merit Order) 테이블 -->
 <div class="card mb" style="margin-top:12px">
   <div class="sh">
-    <div class="st">수익성 기반 제어 순서 (Merit Order) <span class="tip">ⓘ 한계수익이 낮은 순으로 먼저 감발</span></div>
+    <div class="st">수익성 기반 제어 순서 (Merit Order) ${window.tip('Merit Order (수익성 기반 제어 순서)','한계수익이 낮은 순으로 먼저 감발 — 포트폴리오 수익 손실 최소화','한계수익 = SMP 수익 + CP 수익 + AS 수익 (원/kWh)','빨강(1~2위)·주황(3위) = 우선 감발 / 초록(9위~) = 후순위 / — = 제어 불가')}</div>
     <div style="display:flex;gap:8px;align-items:center">
       ${window.csvBtn('cg-merit-tbody','merit_order_curtailment','수익성 기반 제어 순서')}
       <button class="cb" style="font-size:10px" onclick="cgScrollToSim()">시뮬레이션 ▶</button>
@@ -125,7 +125,7 @@ window.P['ctl-cfg']=()=>`
 
 <!-- 감발 시나리오 시뮬레이션 -->
 <div class="card mb">
-  <div class="sh"><div class="st">감발 시나리오 시뮬레이션 <span class="tip">ⓘ 감발 요구량과 알고리즘 선택 후 ▶ 실행 — 운영자 Override 가능</span></div><div style="font-size:10px;color:var(--semantic-label-alt)" id="cg-sim-status">대기 중</div></div>
+  <div class="sh"><div class="st">감발 시나리오 시뮬레이션 ${window.tip('감발 시나리오 시뮬레이션','감발 요구량 입력 후 알고리즘별 예상 결과 미리보기','각 자원의 감발량·감발 후 출력·예상 손실(원) + 균등 배분 대비 절감액','Override 체크박스 해제 시 해당 자원을 제외하고 다른 자원으로 자동 재배분 — 가용량 부족 시 빨간 경고')}</div><div style="font-size:10px;color:var(--semantic-label-alt)" id="cg-sim-status">대기 중</div></div>
   <div class="fg" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
     <div style="flex:1;min-width:140px"><label class="fl">감발 요구량 (MW)</label><input class="inp" value="30" type="number" min="0.1" step="0.1" id="cg-sim-mw"></div>
     <div style="flex:1;min-width:160px"><label class="fl">알고리즘</label><select class="sel" id="cg-sim-algo">
