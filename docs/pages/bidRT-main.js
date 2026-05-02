@@ -202,10 +202,10 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
 <!-- ========== VIEW 2: 단기 예측 현황 ========== -->
 <div id="pg-rt-view-forecast" style="display:none">
   <div class="g4">
-    <div class="card acc"><div class="ct">앙상블 신뢰도</div><div class="kv" style="color:var(--semantic-positive-normal)">96.4<span class="ku">%</span></div><div class="kd up">hybrid-ensemble 기본</div></div>
-    <div class="card"><div class="ct">+15분 horizon NMAE</div><div class="kv">4.2<span class="ku">%</span></div><div class="kd up">최근 24시간</div></div>
-    <div class="card"><div class="ct">+30분 horizon NMAE</div><div class="kv">5.8<span class="ku">%</span></div><div class="kd neu">최근 24시간</div></div>
-    <div class="card"><div class="ct">+60분 horizon NMAE</div><div class="kv" style="color:var(--palette-yellow-40)">8.1<span class="ku">%</span></div><div class="kd neu">정확도 하락 영역</div></div>
+    <div class="card acc"><div class="ct">앙상블 신뢰도 ${window.tip('앙상블 신뢰도','다중 단기예측 모델(hybrid-ensemble · nowcast-v2 · kma-ultrashort) 결합 결과의 가중 신뢰도','weighted_avg(model_confidence) [%]','95% 이상 우수 / 90~95% 양호 / 90% 미만 단일 모델 fallback 검토')}</div><div class="kv" style="color:var(--semantic-positive-normal)">96.4<span class="ku">%</span></div><div class="kd up">hybrid-ensemble 기본</div></div>
+    <div class="card"><div class="ct">+15분 horizon NMAE ${window.tip('+15분 horizon NMAE','현재 시점 +15분 예측의 정규화 평균 절대 오차 (24시간 이동평균)','AVG(|예측-실측| ÷ 정격용량) × 100 [%]','T-75 실시간 입찰에 직접 반영 / 5% 이내 정상 / 8% 초과 시 IMBP 페널티 위험')}</div><div class="kv">4.2<span class="ku">%</span></div><div class="kd up">최근 24시간</div></div>
+    <div class="card"><div class="ct">+30분 horizon NMAE ${window.tip('+30분 horizon NMAE','현재 시점 +30분 예측의 정규화 평균 절대 오차 (24시간 이동평균)','AVG(|예측-실측| ÷ 정격용량) × 100 [%]','다음 슬롯 사전 검토용 / 7% 이내 정상 — 시간 흐름에 따라 정확도 자연 감소')}</div><div class="kv">5.8<span class="ku">%</span></div><div class="kd neu">최근 24시간</div></div>
+    <div class="card"><div class="ct">+60분 horizon NMAE ${window.tip('+60분 horizon NMAE','현재 시점 +60분 예측의 정규화 평균 절대 오차 (24시간 이동평균)','AVG(|예측-실측| ÷ 정격용량) × 100 [%]','운영 의사결정 보조 영역 / 8% 초과 시 정확도 하락 — 직접 입찰 반영 비권장')}</div><div class="kv" style="color:var(--palette-yellow-40)">8.1<span class="ku">%</span></div><div class="kd neu">정확도 하락 영역</div></div>
   </div>
   <div class="card mb"><div class="sh"><div class="st">초단기 예보 모델 상태</div><span class="kpi-pill" style="font-size:11px">2분 이내 수신</span></div>
     <table class="tbl"><thead><tr><th>모델</th><th>종류</th><th>응답시간</th><th>최종 수신</th><th>신뢰도</th><th>NMAE (최근 24h)</th><th>상태</th></tr></thead><tbody>
@@ -241,10 +241,10 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
 <!-- ========== VIEW 3: 실시간 내역 ========== -->
 <div id="pg-rt-view-history" style="display:none">
   <div class="g4">
-    <div class="card acc"><div class="ct">금일 T-75 제출</div><div class="kv">62<span class="ku">/96회</span></div><div class="kd up">계획 대비 100%</div></div>
-    <div class="card"><div class="ct">평균 Imbalance</div><div class="kv" style="color:var(--semantic-positive-normal)">2.1<span class="ku">%</span></div><div class="kd up">임계 5% 내</div></div>
-    <div class="card"><div class="ct">재입찰률</div><div class="kv">18<span class="ku">%</span></div><div class="kd neu">11/62회 임계 초과 갱신</div></div>
-    <div class="card"><div class="ct">누적 RTES</div><div class="kv" style="color:var(--semantic-brand-primary)">+4.2<span class="ku">백만원</span></div><div class="kd up">금일 실시간 편차정산</div></div>
+    <div class="card acc"><div class="ct">금일 T-75 제출 ${window.tip('금일 T-75 제출','T-75(실시간 75분 전) 마감에 KPX로 제출한 입찰 회차 수','COUNT(*) FROM rt_bids WHERE submitted_at = today','정상 운영 시 96회/일 (15분 단위 × 24시간) / 누락 시 KPX 미제출 페널티')}</div><div class="kv">62<span class="ku">/96회</span></div><div class="kd up">계획 대비 100%</div></div>
+    <div class="card"><div class="ct">평균 Imbalance ${window.tip('평균 Imbalance','금일 제출분의 평균 절대 편차율','AVG(|실측-입찰| ÷ 입찰 × 100) [%]','5% 이하 정상 / 5~10% 주의 / 10% 초과 IMBP 페널티 (kWh당 SMP의 1.2배)')}</div><div class="kv" style="color:var(--semantic-positive-normal)">2.1<span class="ku">%</span></div><div class="kd up">임계 5% 내</div></div>
+    <div class="card"><div class="ct">재입찰률 ${window.tip('재입찰률','임계 초과 예측 변동으로 직전 입찰을 갱신 제출한 비율','재입찰 회수 ÷ 전체 회수 × 100 [%]','20% 이내 정상 / 30% 초과 시 예측 모델 안정성 검토 권장')}</div><div class="kv">18<span class="ku">%</span></div><div class="kd neu">11/62회 임계 초과 갱신</div></div>
+    <div class="card"><div class="ct">누적 RTES ${window.tip('누적 RTES (Real-Time Earned Settlement)','금일 실시간 편차정산(IBES) 누적 수익','Σ(편차 보상) - Σ(IMBP 페널티) [백만원]','KPX 정산 = DA 본정산(DAES) + RT 편차정산(RTES) - 페널티 / 익일 06:00 확정')}</div><div class="kv" style="color:var(--semantic-brand-primary)">+4.2<span class="ku">백만원</span></div><div class="kd up">금일 실시간 편차정산</div></div>
   </div>
   <div class="card mb"><div class="sh"><div class="st">금일 Imbalance 시계열 (15분 단위 × 96구간)</div><span class="kpi-pill warn" style="font-size:11px">임계 5% 초과 6건</span></div>
     <div style="height:200px;position:relative"><canvas id="c-rt-imb-series" role="img" aria-label="Imbalance 시계열"></canvas></div>
