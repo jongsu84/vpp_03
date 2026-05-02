@@ -472,20 +472,26 @@ window.bdpSavePolicy=function(){
 window._bdpEditTr=null;
 window.bdpOpenOverride=function(btn){
   var tr=btn.closest('tr');
-  if(!tr) return;
+  if(!tr){ toast('자원 정보를 찾을 수 없습니다.','err'); return; }
   window._bdpEditTr=tr;
   var name=tr.dataset.name;
   var type=tr.dataset.type;
   var vpp=tr.dataset.vpp;
   var company=tr.dataset.company;
-  var pol=window.bdpPolicy[vpp]&&window.bdpPolicy[vpp][type];
   var rule=window.MARKET_RULES[vpp];
-  if(!pol||!rule) return;
+  if(!rule){ toast('시장 규정 정보 누락','err'); return; }
+  // 정책 해석: 그룹 OR > 표준 정책 (상속 모델)
+  var groupPol=window.bdpPolicy[vpp]&&window.bdpPolicy[vpp][type];
+  var std=window.bdpStandardPolicy[type];
+  var pol=groupPol||std;
+  if(!pol){ toast(type+' 표준 정책 누락','err'); return; }
+  var polSrc=groupPol?'그룹 OR ('+vpp+')':'표준 정책 (글로벌)';
+  var polColor=groupPol?'#e80':'#0a7';
   var existing=window.bdpResourceOverrides[name]||{};
   document.getElementById('bdp-override-title').textContent='자원별 가격 정책 오버라이드 — '+name;
   document.getElementById('bdp-override-info').innerHTML=
     '<b>'+name+'</b> · <span class="badge" style="font-size:10px">'+type+'</span> · '+company+' · '+vpp+'<br>'
-    +'<span style="color:var(--semantic-label-alt)">VPP 그룹 정책: 변동비 '+pol.cost+'원 / 가중치 '+pol.w.toFixed(2)+' / 상한 '+pol.max+'원 (SMP '+rule.smpAvg+'원, 하한 '+rule.minPrice+'원)</span>';
+    +'<span style="color:var(--semantic-label-alt)">현재 적용 정책: <span style="color:'+polColor+';font-weight:600">'+polSrc+'</span> — 변동비 '+pol.cost+'원 / 가중치 '+pol.w.toFixed(2)+' / 상한 '+pol.max+'원 (SMP '+rule.smpAvg+'원, 하한 '+rule.minPrice+'원)</span>';
   document.getElementById('bdp-override-enabled').checked=!!existing.enabled;
   document.getElementById('bdp-override-cost').value=existing.cost!=null?existing.cost:'';
   document.getElementById('bdp-override-w').value=existing.w!=null?existing.w:'';
@@ -523,11 +529,15 @@ window.bdpClearOverride=function(){
   var tr=window._bdpEditTr;
   if(!tr) return;
   var name=tr.dataset.name;
-  if(!confirm(name+' 오버라이드 해제 — VPP 그룹 정책으로 복귀합니다.')) return;
+  var type=tr.dataset.type;
+  var vpp=tr.dataset.vpp;
+  var hasGroupOR=window.bdpPolicy[vpp]&&window.bdpPolicy[vpp][type];
+  var revertTo=hasGroupOR?'그룹 OR':'표준 정책';
+  if(!confirm(name+' 자원 오버라이드 해제 — '+revertTo+'으로 복귀합니다.')) return;
   delete window.bdpResourceOverrides[name];
   window.bdpRenderMeritPrices();
   closeModal('modal-bdp-override');
-  toast(name+' 오버라이드 해제');
+  toast(name+' 오버라이드 해제 → '+revertTo+' 적용');
   window._bdpEditTr=null;
 };
 
