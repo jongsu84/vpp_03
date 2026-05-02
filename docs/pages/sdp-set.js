@@ -69,7 +69,6 @@ window.P['sdp-set']=()=>`
       <div style="font-size:11px;color:var(--semantic-label-alt)">수수료·페널티 차감 후</div>
     </div>
     <div style="padding:14px 18px;display:flex;align-items:center;gap:8px">
-      <button class="cb n sm" onclick="ssOpenPreview()">미리보기</button>
       <button class="cb p sm" onclick="ssDownloadPDF()">PDF 다운로드</button>
     </div>
   </div>
@@ -160,11 +159,11 @@ window.P['sdp-set']=()=>`
   ※ <b>지시 이행 보상금</b>은 <span onclick="activate('sdp-del')" style="color:var(--semantic-brand-primary);cursor:pointer">발전량인도 ↗</span> 이행률 집계에서 자동 산출되며 · <b>인센티브 단가</b>는 <span onclick="activate('sdp-con')" style="color:var(--semantic-brand-primary);cursor:pointer">계약정보 ↗</span> 마스터 값 참조
 </div>
 
-<!-- 정산서 미리보기 / PDF 모달 -->
+<!-- 정산서 PDF 모달 -->
 <div class="modal-backdrop" id="modal-ss-doc" style="display:none" onclick="closeModalBg(event,'modal-ss-doc')">
   <div class="modal" style="width:760px;max-height:min(82vh,820px);display:flex;flex-direction:column;overflow:hidden">
     <div class="modal-hdr no-print" style="flex-shrink:0;background:var(--semantic-background-1);position:relative;z-index:2">
-      <span class="modal-title">정산서 미리보기</span>
+      <span class="modal-title">정산서</span>
       <button class="modal-close" onclick="closeModal('modal-ss-doc')" aria-label="닫기">✕</button>
     </div>
     <div class="modal-body" id="ss-doc-body" style="overflow-y:auto;flex:1 1 auto;min-height:0">
@@ -223,7 +222,6 @@ window.P['sdp-set']=()=>`
 window['I_sdp-set']=function(){
   setTimeout(window._ssInitCharts,40);
 };
-window.ssOpenPreview=function(){ openModal('modal-ss-doc'); };
 window.ssDownloadPDF=function(){
   const wasOpen=document.getElementById('modal-ss-doc')?.style.display==='flex';
   if(!wasOpen) openModal('modal-ss-doc');

@@ -69,7 +69,7 @@ window.P['sdp-rev']=()=>`
 </div>
 
 <!-- 자원별 준중앙 수익 기여도 -->
-<div class="card mb"><div class="sh"><div class="st">자원별 준중앙 수익 기여도 <span id="sr-res-cnt" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">9개소</span></div><div style="display:flex;gap:6px;align-items:center"><button class="cb n sm" onclick="toast('정산 근거 PDF')">정산 근거 PDF</button>${window.csvBtn('sr-res-tbody','revenue_contribution','자원별 준중앙 수익 기여도')}</div></div>
+<div class="card mb"><div class="sh"><div class="st">자원별 준중앙 수익 기여도 <span id="sr-res-cnt" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">9개소</span></div><div style="display:flex;gap:6px;align-items:center"><button class="cb p sm" onclick="srDownloadPDF()">PDF 다운로드</button>${window.csvBtn('sr-res-tbody','revenue_contribution','자원별 준중앙 수익 기여도')}</div></div>
 <div style="overflow-x:auto"><table class="tbl">
   <thead><tr><th>자원명</th><th>유형</th><th>VPP 그룹</th><th>가중치</th><th>이행 SMP</th><th>용량 CP</th><th>부가 AS</th><th>금월 합계</th><th>YTD 누적</th></tr></thead>
   <tbody id="sr-res-tbody">
@@ -125,6 +125,66 @@ window.P['sdp-rev']=()=>`
 <div style="font-size:12px;color:var(--semantic-label-alt);margin-top:10px;padding:12px 14px;background:var(--semantic-background-2);border-radius:6px;line-height:20px">
   ℹ️ 준중앙급전 수익은 <b>EWP 당사자 계약 기반</b>으로 집계되며, 자원소유자별 배분은 <span onclick="activate('sdp-set')" style="color:var(--semantic-brand-primary);cursor:pointer;font-weight:500">수익정산 메뉴 ↗</span>에서 관리합니다.<br>
   ※ 부가정산금(AS)은 KPX 월 마감(익월 10일) 후 확정 — 현재 가정산 상태
+</div>
+
+<!-- 정산 근거 PDF 모달 -->
+<div class="modal-backdrop" id="modal-sr-doc" style="display:none" onclick="closeModalBg(event,'modal-sr-doc')">
+  <div class="modal" style="width:760px;max-height:min(82vh,820px);display:flex;flex-direction:column;overflow:hidden">
+    <div class="modal-hdr no-print" style="flex-shrink:0;background:var(--semantic-background-1);position:relative;z-index:2">
+      <span class="modal-title">준중앙급전 정산 근거서</span>
+      <button class="modal-close" onclick="closeModal('modal-sr-doc')" aria-label="닫기">✕</button>
+    </div>
+    <div class="modal-body" id="sr-doc-body" style="overflow-y:auto;flex:1 1 auto;min-height:0">
+      <div style="text-align:center;padding-bottom:18px;border-bottom:2px solid var(--semantic-label-strong);margin-bottom:20px">
+        <div style="font-size:11px;color:var(--semantic-label-alt);letter-spacing:1px">60Hz · VPP 집합운영자</div>
+        <div style="font-size:22px;font-weight:700;margin-top:6px">준중앙급전 정산 근거서</div>
+        <div style="font-size:12px;color:var(--semantic-label-alt);margin-top:4px">STL-2026-04-SDP-REV · 가정산 · 발행일 2026-04-28</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px 24px;font-size:12px;margin-bottom:20px;line-height:20px">
+        <div><b style="color:var(--semantic-label-normal)">정산 기간</b> &nbsp; 2026.04.01 ~ 2026.04.30</div>
+        <div><b style="color:var(--semantic-label-normal)">확정 예정</b> &nbsp; 2026-05-15 (KPX)</div>
+        <div><b style="color:var(--semantic-label-normal)">정산 구조</b> &nbsp; 3-tier (SMP + CP + AS)</div>
+        <div><b style="color:var(--semantic-label-normal)">대상 자원</b> &nbsp; 9개소 (참여 7 · 미참여 2)</div>
+      </div>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">정산 항목 상세 (3-tier 구조)</div>
+      <table class="tbl" style="margin-bottom:18px">
+        <thead><tr><th>정산 항목</th><th>산식</th><th style="text-align:right">금월</th><th style="text-align:right">YTD</th></tr></thead>
+        <tbody>
+          <tr><td><b>① 이행 보상금 (SMP)</b></td><td class="mono" style="font-size:11px">이행량 × SMP 시간별</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal);font-weight:600">+52.80M</td><td class="mono" style="text-align:right">+198.40M</td></tr>
+          <tr><td><b>② 용량정산금 (CP)</b></td><td class="mono" style="font-size:11px">계약용량 × 6,500원/kW·월</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal)">+24.60M</td><td class="mono" style="text-align:right">+92.10M</td></tr>
+          <tr><td><b>③ 부가정산금 (AS)</b></td><td class="mono" style="font-size:11px">주파수 · 응답속도 기여도</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal)">+10.00M</td><td class="mono" style="text-align:right">+38.20M</td></tr>
+          <tr><td>④ 응답속도 인센티브</td><td class="mono" style="font-size:11px">이행시간 &lt; 60s 보너스</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal)">+1.50M</td><td class="mono" style="text-align:right">+5.40M</td></tr>
+          <tr style="background:var(--semantic-tag-bg-green)"><td><b>소계</b></td><td class="mono" style="font-size:11px">① + ② + ③ + ④</td><td class="mono" style="text-align:right;color:var(--semantic-positive-normal);font-weight:700">+88.90M</td><td class="mono" style="text-align:right;font-weight:700">+334.10M</td></tr>
+          <tr><td>⑤ 미이행 페널티</td><td class="mono" style="font-size:11px">허용범위 초과 차감</td><td class="mono" style="text-align:right;color:var(--semantic-negative-normal)">-1.50M</td><td class="mono" style="text-align:right;color:var(--semantic-negative-normal)">-4.20M</td></tr>
+          <tr style="background:var(--semantic-brand-primary-assistive);font-weight:700"><td colspan="2">총 수익 합계</td><td class="mono" style="text-align:right;font-size:16px;color:var(--semantic-brand-primary)">+87.40M</td><td class="mono" style="text-align:right;font-size:14px;color:var(--semantic-brand-primary)">+329.90M</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:13px;font-weight:600;margin-bottom:8px">자원별 기여도 (요약)</div>
+      <table class="tbl" style="margin-bottom:18px">
+        <thead><tr><th>자원</th><th>유형</th><th style="text-align:right">가중치</th><th style="text-align:right">금월</th><th style="text-align:right">YTD</th></tr></thead>
+        <tbody>
+          <tr><td>광양항태양광 01단계</td><td>태양광</td><td class="mono" style="text-align:right">20.0%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+17.48M</td><td class="mono" style="text-align:right">65.20M</td></tr>
+          <tr><td>광양항태양광 04단계</td><td>태양광</td><td class="mono" style="text-align:right">19.2%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+16.78M</td><td class="mono" style="text-align:right">62.80M</td></tr>
+          <tr><td>해맞이 태양광</td><td>태양광</td><td class="mono" style="text-align:right">8.7%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+7.60M</td><td class="mono" style="text-align:right">28.40M</td></tr>
+          <tr><td>온누리 태양광</td><td>태양광</td><td class="mono" style="text-align:right">8.7%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+7.60M</td><td class="mono" style="text-align:right">28.40M</td></tr>
+          <tr><td>금능1호 태양광</td><td>태양광</td><td class="mono" style="text-align:right">8.6%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+7.52M</td><td class="mono" style="text-align:right">28.10M</td></tr>
+          <tr><td>김주풍력 01단계</td><td>풍력</td><td class="mono" style="text-align:right">25.4%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+22.20M</td><td class="mono" style="text-align:right">82.90M</td></tr>
+          <tr><td>금능1호 ESS</td><td>ESS</td><td class="mono" style="text-align:right">9.4%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+8.22M</td><td class="mono" style="text-align:right">30.70M</td></tr>
+          <tr style="background:var(--semantic-background-2);font-weight:600"><td colspan="2">합계 (참여 7개소)</td><td class="mono" style="text-align:right">100.0%</td><td class="mono" style="text-align:right;color:var(--semantic-brand-primary)">+87.40M</td><td class="mono" style="text-align:right">326.50M</td></tr>
+        </tbody>
+      </table>
+      <div style="font-size:11px;color:var(--semantic-label-alt);line-height:18px;padding-top:14px;border-top:1px solid var(--semantic-line-alt)">
+        ※ 본 정산 근거서는 <b>준중앙급전 3-tier 구조 (SMP + CP + AS)</b> 기반 가정산이며 KPX 월 마감(익월 10일) 후 확정<br>
+        ※ AS(부가정산금)는 주파수 조정 · 응답속도 기여도 기반 — 시장 참여 모드(FR·SR·OR)별 단가 차등 적용<br>
+        ※ 일반 입찰(DAES) 대비 평균 +18.4% 단가 프리미엄 — KPX 급전지시 이행 의무 부담의 대가<br>
+        ※ 자원소유자별 배분 명세는 [수익정산] 메뉴 참조 · SHA-256 해시 무결성 로그와 함께 5년 영구 보관
+      </div>
+    </div>
+    <div class="modal-footer no-print" style="flex-shrink:0;background:var(--semantic-background-1);position:relative;z-index:2">
+      <button class="cb n" onclick="closeModal('modal-sr-doc')">닫기</button>
+      <button class="cb p" onclick="srDownloadPDF()">PDF 다운로드</button>
+    </div>
+  </div>
 </div>`;
 window['I_sdp-rev']=function(){
   setTimeout(window._srInitCharts,40);
@@ -183,6 +243,16 @@ window.srFilterApply=function(){
   if(title)title.textContent=(unit==='day'?'일별 준중앙 수익 추이 (4월 1~23일)':'월별 준중앙 수익 추이 (6개월)');
   // 차트 재렌더
   setTimeout(window._srInitCharts,30);
+};
+window.srDownloadPDF=function(){
+  const wasOpen=document.getElementById('modal-sr-doc')?.style.display==='flex';
+  if(!wasOpen) openModal('modal-sr-doc');
+  const prevTitle=document.title;
+  document.title='준중앙급전_정산근거서_2026-04';
+  setTimeout(()=>{
+    window.print();
+    document.title=prevTitle;
+  },wasOpen?50:250);
 };
 window.srReset=function(){
   const defaults={'sr-f-from':'2026-01-01','sr-f-to':'2026-04-23','sr-f-unit':'month','sr-f-type':'all','sr-f-vpp':'전체','sr-f-item':'all'};
