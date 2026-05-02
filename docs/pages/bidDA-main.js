@@ -190,12 +190,12 @@ ${_mkCross('bidDA-main')}
       <option value="all">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
     </select>
   </div>
-  <div class="fbar-item" style="width:auto">
+  <div class="fbar-item">
     <span class="fbar-lbl">차수</span>
-    <div style="display:inline-flex;background:var(--semantic-background-3);padding:3px;border-radius:6px;gap:2px;height:34px;align-items:center;white-space:nowrap">
-      <button class="rd-tab active" onclick="selRound(1,this)">1차</button>
-      <button class="rd-tab" onclick="selRound(2,this)">2차</button>
-    </div>
+    <select class="fbar-sel" id="bdm-round" onchange="selRound(parseInt(this.value,10), null)">
+      <option value="1">1차</option>
+      <option value="2">2차</option>
+    </select>
   </div>
   <div class="fbar-item wide" style="margin-left:auto;align-items:flex-end">
     <span class="fbar-lbl" style="display:inline-flex;align-items:center;gap:6px">
@@ -621,8 +621,14 @@ window['I_bidDA-main']=function(){
   if(typeof window.updateDaResCount==='function') window.updateDaResCount();
 };
 window.selRound=function(n,el){
-  document.querySelectorAll('.rd-tab').forEach(e=>e.classList.remove('active'));
-  el.classList.add('active');
+  // 기존 .rd-tab 버튼 호환 (다른 페이지에서 사용 중이면 유지) + select 호출(el null) 모두 지원
+  if(el){
+    document.querySelectorAll('.rd-tab').forEach(e=>e.classList.remove('active'));
+    el.classList.add('active');
+  }
+  // select 동기화
+  var sel=document.getElementById('bdm-round');
+  if(sel && parseInt(sel.value,10)!==n) sel.value=String(n);
   window._daRound=n;
   const Q=id=>document.getElementById(id);
   const isManual=(window._bidMode==='manual');
