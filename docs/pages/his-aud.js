@@ -45,6 +45,15 @@ window.HIS_AUD_DATA=[
 ];
 
 window.P['his-aud']=()=>`
+<!-- 정책 안내 -->
+<div class="card mb" style="border-left:3px solid var(--semantic-brand-primary);padding:14px 18px;background:var(--semantic-brand-primary-assistive);margin-bottom:12px">
+  <div style="font-size:14px;font-weight:600;margin-bottom:4px">사용자 행위 감사 로그 정책</div>
+  <div style="font-size:13px;line-height:20px;color:var(--semantic-label-normal)">
+    인증·권한·계정 관련 모든 행위는 SHA-256 해시로 무결성 보호되어 <b>5년간 영구 보관</b>됩니다.
+    로그인 5회 실패 시 자동 잠금, 비정상 IP 접속 시 의심 플래그 부여, 권한 상승은 시스템관리자만 수행 가능. (ISMS-P 2.5/2.6 통제 항목 대응)
+  </div>
+</div>
+
 ${_mkFilterBar({periodStart:'2026-04-19',periodEnd:'2026-04-23',interval:'일',prefix:'hu-f',onChange:'hisAudApply',extras:`
   <div class="fbar-item">
     <span class="fbar-lbl">행위 유형</span>
@@ -77,15 +86,6 @@ ${_mkFilterBar({periodStart:'2026-04-19',periodEnd:'2026-04-23',interval:'일',p
       <option>전체</option><option>60Hertz</option><option>동서발전</option><option>광양항태양광</option><option>온누리태양광</option><option>GIST</option><option>Fraunhofer</option><option>에기연</option>
     </select>
   </div>`})}
-
-<!-- 정책 안내 -->
-<div class="card mb" style="border-left:3px solid var(--semantic-brand-primary);padding:14px 18px;background:var(--semantic-brand-primary-assistive);margin-bottom:12px">
-  <div style="font-size:14px;font-weight:600;margin-bottom:4px">사용자 행위 감사 로그 정책</div>
-  <div style="font-size:13px;line-height:20px;color:var(--semantic-label-normal)">
-    인증·권한·계정 관련 모든 행위는 SHA-256 해시로 무결성 보호되어 <b>5년간 영구 보관</b>됩니다.
-    로그인 5회 실패 시 자동 잠금, 비정상 IP 접속 시 의심 플래그 부여, 권한 상승은 시스템관리자만 수행 가능. (ISMS-P 2.5/2.6 통제 항목 대응)
-  </div>
-</div>
 
 <div class="g4">
   <div class="card"><div class="ct">조회 결과 ${window.tip('조회 결과','현재 필터 조건에 매칭되는 감사 로그 건수','COUNT(*) FROM audit_log WHERE 필터','보존기간 5년 / SHA-256 무결성 해시 적용')}</div><div class="kv" id="hu-kpi-total">—<span class="ku">건</span></div></div>
