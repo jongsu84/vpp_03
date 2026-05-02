@@ -180,8 +180,8 @@ window.P['sdp-con']=()=>`
         <div class="form-item"><label>응답 속도 *</label><input class="inp" id="conE-resp"></div>
       </div>
       <div class="form-row">
-        <div class="form-item"><label>계약 시작일</label><input class="inp" type="month" id="conE-period-start"></div>
-        <div class="form-item"><label>계약 종료일</label><input class="inp" type="month" id="conE-period-end"></div>
+        <div class="form-item"><label>계약 시작일</label><input class="inp" type="date" id="conE-period-start"></div>
+        <div class="form-item"><label>계약 종료일</label><input class="inp" type="date" id="conE-period-end"></div>
       </div>
       <hr class="form-divider">
       <div class="form-section">운영 정보</div>
@@ -335,8 +335,8 @@ window.P['sdp-con']=()=>`
         <div class="form-item"></div>
       </div>
       <div class="form-row">
-        <div class="form-item"><label>계약 시작일</label><input class="inp" type="month" id="con-period-start"></div>
-        <div class="form-item"><label>계약 종료일</label><input class="inp" type="month" id="con-period-end"></div>
+        <div class="form-item"><label>계약 시작일</label><input class="inp" type="date" id="con-period-start"></div>
+        <div class="form-item"><label>계약 종료일</label><input class="inp" type="date" id="con-period-end"></div>
       </div>
       <hr class="form-divider">
       <div class="form-section">운영 정보</div>
@@ -410,25 +410,49 @@ window.conReset=function(){
 // ===== 자원 추가 / 가중치 재계산 / KPI 갱신 =====
 function _conEscHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
-// "YYYY-MM" 두 입력 → 표시 문자열로 포맷
-function _conFmtPeriod(startMonth,endMonth){
-  if(!startMonth||!endMonth) return '준비 단계';
-  const sp=startMonth.split('-'), ep=endMonth.split('-');
-  if(sp.length<2||ep.length<2) return '준비 단계';
-  const sy=sp[0], sm=sp[1].padStart(2,'0');
-  const ey=ep[0], em=ep[1].padStart(2,'0');
-  if(sy===ey) return sy+'.'+sm+'~'+em;
-  return sy+'.'+sm+'~'+ey+'.'+em;
+// "YYYY-MM-DD" 두 입력 → 표시 문자열 (스마트 포맷)
+//  - 풀 월 계약(시작=1일, 종료=해당월 말일) → 컴팩트: "2026.01~12" / "2025.07~2026.07"
+//  - 그 외 → 일자 포함 풀 포맷: "2026.01.15~2026.12.30"
+function _conFmtPeriod(startISO,endISO){
+  if(!startISO||!endISO) return '준비 단계';
+  const sp=startISO.split('-'), ep=endISO.split('-');
+  if(sp.length<3||ep.length<3) return '준비 단계';
+  const sy=sp[0], sm=sp[1].padStart(2,'0'), sd=sp[2].padStart(2,'0');
+  const ey=ep[0], em=ep[1].padStart(2,'0'), ed=ep[2].padStart(2,'0');
+  // 종료월의 말일 계산 (Date(y, m, 0).getDate() = (m-1)월 말일)
+  const lastDay=new Date(parseInt(ey,10), parseInt(em,10), 0).getDate();
+  const isFullMonth=(sd==='01' && parseInt(ed,10)===lastDay);
+  if(isFullMonth){
+    if(sy===ey) return sy+'.'+sm+'~'+em;
+    return sy+'.'+sm+'~'+ey+'.'+em;
+  }
+  return sy+'.'+sm+'.'+sd+'~'+ey+'.'+em+'.'+ed;
 }
-// 표시 문자열 → "YYYY-MM" 두 값 (편집 모달 prefill용)
+// 표시 문자열 → "YYYY-MM-DD" 두 값 (편집 모달 prefill용, 하위 호환 다중 포맷 지원)
 function _conParsePeriod(text){
   if(!text) return {start:'',end:''};
   const t=text.trim();
   if(t==='준비 단계'||t==='검증 중') return {start:'',end:''};
-  let m=t.match(/^(\d{4})\.(\d{1,2})~(\d{1,2})$/);
-  if(m) return {start:m[1]+'-'+m[2].padStart(2,'0'), end:m[1]+'-'+m[3].padStart(2,'0')};
+  // 1) 풀 포맷: YYYY.MM.DD~YYYY.MM.DD
+  let m=t.match(/^(\d{4})\.(\d{1,2})\.(\d{1,2})~(\d{4})\.(\d{1,2})\.(\d{1,2})$/);
+  if(m) return {
+    start:m[1]+'-'+m[2].padStart(2,'0')+'-'+m[3].padStart(2,'0'),
+    end:m[4]+'-'+m[5].padStart(2,'0')+'-'+m[6].padStart(2,'0')
+  };
+  // 2) 동일연도 풀월: YYYY.MM~MM → 시작=1일, 종료=해당월 말일
+  m=t.match(/^(\d{4})\.(\d{1,2})~(\d{1,2})$/);
+  if(m){
+    const sm=m[2].padStart(2,'0'), em=m[3].padStart(2,'0');
+    const lastDay=new Date(parseInt(m[1],10), parseInt(em,10), 0).getDate();
+    return {start:m[1]+'-'+sm+'-01', end:m[1]+'-'+em+'-'+String(lastDay).padStart(2,'0')};
+  }
+  // 3) 연도 다름 풀월: YYYY.MM~YYYY.MM → 시작=1일, 종료=해당월 말일
   m=t.match(/^(\d{4})\.(\d{1,2})~(\d{4})\.(\d{1,2})$/);
-  if(m) return {start:m[1]+'-'+m[2].padStart(2,'0'), end:m[3]+'-'+m[4].padStart(2,'0')};
+  if(m){
+    const sm=m[2].padStart(2,'0'), em=m[4].padStart(2,'0');
+    const lastDay=new Date(parseInt(m[3],10), parseInt(em,10), 0).getDate();
+    return {start:m[1]+'-'+sm+'-01', end:m[3]+'-'+em+'-'+String(lastDay).padStart(2,'0')};
+  }
   return {start:'',end:''};
 }
 
