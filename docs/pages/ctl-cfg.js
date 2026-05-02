@@ -2,6 +2,21 @@
 window.P = window.P || {};
 /* ===== 클릭제어: 출력제어설정 (지능형 최적 급전 + 수익 손실 최소화) ===== */
 window.P['ctl-cfg']=()=>`
+<!-- 지능형 배분 배너 -->
+<div class="card" style="background:linear-gradient(90deg,#e8f2ff 0%,#f4f9ff 100%);border-left:4px solid #0059ff;margin-bottom:12px">
+  <div style="display:flex;align-items:center;gap:12px;padding:8px 4px">
+    <div style="font-size:22px">🎯</div>
+    <div style="flex:1">
+      <div style="font-size:13px;font-weight:700;color:#0b2a5b">최적 급전 알고리즘 (Merit-Order Curtailment) 가동 중</div>
+      <div style="font-size:11px;color:#1b3c7a;margin-top:2px">SMP · CP · AS 기여도를 종합해 한계수익이 낮은 자원부터 우선 감발 → 포트폴리오 수익 손실 최소화</div>
+    </div>
+    <div style="text-align:right">
+      <div style="font-size:10px;color:#5a7cc4">예상 수익 보호</div>
+      <div style="font-size:16px;font-weight:800;color:#0059ff">₩ 3.42M<span style="font-size:10px;color:#5a7cc4">/일</span></div>
+    </div>
+  </div>
+</div>
+
 <!-- 최상위 필터 바 (VPP 그룹 → 자원 유형 → 정책/허용 → 세부) -->
 <div class="card fbar"><div class="fbar-row">
   <div class="fbar-item"><label class="fbar-lbl">VPP 그룹</label>
@@ -30,21 +45,6 @@ window.P['ctl-cfg']=()=>`
     </select>
   </div>
 </div></div>
-
-<!-- 지능형 배분 배너 -->
-<div class="card" style="background:linear-gradient(90deg,#e8f2ff 0%,#f4f9ff 100%);border-left:4px solid #0059ff;margin-bottom:12px">
-  <div style="display:flex;align-items:center;gap:12px;padding:8px 4px">
-    <div style="font-size:22px">🎯</div>
-    <div style="flex:1">
-      <div style="font-size:13px;font-weight:700;color:#0b2a5b">최적 급전 알고리즘 (Merit-Order Curtailment) 가동 중</div>
-      <div style="font-size:11px;color:#1b3c7a;margin-top:2px">SMP · CP · AS 기여도를 종합해 한계수익이 낮은 자원부터 우선 감발 → 포트폴리오 수익 손실 최소화</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:10px;color:#5a7cc4">예상 수익 보호</div>
-      <div style="font-size:16px;font-weight:800;color:#0059ff">₩ 3.42M<span style="font-size:10px;color:#5a7cc4">/일</span></div>
-    </div>
-  </div>
-</div>
 
 <!-- KPI 5종 -->
 <div class="g5" style="margin-bottom:12px">
