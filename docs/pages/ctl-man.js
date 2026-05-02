@@ -3,6 +3,12 @@ window.P = window.P || {};
 /* ===== 클릭제어: 수동출력제어 ===== */
 /* ===== 클릭제어: 수동출력제어 (RTU 즉시 전송 + 원거리 제어) ===== */
 window.P['ctl-man']=()=>`
+<!-- 경고 배너 -->
+<div style="background:var(--semantic-tag-bg-red);border-left:3px solid var(--semantic-negative-normal);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:12px;line-height:18px">
+  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="flex-shrink:0"><path d="M10 2L18 16H2L10 2z" stroke="var(--semantic-negative-normal)" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 8v4M10 14v.5" stroke="var(--semantic-negative-normal)" stroke-width="1.5" stroke-linecap="round"/></svg>
+  <div><b style="color:var(--semantic-negative-normal)">⚠️ 원거리 즉시 제어 · 실 설비에 영향</b> — UI 제어값이 <b>RTU(Modbus TCP)</b>를 통해 현장 발전소에 실시간 전송됩니다. 비상 상황 외에는 KPX 자동 제어를 우선하세요.</div>
+</div>
+
 <!-- 최상위 필터 바 -->
 <div class="card fbar" style="margin-bottom:12px">
   <div class="fbar-row">
@@ -31,12 +37,6 @@ window.P['ctl-man']=()=>`
       </select>
     </div>
   </div>
-</div>
-
-<!-- 경고 배너 -->
-<div style="background:var(--semantic-tag-bg-red);border-left:3px solid var(--semantic-negative-normal);border-radius:6px;padding:10px 14px;margin-bottom:12px;display:flex;align-items:center;gap:10px;font-size:12px;line-height:18px">
-  <svg width="18" height="18" viewBox="0 0 20 20" fill="none" style="flex-shrink:0"><path d="M10 2L18 16H2L10 2z" stroke="var(--semantic-negative-normal)" stroke-width="1.5" stroke-linejoin="round"/><path d="M10 8v4M10 14v.5" stroke="var(--semantic-negative-normal)" stroke-width="1.5" stroke-linecap="round"/></svg>
-  <div><b style="color:var(--semantic-negative-normal)">⚠️ 원거리 즉시 제어 · 실 설비에 영향</b> — UI 제어값이 <b>RTU(Modbus TCP)</b>를 통해 현장 발전소에 실시간 전송됩니다. 비상 상황 외에는 KPX 자동 제어를 우선하세요.</div>
 </div>
 
 <!-- KPI 5종 -->
