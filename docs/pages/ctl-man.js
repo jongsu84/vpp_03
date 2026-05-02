@@ -53,8 +53,8 @@ window.P['ctl-man']=()=>`
   <div class="sh">
     <div class="st">자원별 즉시 제어 <span id="cm-res-cnt" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">11건</span></div>
     <div style="display:flex;gap:6px;align-items:center">
-      <button class="cb n sm" onclick="toast('비상 All Stop — 확인 필요')" style="color:var(--semantic-negative-normal)">🚨 All Stop</button>
-      <button class="cb n sm" onclick="toast('전체 100% 복원')">전체 복원</button>
+      <button class="cb n sm" onclick="cmAllStop()" style="color:var(--semantic-negative-normal)">🚨 All Stop</button>
+      <button class="cb n sm" onclick="cmAllRestore()">전체 복원</button>
       ${window.csvBtn('cm-res-tbody','manual_control_grid','자원별 즉시 제어')}
     </div>
   </div>
@@ -70,7 +70,7 @@ window.P['ctl-man']=()=>`
       ['김주풍력 01단계','풍력','VPP-경북권',3720,4000,100,'ON','정상',8],
       ['김주풍력 02단계','풍력','VPP-경북권',9500,10000,100,'ON','정상',9],
       ['금능1호 ESS','ESS','VPP-제주권',1760,2000,88,'ON','정상',5],
-      ['제주 ESS허브',' ESS','VPP-제주권',-1420,5000,-28,'ON','정상',6],
+      ['제주 ESS허브','ESS','VPP-제주권',-1420,5000,-28,'ON','정상',6],
       ['순천 바이오가스','바이오','VPP-전남권',1400,1500,100,'ON','정상',4],
       ['여수 바이오매스','바이오','VPP-전남권',2850,3000,100,'ON','정상',4],
       ['광주 V2G 스테이션','V2G','VPP-전남권',700,800,90,'ON','정상',12],
@@ -81,7 +81,7 @@ window.P['ctl-man']=()=>`
       const onCls=r[6]==='ON'?'ok':'off';
       const ratio=(r[3]/r[4]*100).toFixed(0);
       const canControl=r[7]!=='단절';
-      return `<tr data-type="${r[1].trim()}" data-vpp="${r[2]}" data-state="${r[6]}" data-comm="${r[7]}"><td><b style="font-size:12px">${r[0]}</b></td><td><span class="badge ${r[1].trim()==='태양광'?'inf':''}" ${typeStyle?`style="${typeStyle}"`:''}>${r[1].trim()}</span></td><td style="font-size:12px">${r[2].replace('VPP-','').replace('권','')}</td><td class="mono">${r[3]>=0?'+':''}${r[3].toLocaleString()} kW<br><span style="font-size:10px;color:var(--semantic-label-alt)">/ ${r[4].toLocaleString()} kW</span></td><td style="min-width:160px"><div style="display:flex;align-items:center;gap:8px"><input type="range" min="0" max="100" value="${r[5]}" style="flex:1;max-width:100px" ${canControl?'':'disabled'} oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="mono" style="font-weight:600;color:var(--semantic-brand-primary);min-width:38px">${r[5]}%</span></div></td><td><label class="toggle"><input type="checkbox" ${r[6]==='ON'?'checked':''} ${canControl?'':'disabled'}><div class="ts"></div></label></td><td><span class="badge ${commCls}" style="font-size:11px">${r[7]}${r[8]?' '+r[8]+'ms':''}</span></td><td><div style="display:flex;gap:4px"><button class="cb p sm" ${canControl?'':'disabled'} onclick="toast('${r[0]} 제어 명령 RTU 전송')">전송</button><button class="cb n sm" onclick="toast('${r[0]} 100% 복원')">↻</button></div></td></tr>`;
+      return `<tr data-type="${r[1].trim()}" data-vpp="${r[2]}" data-state="${r[6]}" data-comm="${r[7]}" data-cap="${r[4]}" data-name="${r[0]}"><td><b style="font-size:12px">${r[0]}</b></td><td><span class="badge ${r[1].trim()==='태양광'?'inf':''}" ${typeStyle?`style="${typeStyle}"`:''}>${r[1].trim()}</span></td><td style="font-size:12px">${r[2].replace('VPP-','').replace('권','')}</td><td class="mono">${r[3]>=0?'+':''}${r[3].toLocaleString()} kW<br><span style="font-size:10px;color:var(--semantic-label-alt)">/ ${r[4].toLocaleString()} kW</span></td><td style="min-width:160px"><div style="display:flex;align-items:center;gap:8px"><input type="range" min="0" max="100" value="${r[5]}" style="flex:1;max-width:100px" ${canControl?'':'disabled'} oninput="this.nextElementSibling.textContent=this.value+'%'"><span class="mono" style="font-weight:600;color:var(--semantic-brand-primary);min-width:38px">${r[5]}%</span></div></td><td><label class="toggle"><input type="checkbox" ${r[6]==='ON'?'checked':''} ${canControl?'':'disabled'} onchange="cmToggle(this)"><div class="ts"></div></label></td><td><span class="badge ${commCls}" style="font-size:11px">${r[7]}${r[8]?' '+r[8]+'ms':''}</span></td><td><div style="display:flex;gap:4px"><button class="cb p sm" ${canControl?'':'disabled'} onclick="cmSend(this)">전송</button><button class="cb n sm" ${canControl?'':'disabled'} onclick="cmRowRestore(this)">↻</button></div></td></tr>`;
     }).join('')}
     </tbody>
   </table></div>
@@ -114,8 +114,19 @@ window.cmFilterApply=function(){
     if(vpp!=='전체' && tr.dataset.vpp!==vpp)show=false;
     if(state!=='전체'){
       const st=tr.dataset.state;
+      const slider=tr.querySelector('input[type="range"]');
+      const sliderVal=slider?parseInt(slider.value,10):100;
       if(state==='ON (가동)' && st!=='ON')show=false;
-      if(state==='OFF (정지)' && st!=='OFF')show=false;
+      else if(state==='OFF (정지)' && st!=='OFF')show=false;
+      else if(state==='제어 중'){
+        // 제어 중 = ON 상태이며 슬라이더 100 미만 (운영자 감발)
+        if(st!=='ON' || sliderVal===100) show=false;
+      }
+      else if(state==='이상'){
+        // 이상 = 통신 지연/단절 (정상 통신은 제외)
+        const c=tr.dataset.comm;
+        if(c!=='지연' && c!=='단절') show=false;
+      }
     }
     if(comm!=='전체' && tr.dataset.comm!==comm)show=false;
     tr.style.display=show?'':'none';
@@ -123,5 +134,123 @@ window.cmFilterApply=function(){
   });
   const cnt=document.getElementById('cm-res-cnt');
   if(cnt)cnt.textContent=visible+'건';
+};
+
+// ===== 즉시 제어 인터랙션 (All Stop / 전체 복원 / 행별 전송·복원·토글) =====
+function _cmRowSetSlider(tr,val){
+  const slider=tr.querySelector('input[type="range"]');
+  if(!slider) return;
+  slider.value=val;
+  const span=slider.nextElementSibling;
+  if(span) span.textContent=val+'%';
+}
+function _cmRowSetOutputCell(tr,kw,cap){
+  const cell=tr.cells[3];
+  if(!cell) return;
+  const sign=kw>=0?'+':'';
+  cell.innerHTML=sign+kw.toLocaleString()+' kW<br><span style="font-size:10px;color:var(--semantic-label-alt)">/ '+cap.toLocaleString()+' kW</span>';
+}
+
+window.cmAllStop=function(){
+  if(!confirm('🚨 비상 All Stop 실행\n\n모든 활성 자원의 출력을 0%로 즉시 차단하고 OFF 상태로 전환합니다.\n실 설비에 즉시 영향을 미치며 KPX 자동 제어를 일시 차단합니다.\n\n계속하시겠습니까?')) return;
+  const rows=document.querySelectorAll('#cm-res-tbody tr[data-type]');
+  let cnt=0;
+  rows.forEach(tr=>{
+    if(tr.dataset.comm==='단절') return; // 통신 단절 자원은 제어 불가
+    _cmRowSetSlider(tr,0);
+    const toggle=tr.querySelector('input[type="checkbox"]');
+    if(toggle){ toggle.checked=false; }
+    const slider=tr.querySelector('input[type="range"]');
+    if(slider) slider.disabled=true;
+    tr.dataset.state='OFF';
+    const cap=parseInt(tr.dataset.cap,10)||0;
+    _cmRowSetOutputCell(tr,0,cap);
+    cnt++;
+  });
+  toast('🚨 All Stop 실행 완료 — '+cnt+'개 자원 출력 차단','warn');
+};
+
+window.cmAllRestore=function(){
+  if(!confirm('전체 100% 복원\n\n모든 활성 자원을 정격 출력 100%로 복원합니다.\n계속하시겠습니까?')) return;
+  const rows=document.querySelectorAll('#cm-res-tbody tr[data-type]');
+  let cnt=0;
+  rows.forEach(tr=>{
+    if(tr.dataset.comm==='단절') return;
+    _cmRowSetSlider(tr,100);
+    const toggle=tr.querySelector('input[type="checkbox"]');
+    if(toggle){ toggle.checked=true; }
+    const slider=tr.querySelector('input[type="range"]');
+    if(slider) slider.disabled=false;
+    tr.dataset.state='ON';
+    const cap=parseInt(tr.dataset.cap,10)||0;
+    _cmRowSetOutputCell(tr,cap,cap);
+    cnt++;
+  });
+  toast('전체 복원 완료 — '+cnt+'개 자원 100% 출력');
+};
+
+window.cmSend=function(btn){
+  const tr=btn.closest('tr');
+  if(!tr) return;
+  const slider=tr.querySelector('input[type="range"]');
+  if(!slider){ toast('슬라이더를 찾을 수 없습니다','err'); return; }
+  const target=parseInt(slider.value,10);
+  const cap=parseInt(tr.dataset.cap,10);
+  if(isNaN(cap)){ toast('정격 용량 정보가 없습니다','err'); return; }
+  // 음수 출력(ESS 충전) 자원은 충/방전 모드 시뮬 — 슬라이더 0~100을 정격에 매핑
+  // 단순화: target% × 정격 kW (양의 출력만 계산)
+  const newKw=Math.round(cap*target/100);
+  _cmRowSetOutputCell(tr,newKw,cap);
+  // 통신 응답 시뮬 (배지 응답시간 갱신)
+  const respMs=Math.floor(200+Math.random()*200); // 200~400ms
+  const commCell=tr.cells[6];
+  if(commCell){
+    const badge=commCell.querySelector('.badge');
+    if(badge){
+      const c=tr.dataset.comm;
+      const cls=c==='정상'?'ok':c==='지연'?'warn':'err';
+      badge.className='badge '+cls;
+      badge.textContent=c+' '+respMs+'ms';
+    }
+  }
+  const name=tr.dataset.name||'자원';
+  toast(name+' RTU 전송 완료 → '+target+'% ('+newKw.toLocaleString()+' kW · '+respMs+'ms)');
+};
+
+window.cmRowRestore=function(btn){
+  const tr=btn.closest('tr');
+  if(!tr) return;
+  const slider=tr.querySelector('input[type="range"]');
+  if(slider) slider.disabled=false;
+  _cmRowSetSlider(tr,100);
+  const toggle=tr.querySelector('input[type="checkbox"]');
+  if(toggle) toggle.checked=true;
+  tr.dataset.state='ON';
+  const cap=parseInt(tr.dataset.cap,10)||0;
+  _cmRowSetOutputCell(tr,cap,cap);
+  const name=tr.dataset.name||'자원';
+  toast(name+' 100% 복원 완료');
+};
+
+window.cmToggle=function(checkbox){
+  const tr=checkbox.closest('tr');
+  if(!tr) return;
+  const slider=tr.querySelector('input[type="range"]');
+  const cap=parseInt(tr.dataset.cap,10)||0;
+  if(checkbox.checked){
+    // ON 전환 → 슬라이더 활성화 + 100%
+    if(slider){ slider.disabled=false; }
+    _cmRowSetSlider(tr,100);
+    tr.dataset.state='ON';
+    _cmRowSetOutputCell(tr,cap,cap);
+  } else {
+    // OFF 전환 → 슬라이더 0% + 비활성화
+    _cmRowSetSlider(tr,0);
+    if(slider) slider.disabled=true;
+    tr.dataset.state='OFF';
+    _cmRowSetOutputCell(tr,0,cap);
+  }
+  const name=tr.dataset.name||'자원';
+  toast(name+(checkbox.checked?' ON':' OFF')+' 전환');
 };
 
