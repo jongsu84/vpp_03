@@ -234,7 +234,7 @@ window.bdpRenderContext=function(){
   }
 };
 
-// ===== 자원 유형 카드 갱신 (그룹 컨텍스트 + 비활성 처리) =====
+// ===== 자원 유형 카드 갱신 (그룹 컨텍스트 + 자원 수 표시) =====
 window.bdpRenderTypeCards=function(){
   var vpp=window._bdpCurrentVPP;
   var rule=window.MARKET_RULES[vpp];
@@ -243,15 +243,40 @@ window.bdpRenderTypeCards=function(){
   // 컨텍스트 라벨
   var ctxLbl=document.getElementById('bdp-pol-ctx-label');
   if(ctxLbl) ctxLbl.textContent='— '+vpp+' 컨텍스트';
-  // 5개 카드 활성/비활성 + 값 채우기
+  // 그룹 내 자원 유형별 카운트
+  var typeCount={};
+  document.querySelectorAll('#bdp-merit-tbody tr[data-vpp="'+vpp+'"]').forEach(function(tr){
+    var t=tr.dataset.type;
+    typeCount[t]=(typeCount[t]||0)+1;
+  });
+  // 5개 카드: 모두 활성화 (사전 정책 설정 가능) + 자원 수 배지 표시
   Object.keys(window._bdpTypeMap).forEach(function(type){
     var prefix=window._bdpTypeMap[type];
     var card=document.querySelector('.bdp-pol-card[data-type="'+type+'"]');
-    var hasType=rule.types.indexOf(type)>=0;
     if(card){
-      card.style.opacity=hasType?'1':'0.35';
-      card.style.pointerEvents=hasType?'auto':'none';
-      card.title=hasType?'':'이 그룹에 해당 자원 유형 없음';
+      card.style.opacity='1';
+      card.style.pointerEvents='auto';
+      // 자원 수 배지 추가/갱신
+      var countBadge=card.querySelector('.bdp-type-count');
+      if(!countBadge){
+        countBadge=document.createElement('span');
+        countBadge.className='bdp-type-count';
+        countBadge.style.cssText='font-size:9px;font-weight:400;margin-left:6px;padding:1px 6px;border-radius:8px';
+        var titleDiv=card.querySelector('div[style*="font-weight:600"]');
+        if(titleDiv) titleDiv.appendChild(countBadge);
+      }
+      var n=typeCount[type]||0;
+      if(n>0){
+        countBadge.textContent=n+'자원';
+        countBadge.style.background='var(--semantic-positive-assistive,#e8f4ed)';
+        countBadge.style.color='var(--semantic-positive-normal,#0a7)';
+        card.title='';
+      } else {
+        countBadge.textContent='사전 설정';
+        countBadge.style.background='var(--semantic-background-3,#f0f0f5)';
+        countBadge.style.color='var(--semantic-label-alt,#888)';
+        card.title='이 그룹에 현재 해당 자원 없음 — 사전 정책 설정 가능 (향후 자원 추가 대비)';
+      }
     }
     var p=pol[type];
     if(!p) return;
@@ -337,30 +362,37 @@ window.bdpRenderMeritPrices=function(){
   });
 };
 
-// ===== 정책 저장 (현재 그룹) =====
+// ===== 정책 저장 (현재 그룹 — 5개 유형 모두 검증·저장) =====
 window.bdpSavePolicy=function(){
   var vpp=window._bdpCurrentVPP;
   var rule=window.MARKET_RULES[vpp];
   if(!rule){toast('VPP 그룹을 선택하세요.','warn');return;}
   var errs=[];
   var newPol={};
+  // 그룹 내 자원 유형별 카운트 (사전 설정 vs 즉시 적용 구분 안내용)
+  var typeCount={};
+  document.querySelectorAll('#bdp-merit-tbody tr[data-vpp="'+vpp+'"]').forEach(function(tr){
+    var t=tr.dataset.type;
+    typeCount[t]=(typeCount[t]||0)+1;
+  });
+  var activeTypes=0, preconfTypes=0;
   Object.keys(window._bdpTypeMap).forEach(function(type){
     var prefix=window._bdpTypeMap[type];
     var p=_bdpReadCard(prefix);
-    if(rule.types.indexOf(type)<0){ newPol[type]=window.bdpPolicy[vpp][type]; return; } // 그룹 내 없는 유형은 기존 값 유지
     if(p.cost<0) errs.push(type+': 변동비 0 이상');
     if(p.w<0.5||p.w>1.5) errs.push(type+': 가중치 0.50~1.50');
     if(p.max<=0) errs.push(type+': 상한가 0 초과');
     if(p.max<p.cost) errs.push(type+': 상한가 < 변동비 (역마진)');
     newPol[type]=p;
+    if((typeCount[type]||0)>0) activeTypes++; else preconfTypes++;
   });
   if(errs.length>0){toast(errs[0],'warn');return;}
-  if(!confirm(vpp+' 그룹의 가격 정책을 저장하고 다음 입찰 차수부터 적용하시겠습니까?\n\n· 자원 유형 정책 '+rule.types.length+'종 (그룹 내 자원만)\n· '+rule.region+' 시장 규정 (하한가 '+rule.minPrice+'원)\n\n변경 내역은 감사이력에 영구 보관됩니다.')) return;
+  if(!confirm(vpp+' 그룹의 가격 정책을 저장하고 다음 입찰 차수부터 적용하시겠습니까?\n\n· 즉시 적용: '+activeTypes+'개 유형 (그룹 내 자원 존재)\n· 사전 설정: '+preconfTypes+'개 유형 (향후 자원 추가 시 자동 적용)\n· '+rule.region+' 시장 규정 (하한가 '+rule.minPrice+'원)\n\n변경 내역은 감사이력에 영구 보관됩니다.')) return;
   window.bdpPolicy[vpp]=newPol;
   window.bdpUpdatePreview();
   window.bdpRenderMeritPrices();
   window.bdpRenderContext();
-  toast(vpp+' 정책 저장 완료 — '+rule.types.length+'개 자원 유형 적용');
+  toast(vpp+' 정책 저장 — 즉시 적용 '+activeTypes+'개 + 사전 설정 '+preconfTypes+'개 유형');
 };
 
 // ===== 자원별 오버라이드 모달 =====
