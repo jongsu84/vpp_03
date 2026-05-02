@@ -38,10 +38,10 @@ window.P['sdp-con']=()=>`
 
 <!-- KPI 5종 -->
 <div class="g5">
-  <div class="card acc"><div class="ct">계약 자원수 ${window.tip('계약 자원수','준중앙급전 계약된 자원 수','상태 = 계약 인 자원 (활성 + 정비 포함)','정비 자원도 계약은 유지 — 정비 종료 시 자동 활성 복귀')}</div><div class="kv">9<span class="ku">개소</span></div><div class="kd neu">활성 8 · 정비 1</div></div>
-  <div class="card"><div class="ct">총 계약 용량 ${window.tip('총 계약 용량','KPX에 등록된 계약 용량 합계','Σ(자원별 계약 MW) [MW]','실제 입찰 가능 용량 — 시운전·차단 자원 제외')}</div><div class="kv">11.45<span class="ku">MW</span></div><div class="kd up">KPX 등록 완료</div></div>
-  <div class="card"><div class="ct">평균 가중치 ${window.tip('평균 가중치','자원별 정산 분배 가중치의 평균','Σ(자원별 가중치) ÷ 자원수 [%]','가중치는 계약 시 결정 — 자원 규모·입지·응답 속도에 따라 차등')}</div><div class="kv">11.1<span class="ku">%</span></div><div class="kd neu">자원당 · 최대 25.4%</div></div>
-  <div class="card"><div class="ct">만료 임박 (90일) ${window.tip('만료 임박 계약','90일 이내 만료 예정인 계약 수','계약 종료일 - 오늘 ≤ 90일','60일 전 갱신 협상 시작 권장 — 30일 전 KPX에 갱신 의사 통보 필수')}</div><div class="kv" style="color:var(--palette-yellow-40)">1<span class="ku">건</span></div><div class="kd neu">금능1호 · 2026-07-15</div></div>
+  <div class="card acc"><div class="ct">계약 자원수 ${window.tip('계약 자원수','준중앙급전 계약된 자원 수','상태 = 계약 인 자원 (활성 + 정비 포함)','정비 자원도 계약은 유지 — 정비 종료 시 자동 활성 복귀')}</div><div class="kv" id="con-kpi-cnt">9<span class="ku">개소</span></div><div class="kd neu" id="con-kpi-cnt-sub">활성 8 · 정비 1</div></div>
+  <div class="card"><div class="ct">총 계약 용량 ${window.tip('총 계약 용량','KPX에 등록된 계약 용량 합계','Σ(자원별 계약 MW) [MW]','실제 입찰 가능 용량 — 시운전·차단 자원 제외')}</div><div class="kv" id="con-kpi-cap">11.45<span class="ku">MW</span></div><div class="kd up">KPX 등록 완료</div></div>
+  <div class="card"><div class="ct">평균 가중치 ${window.tip('평균 가중치','자원별 정산 분배 가중치의 평균','Σ(자원별 가중치) ÷ 자원수 [%]','가중치는 계약 시 결정 — 자원 규모·입지·응답 속도에 따라 차등')}</div><div class="kv" id="con-kpi-wavg">11.1<span class="ku">%</span></div><div class="kd neu" id="con-kpi-wavg-sub">자원당 · 최대 25.4%</div></div>
+  <div class="card"><div class="ct">만료 임박 (90일) ${window.tip('만료 임박 계약','90일 이내 만료 예정인 계약 수','계약 종료일 - 오늘 ≤ 90일','60일 전 갱신 협상 시작 권장 — 30일 전 KPX에 갱신 의사 통보 필수')}</div><div class="kv" id="con-kpi-exp" style="color:var(--palette-yellow-40)">1<span class="ku">건</span></div><div class="kd neu">금능1호 · 2026-07-15</div></div>
   <div class="card"><div class="ct">연 예상 수익 ${window.tip('연 예상 수익','계약 자원의 연간 정산금 추정','Σ(자원별 연 예상 정산금) [백만원]','이행률 99% 가정 — 실제 이행률에 따라 ±10% 변동')}</div><div class="kv">1,540<span class="ku">백만원</span></div><div class="kd up">이행률 99% 가정</div></div>
 </div>
 
@@ -50,8 +50,8 @@ window.P['sdp-con']=()=>`
   <div class="sh">
     <div class="st">참여 자원 마스터 <span id="con-res-cnt" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">9개소</span></div>
     <div style="display:flex;gap:6px">
-      <button class="cb n sm" onclick="toast('자원 추가')">+ 자원 추가</button>
-      <button class="cb n sm" onclick="toast('가중치 재계산')">가중치 재계산</button>
+      <button class="cb n sm" onclick="conPrepareAdd();openModal('modal-con-add')">+ 자원 추가</button>
+      <button class="cb n sm" onclick="conRecalcWeights()">가중치 재계산</button>
       ${window.csvBtn('con-res-tbody','contract_resources','준중앙급전 계약 자원')}
     </div>
   </div>
@@ -150,6 +150,66 @@ window.P['sdp-con']=()=>`
 <div style="font-size:12px;color:var(--semantic-label-alt);margin-top:10px;padding:12px 14px;background:var(--semantic-background-2);border-radius:6px;line-height:20px">
   ℹ️ 본 계약 마스터는 준중앙급전 전용이며, 일반 전력입찰·정산 설정과는 <b>분리 관리</b>됩니다. 변경 시 KPX 감사 대응용으로 <b>SHA-256 해시 무결성 로그가 5년간 영구 보관</b>됩니다.<br>
   ⚠️ <b>자동 갱신 미설정</b> — 만료 60일 전(2026-10-01) 갱신 협의 개시 권장. 갱신 알림 버튼으로 자동 리마인더 설정 가능.
+</div>
+
+<!-- 자원 추가 모달 -->
+<div class="modal-backdrop" id="modal-con-add" style="display:none" onclick="closeModalBg(event,'modal-con-add')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">계약 자원 추가</span>
+      <button class="modal-close" onclick="closeModal('modal-con-add')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">계약 마스터</div>
+      <div class="form-row">
+        <div class="form-item"><label>자원명 *</label><input class="inp" placeholder="예: 광양항태양광 05단계" id="con-name"></div>
+        <div class="form-item"><label>유형 *</label>
+          <select class="sel" id="con-type">
+            <option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>VPP 그룹 *</label>
+          <select class="sel" id="con-vpp">
+            <option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option>
+          </select>
+        </div>
+        <div class="form-item"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">계약 조건</div>
+      <div class="form-row">
+        <div class="form-item"><label>개별 계약번호 *</label><input class="inp" placeholder="CON-SUB-2026-NN" id="con-contract"></div>
+        <div class="form-item"><label>계약 용량 (kW) *</label><input class="inp" type="number" min="1" placeholder="예: 1500" id="con-cap"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>응답 속도 *</label><input class="inp" placeholder="예: 3.0 MW/min" id="con-resp"></div>
+        <div class="form-item"><label>계약 기간</label><input class="inp" placeholder="2026.01~12" id="con-period"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">운영 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>원격 제어</label>
+          <select class="sel" id="con-remote">
+            <option>동의</option><option>미등록</option>
+          </select>
+        </div>
+        <div class="form-item"><label>상태</label>
+          <select class="sel" id="con-state">
+            <option>활성</option><option>등록 대기</option><option>만료 임박</option><option>만료</option>
+          </select>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:var(--semantic-background-2);border-radius:6px;font-size:11px;color:var(--semantic-label-alt);line-height:18px;margin-top:10px">
+        ℹ 가중치는 0%로 시작하며, 추가 후 [가중치 재계산] 버튼으로 활성 자원 합계 100%가 되도록 재분배됩니다. 등록 대기 자원은 0% 유지.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-con-add')">취소</button>
+      <button class="cb p" onclick="saveCon()">자원 추가</button>
+    </div>
+  </div>
 </div>`;
 // 계약정보 자원 마스터 필터
 window.conFilterApply=function(){
@@ -194,5 +254,165 @@ window.conReset=function(){
     if(el)el.value=(id==='con-f-type')?'all':'전체';
   });
   window.conFilterApply();
+};
+
+// ===== 자원 추가 / 가중치 재계산 / KPI 갱신 =====
+function _conEscHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// 행 6번째 셀에서 kW 값 파싱
+function _conParseCapKw(tr){
+  const cell=tr.cells[5];
+  if(!cell) return 0;
+  const m=cell.textContent.match(/([\d,]+)\s*kW/);
+  if(!m) return 0;
+  return parseInt(m[1].replace(/,/g,''),10)||0;
+}
+// 행 7번째 셀에서 가중치 % 값 파싱
+function _conParseWeight(tr){
+  const cell=tr.cells[6];
+  if(!cell) return 0;
+  const m=cell.textContent.match(/([\d.]+)/);
+  return m?parseFloat(m[1]):0;
+}
+
+// 모달 오픈 직전: 다음 계약번호 자동 제안
+window.conPrepareAdd=function(){
+  const n=document.querySelectorAll('#con-res-tbody tr').length+1;
+  const nn=String(n).padStart(2,'0');
+  const ct=document.getElementById('con-contract');
+  if(ct && !ct.value) ct.placeholder='CON-SUB-2026-'+nn;
+};
+
+window.resetConForm=function(){
+  ['con-name','con-contract','con-cap','con-resp','con-period'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  const t=document.getElementById('con-type'); if(t) t.selectedIndex=0;
+  const v=document.getElementById('con-vpp'); if(v) v.selectedIndex=0;
+  const r=document.getElementById('con-remote'); if(r) r.selectedIndex=0;
+  const s=document.getElementById('con-state'); if(s) s.selectedIndex=0;
+};
+
+window.saveCon=function(){
+  const name=(document.getElementById('con-name')?.value||'').trim();
+  const type=document.getElementById('con-type')?.value||'태양광';
+  const vpp=document.getElementById('con-vpp')?.value||'VPP-전남권';
+  const contract=(document.getElementById('con-contract')?.value||'').trim();
+  const capStr=(document.getElementById('con-cap')?.value||'').trim();
+  const resp=(document.getElementById('con-resp')?.value||'').trim();
+  const period=(document.getElementById('con-period')?.value||'').trim()||'준비 단계';
+  const remote=document.getElementById('con-remote')?.value||'동의';
+  const state=document.getElementById('con-state')?.value||'활성';
+
+  if(!name){toast('자원명은 필수입니다.','warn');return;}
+  if(!contract){toast('개별 계약번호는 필수입니다.','warn');return;}
+  if(!resp){toast('응답 속도는 필수입니다.','warn');return;}
+  const cap=parseInt(capStr,10);
+  if(!cap||cap<=0){toast('계약 용량(kW)은 1 이상의 정수여야 합니다.','warn');return;}
+
+  const tbody=document.getElementById('con-res-tbody');
+  if(!tbody){toast('테이블을 찾을 수 없습니다.','err');return;}
+
+  // 유형별 배지 스타일 (기존 line 72 매핑과 동일)
+  let typeStyle='';
+  if(type==='풍력') typeStyle='background:var(--semantic-tag-bg-blue);color:var(--semantic-tag-label-blue)';
+  else if(type==='ESS') typeStyle='background:var(--semantic-tag-bg-yellow);color:var(--semantic-tag-label-yellow)';
+  const typeBadgeCls=type==='태양광'?'inf':'';
+
+  // 상태별 배지 클래스 (기존 line 74 매핑과 동일)
+  const statusCls=state==='활성'?'ok':state==='만료 임박'?'warn':state==='만료'?'err':'off';
+  const periodColor=state==='만료 임박'?'var(--palette-yellow-40)':'';
+
+  const idx=tbody.querySelectorAll('tr').length+1;
+  const safeName=_conEscHtml(name);
+  const safeContract=_conEscHtml(contract);
+  const safeResp=_conEscHtml(resp);
+  const safePeriod=_conEscHtml(period);
+
+  const tr=document.createElement('tr');
+  tr.dataset.type=type;
+  tr.dataset.vpp=vpp;
+  tr.dataset.state=state;
+  tr.dataset.remote=remote;
+  tr.innerHTML=
+    '<td class="mono">'+idx+'</td>'+
+    '<td><b>'+safeName+'</b></td>'+
+    '<td><span class="badge '+typeBadgeCls+'"'+(typeStyle?' style="'+typeStyle+'"':'')+'>'+_conEscHtml(type)+'</span></td>'+
+    '<td style="font-size:12px">'+_conEscHtml(vpp)+'</td>'+
+    '<td class="mono" style="font-size:12px">'+safeContract+'</td>'+
+    '<td class="mono">'+(cap/1000).toFixed(2)+' MW<br><span style="font-size:10px;color:var(--semantic-label-alt)">'+cap.toLocaleString()+' kW</span></td>'+
+    '<td class="mono" style="font-weight:600;color:var(--semantic-brand-primary)">0.0%</td>'+
+    '<td class="mono" style="font-size:12px">'+safeResp+'</td>'+
+    '<td style="font-size:12px'+(periodColor?';color:'+periodColor:'')+'">'+safePeriod+'</td>'+
+    '<td><span class="badge '+(remote==='동의'?'ok':'off')+'">'+_conEscHtml(remote)+'</span></td>'+
+    '<td><span class="badge '+statusCls+'">'+_conEscHtml(state)+'</span></td>'+
+    '<td><button class="cb n sm" type="button">편집</button></td>';
+  const editBtn=tr.querySelector('button');
+  if(editBtn) editBtn.onclick=function(){toast(name+' 편집');};
+  tbody.appendChild(tr);
+
+  window.updateConKPI();
+  window.resetConForm();
+  closeModal('modal-con-add');
+  toast(name+' 추가됨 — 가중치 재계산을 권장합니다.');
+};
+
+window.conRecalcWeights=function(){
+  const rows=Array.from(document.querySelectorAll('#con-res-tbody tr'));
+  const active=rows.filter(tr=>tr.dataset.state!=='등록 대기');
+  const pending=rows.filter(tr=>tr.dataset.state==='등록 대기');
+  const totalCap=active.reduce((s,tr)=>s+_conParseCapKw(tr),0);
+  if(totalCap<=0){toast('활성 자원 용량 합계가 0입니다.','warn');return;}
+
+  // 1차 분배
+  const raw=active.map(tr=>(_conParseCapKw(tr)/totalCap)*100);
+  const rounded=raw.map(v=>Math.round(v*10)/10);
+  // 합계 보정 → 가장 큰 항목에 차이 흡수
+  const diff=Math.round((100-rounded.reduce((a,b)=>a+b,0))*10)/10;
+  if(Math.abs(diff)>=0.05){
+    let maxIdx=0;
+    for(let i=1;i<rounded.length;i++) if(rounded[i]>rounded[maxIdx]) maxIdx=i;
+    rounded[maxIdx]=Math.round((rounded[maxIdx]+diff)*10)/10;
+  }
+  // 셀 갱신
+  active.forEach((tr,i)=>{
+    const cell=tr.cells[6];
+    if(cell) cell.innerHTML=rounded[i].toFixed(1)+'%';
+  });
+  pending.forEach(tr=>{
+    const cell=tr.cells[6];
+    if(cell) cell.innerHTML='0.0%';
+  });
+
+  window.updateConKPI();
+  toast('가중치 재계산 완료 — 활성 '+active.length+'개 자원, 합계 100.0%');
+};
+
+window.updateConKPI=function(){
+  const rows=Array.from(document.querySelectorAll('#con-res-tbody tr'));
+  const active=rows.filter(tr=>tr.dataset.state==='활성');
+  const expSoon=rows.filter(tr=>tr.dataset.state==='만료 임박');
+  const totalCnt=rows.length;
+  const totalCapKw=rows.reduce((s,tr)=>s+_conParseCapKw(tr),0);
+  const totalCapMW=(totalCapKw/1000).toFixed(2);
+  const activeWeights=rows.filter(tr=>tr.dataset.state!=='등록 대기').map(_conParseWeight);
+  const wAvg=activeWeights.length?(activeWeights.reduce((a,b)=>a+b,0)/activeWeights.length):0;
+  const wMax=activeWeights.length?Math.max.apply(null,activeWeights):0;
+
+  const elCnt=document.getElementById('con-kpi-cnt');
+  if(elCnt) elCnt.innerHTML=totalCnt+'<span class="ku">개소</span>';
+  const elCntSub=document.getElementById('con-kpi-cnt-sub');
+  if(elCntSub) elCntSub.textContent='활성 '+active.length+' · 등록대기 '+rows.filter(tr=>tr.dataset.state==='등록 대기').length;
+  const elCap=document.getElementById('con-kpi-cap');
+  if(elCap) elCap.innerHTML=totalCapMW+'<span class="ku">MW</span>';
+  const elWavg=document.getElementById('con-kpi-wavg');
+  if(elWavg) elWavg.innerHTML=wAvg.toFixed(1)+'<span class="ku">%</span>';
+  const elWavgSub=document.getElementById('con-kpi-wavg-sub');
+  if(elWavgSub) elWavgSub.textContent='자원당 · 최대 '+wMax.toFixed(1)+'%';
+  const elExp=document.getElementById('con-kpi-exp');
+  if(elExp) elExp.innerHTML=expSoon.length+'<span class="ku">건</span>';
+
+  const cnt=document.getElementById('con-res-cnt');
+  if(cnt) cnt.textContent=totalCnt+'개소';
 };
 
