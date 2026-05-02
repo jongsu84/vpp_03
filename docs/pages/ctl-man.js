@@ -30,12 +30,6 @@ window.P['ctl-man']=()=>`
         <option>전체</option><option>정상</option><option>지연</option><option>단절</option>
       </select>
     </div>
-    <div class="fbar-item">
-      <span class="fbar-lbl">제어 권한</span>
-      <select class="fbar-sel" id="cm-f-auth" onchange="cmFilterApply()">
-        <option>전체</option><option>Lv.2 수동제어 이상</option><option>Lv.3 비상정지 전용</option>
-      </select>
-    </div>
   </div>
 </div>
 
@@ -97,34 +91,13 @@ window.P['ctl-man']=()=>`
   </div>
 </div>
 
-<!-- 제어 신호 피드백 + 최근 제어 이력 -->
-<div class="g2">
-  <div class="card mb"><div class="sh"><div class="st">RTU 통신 로그 (실시간)</div><span class="kpi-pill" style="font-size:11px">Modbus TCP</span></div>
-    <div style="background:var(--semantic-background-2);border-radius:5px;padding:12px;font-family:var(--mono);font-size:11px;line-height:1.8">
-      <div style="color:var(--semantic-brand-primary)">[14:23:01] SESSION: CTL-20260419-0087</div>
-      <div style="color:var(--semantic-label-alt)">  └ USER: 이제어 (Lv.2 운영관리자)</div>
-      <div style="color:var(--semantic-label-alt)">  └ TARGET: 광양항태양광 01단계</div>
-      <div style="color:var(--semantic-label-alt)">TX → MODBUS WRITE FC16: 0x0041 = 4480 (70%)</div>
-      <div style="color:var(--semantic-label-alt)">  → RTU [10.20.5.21 : 502] via KT 게이트웨이</div>
-      <div style="color:var(--semantic-positive-normal)">[14:23:02] ACK ✓ 응답시간 0.31s</div>
-      <div style="color:var(--semantic-brand-primary)">[14:23:05] FEEDBACK: 실측 1,605 kW → TARGET 도달 ✓</div>
-      <div style="color:var(--semantic-label-alt)">  └ 편차 2.2% · Ramp-rate 2.4 MW/min (준수)</div>
-      <div style="color:var(--semantic-label-alt)">[14:23:10] AUDIT: 제어 이력 감사 로그 기록 완료</div>
-      <div style="color:var(--semantic-label-alt)">  └ SHA-256: a3f91c82b04d...</div>
-    </div>
-    <div style="font-size:11px;color:var(--semantic-label-alt);margin-top:8px">※ 모든 제어 명령은 감사 로그 영구 보관 (5년)</div>
+<!-- 감사이력 페이지 안내 -->
+<div class="card mb" style="border-left:3px solid var(--semantic-brand-primary);background:var(--semantic-brand-primary-assistive);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:2px">제어 명령 이력은 감사이력 페이지에서 확인할 수 있습니다</div>
+    <div style="font-size:12px;color:var(--semantic-label-alt);line-height:18px">모든 제어 명령은 SHA-256 무결성 해시로 5년간 영구 보관됩니다. 운영자·시각·대상 자원·설정값·응답시간·결과를 통합 추적합니다.</div>
   </div>
-  <div class="card mb"><div class="sh"><div class="st">최근 제어 이력 (24h)</div>${window.csvBtn('cm-ctrl-hist-tbody','manual_control_history_24h','최근 제어 이력 (24h)')}</div>
-    <div style="overflow-x:auto"><table class="tbl">
-      <thead><tr><th>일시</th><th>운영자</th><th>대상</th><th>설정값</th><th>응답</th><th>결과</th></tr></thead><tbody id="cm-ctrl-hist-tbody">
-      <tr><td class="mono" style="font-size:11px">14:23:05</td><td>이제어</td><td>광양항태양광 01</td><td class="mono">70%</td><td class="mono" style="color:var(--semantic-positive-normal)">0.31s</td><td><span class="badge ok">성공</span></td></tr>
-      <tr><td class="mono" style="font-size:11px">14:00:07</td><td>(system)</td><td>전체 (5개소)</td><td class="mono">95%</td><td class="mono" style="color:var(--semantic-positive-normal)">0.42s</td><td><span class="badge ok">성공</span></td></tr>
-      <tr><td class="mono" style="font-size:11px">13:30:12</td><td>이제어</td><td>광양항태양광 04</td><td class="mono">85%</td><td class="mono" style="color:var(--semantic-positive-normal)">0.28s</td><td><span class="badge ok">성공</span></td></tr>
-      <tr><td class="mono" style="font-size:11px">12:15:44</td><td>김발전</td><td>금능1호 태양광</td><td class="mono">100%</td><td class="mono" style="color:var(--palette-yellow-40)">1.82s</td><td><span class="badge warn">지연</span></td></tr>
-      <tr><td class="mono" style="font-size:11px">11:00:08</td><td>김운영</td><td>전남 V2G 허브</td><td class="mono">OFF</td><td class="mono">—</td><td><span class="badge off">정비 전환</span></td></tr>
-      <tr><td class="mono" style="font-size:11px">09:55:33</td><td>이제어</td><td>제주 ESS허브</td><td class="mono">충전 시작</td><td class="mono" style="color:var(--semantic-positive-normal)">0.18s</td><td><span class="badge ok">성공</span></td></tr>
-    </tbody></table></div>
-  </div>
+  <button class="cb p sm" onclick="activate('his-aud')" style="white-space:nowrap;flex-shrink:0">감사이력 ↗</button>
 </div>
 
 `;
