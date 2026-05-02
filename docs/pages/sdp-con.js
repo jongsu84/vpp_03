@@ -73,7 +73,7 @@ window.P['sdp-con']=()=>`
       const state=r[10];
       const statusCls=state==='활성'?'ok':state==='만료 임박'?'warn':state==='만료'?'err':'off';
       const periodColor=state==='만료 임박'?'var(--palette-yellow-40)':'';
-      return `<tr data-type="${r[2]}" data-vpp="${r[3]}" data-state="${state}" data-remote="${r[9]}"><td class="mono">${r[0]}</td><td><b>${r[1]}</b></td><td><span class="badge ${r[2]==='태양광'?'inf':''}" ${typeStyle?`style="${typeStyle}"`:''}>${r[2]}</span></td><td style="font-size:12px">${r[3]}</td><td class="mono" style="font-size:12px">${r[4]}</td><td class="mono">${(r[5]/1000).toFixed(2)} MW<br><span style="font-size:10px;color:var(--semantic-label-alt)">${r[5].toLocaleString()} kW</span></td><td class="mono" style="font-weight:600;color:var(--semantic-brand-primary)">${r[6].toFixed(1)}%</td><td class="mono" style="font-size:12px">${r[7]}</td><td style="font-size:12px;color:${periodColor}">${r[8]}</td><td><span class="badge ${r[9]==='동의'?'ok':'off'}">${r[9]}</span></td><td><span class="badge ${statusCls}">${state}</span></td><td><button class="cb n sm" onclick="toast('${r[1]} 편집')">편집</button></td></tr>`;
+      return `<tr data-type="${r[2]}" data-vpp="${r[3]}" data-state="${state}" data-remote="${r[9]}"><td class="mono">${r[0]}</td><td><b>${r[1]}</b></td><td><span class="badge ${r[2]==='태양광'?'inf':''}" ${typeStyle?`style="${typeStyle}"`:''}>${r[2]}</span></td><td style="font-size:12px">${r[3]}</td><td class="mono" style="font-size:12px">${r[4]}</td><td class="mono">${(r[5]/1000).toFixed(2)} MW<br><span style="font-size:10px;color:var(--semantic-label-alt)">${r[5].toLocaleString()} kW</span></td><td class="mono" style="font-weight:600;color:var(--semantic-brand-primary)">${r[6].toFixed(1)}%</td><td class="mono" style="font-size:12px">${r[7]}</td><td style="font-size:12px;color:${periodColor}">${r[8]}</td><td><span class="badge ${r[9]==='동의'?'ok':'off'}">${r[9]}</span></td><td><span class="badge ${statusCls}">${state}</span></td><td><button class="cb n sm" onclick="openConEdit(this)">편집</button></td></tr>`;
     }).join('')}
     </tbody>
   </table></div>
@@ -94,26 +94,26 @@ window.P['sdp-con']=()=>`
     <div class="mr"><div class="ml">원격 제어 동의</div><div class="mv"><span class="badge ok">7/9 동의 · 2 등록 대기</span></div></div>
     <div class="mr" style="border:none"><div class="ml">위약금 조항</div><div class="mv mono" style="font-size:12px">미이행률 10% 초과 시 감액</div></div>
   </div>
-  <div class="card mb"><div class="sh"><div class="st">인센티브 구조 (마스터 단가)</div><button class="cb n sm" onclick="toast('단가 편집 (승인 필요)')">단가 편집</button></div>
+  <div class="card mb"><div class="sh"><div class="st">인센티브 구조 (마스터 단가)</div><button class="cb n sm" onclick="openPriceEdit()">단가 편집</button></div>
     <div style="padding:10px 0;border-bottom:1px solid var(--semantic-line-alt);margin-bottom:8px">
       <div style="font-size:11px;color:var(--semantic-label-alt);margin-bottom:6px;font-weight:600">보상 단가</div>
-      <div class="mr" style="padding:6px 0;border:0"><div class="ml">이행 보상 단가 (SMP 연계)</div><div class="mv mono" style="color:var(--semantic-positive-normal);font-weight:600">+4.20 원/kWh</div></div>
-      <div class="mr" style="padding:6px 0;border:0"><div class="ml">대기 보상 단가</div><div class="mv mono" style="color:var(--semantic-positive-normal)">+1.80 원/kWh</div></div>
-      <div class="mr" style="padding:6px 0;border:0"><div class="ml">응답 속도 인센티브</div><div class="mv mono" style="color:var(--semantic-positive-normal)">+0.30 원/kWh</div></div>
-      <div class="mr" style="padding:6px 0;border:0"><div class="ml">용량정산금 (CP) 단가</div><div class="mv mono" style="color:var(--semantic-positive-normal)">+6,500 원/kW·월</div></div>
+      <div class="mr" style="padding:6px 0;border:0"><div class="ml">이행 보상 단가 (SMP 연계)</div><div class="mv mono" style="color:var(--semantic-positive-normal);font-weight:600" id="con-price-perf">+4.20 원/kWh</div></div>
+      <div class="mr" style="padding:6px 0;border:0"><div class="ml">대기 보상 단가</div><div class="mv mono" style="color:var(--semantic-positive-normal)" id="con-price-stby">+1.80 원/kWh</div></div>
+      <div class="mr" style="padding:6px 0;border:0"><div class="ml">응답 속도 인센티브</div><div class="mv mono" style="color:var(--semantic-positive-normal)" id="con-price-resp">+0.30 원/kWh</div></div>
+      <div class="mr" style="padding:6px 0;border:0"><div class="ml">용량정산금 (CP) 단가</div><div class="mv mono" style="color:var(--semantic-positive-normal)" id="con-price-cap">+6,500 원/kW·월</div></div>
     </div>
     <div style="padding:10px 0">
       <div style="font-size:11px;color:var(--semantic-label-alt);margin-bottom:6px;font-weight:600">패널티</div>
-      <div class="mr" style="padding:6px 0;border:0"><div class="ml">허용범위 초과 시 (단회)</div><div class="mv mono" style="color:var(--semantic-negative-normal)">−2.50 원/kWh</div></div>
-      <div class="mr" style="padding:6px 0;border:0"><div class="ml">월 미이행률 10% 초과</div><div class="mv mono" style="color:var(--semantic-negative-normal)">월 보상금 20% 감액</div></div>
-      <div class="mr" style="padding:6px 0;border:0;border:none"><div class="ml">통신 장애 유발</div><div class="mv mono" style="color:var(--semantic-negative-normal)">−500천원/건 (3회 초과)</div></div>
+      <div class="mr" style="padding:6px 0;border:0"><div class="ml">허용범위 초과 시 (단회)</div><div class="mv mono" style="color:var(--semantic-negative-normal)" id="con-price-pen-over">−2.50 원/kWh</div></div>
+      <div class="mr" style="padding:6px 0;border:0"><div class="ml">월 미이행률 10% 초과</div><div class="mv mono" style="color:var(--semantic-negative-normal)" id="con-price-pen-noncomp">월 보상금 20% 감액</div></div>
+      <div class="mr" style="padding:6px 0;border:0;border:none"><div class="ml">통신 장애 유발</div><div class="mv mono" style="color:var(--semantic-negative-normal)" id="con-price-pen-comm">−500천원/건 (3회 초과)</div></div>
     </div>
   </div>
 </div>
 
 <!-- 계약 기간 관리 + 변경 이력 -->
 <div class="g2">
-  <div class="card mb"><div class="sh"><div class="st">계약 기간 관리</div><button class="cb n sm" onclick="toast('갱신 알림 설정')">갱신 알림</button></div>
+  <div class="card mb"><div class="sh"><div class="st">계약 기간 관리</div><button class="cb n sm" onclick="openRenewalEdit()">갱신 알림</button></div>
     <!-- 타임라인 시각화 -->
     <div style="padding:12px 0;border-bottom:1px solid var(--semantic-line-alt);margin-bottom:10px">
       <div style="display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:8px">
@@ -130,7 +130,7 @@ window.P['sdp-con']=()=>`
         <span>만료 · 252일 후</span>
       </div>
     </div>
-    <div class="mr"><div class="ml">자동 갱신 설정</div><div class="mv"><span class="badge off">수동 갱신</span></div></div>
+    <div class="mr"><div class="ml">자동 갱신 설정</div><div class="mv" id="con-renew-mv"><span class="badge off">수동 갱신</span></div></div>
     <div class="mr"><div class="ml">갱신 협의 개시 권장일</div><div class="mv mono">2026-10-01 (60일 전)</div></div>
     <div class="mr"><div class="ml">다음 갱신 예정</div><div class="mv mono">2027.01.01 ~ 2027.12.31 (협의 중)</div></div>
     <div class="mr" style="border:none"><div class="ml">만료 임박 자원</div><div class="mv"><span class="badge warn">금능1호 · 2026-07-15</span></div></div>
@@ -150,6 +150,153 @@ window.P['sdp-con']=()=>`
 <div style="font-size:12px;color:var(--semantic-label-alt);margin-top:10px;padding:12px 14px;background:var(--semantic-background-2);border-radius:6px;line-height:20px">
   ℹ️ 본 계약 마스터는 준중앙급전 전용이며, 일반 전력입찰·정산 설정과는 <b>분리 관리</b>됩니다. 변경 시 KPX 감사 대응용으로 <b>SHA-256 해시 무결성 로그가 5년간 영구 보관</b>됩니다.<br>
   ⚠️ <b>자동 갱신 미설정</b> — 만료 60일 전(2026-10-01) 갱신 협의 개시 권장. 갱신 알림 버튼으로 자동 리마인더 설정 가능.
+</div>
+
+<!-- 자원 편집 모달 -->
+<div class="modal-backdrop" id="modal-con-edit" style="display:none" onclick="closeModalBg(event,'modal-con-edit')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title" id="con-edit-title">계약 자원 편집</span>
+      <button class="modal-close" onclick="closeModal('modal-con-edit')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">계약 마스터 (식별자 잠금)</div>
+      <div class="form-row">
+        <div class="form-item"><label>자원명</label><input class="inp" id="conE-name" disabled style="background:var(--semantic-background-2)"></div>
+        <div class="form-item"><label>개별 계약번호</label><input class="inp" id="conE-contract" disabled style="background:var(--semantic-background-2)"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>유형 *</label>
+          <select class="sel" id="conE-type"><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option></select>
+        </div>
+        <div class="form-item"><label>VPP 그룹 *</label>
+          <select class="sel" id="conE-vpp"><option>VPP-전남권</option><option>VPP-제주권</option><option>VPP-경북권</option></select>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">계약 조건</div>
+      <div class="form-row">
+        <div class="form-item"><label>계약 용량 (kW) *</label><input class="inp" type="number" min="1" id="conE-cap"></div>
+        <div class="form-item"><label>응답 속도 *</label><input class="inp" id="conE-resp"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>계약 기간</label><input class="inp" id="conE-period"></div>
+        <div class="form-item"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">운영 정보</div>
+      <div class="form-row">
+        <div class="form-item"><label>원격 제어</label>
+          <select class="sel" id="conE-remote"><option>동의</option><option>미등록</option></select>
+        </div>
+        <div class="form-item"><label>상태</label>
+          <select class="sel" id="conE-state"><option>활성</option><option>등록 대기</option><option>만료 임박</option><option>만료</option></select>
+        </div>
+      </div>
+      <div style="padding:10px 12px;background:var(--semantic-background-2);border-radius:6px;font-size:11px;color:var(--semantic-label-alt);line-height:18px;margin-top:10px">
+        ℹ 용량 변경 시 [가중치 재계산]을 실행해야 합계 100%가 유지됩니다. 자원명·계약번호는 KPX 등록 식별자로 변경 불가합니다.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb d" style="margin-right:auto;font-size:10px" onclick="deleteCon()">계약 자원 삭제</button>
+      <button class="cb n" onclick="closeModal('modal-con-edit')">취소</button>
+      <button class="cb p" onclick="updateCon()">저장</button>
+    </div>
+  </div>
+</div>
+
+<!-- 단가 편집 모달 -->
+<div class="modal-backdrop" id="modal-con-price" style="display:none" onclick="closeModalBg(event,'modal-con-price')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">인센티브 단가 편집 <span style="font-size:11px;color:var(--semantic-label-alt);margin-left:6px">승인 필요</span></span>
+      <button class="modal-close" onclick="closeModal('modal-con-price')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">보상 단가 (양수)</div>
+      <div class="form-row">
+        <div class="form-item"><label>이행 보상 단가 (원/kWh)</label><input class="inp" type="number" step="0.01" id="conP-perf"></div>
+        <div class="form-item"><label>대기 보상 단가 (원/kWh)</label><input class="inp" type="number" step="0.01" id="conP-stby"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>응답 속도 인센티브 (원/kWh)</label><input class="inp" type="number" step="0.01" id="conP-resp"></div>
+        <div class="form-item"><label>용량정산금 CP (원/kW·월)</label><input class="inp" type="number" step="1" id="conP-cap"></div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">패널티 (양수로 입력 — 표시는 음수/감액)</div>
+      <div class="form-row">
+        <div class="form-item"><label>허용범위 초과 (원/kWh)</label><input class="inp" type="number" step="0.01" id="conP-penOver"></div>
+        <div class="form-item"><label>월 미이행률 감액률 (%)</label><input class="inp" type="number" step="1" min="0" max="100" id="conP-penNon"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>통신 장애 (천원/건)</label><input class="inp" type="number" step="1" id="conP-penComm"></div>
+        <div class="form-item"></div>
+      </div>
+      <div style="padding:10px 12px;background:var(--semantic-tag-bg-yellow);border-radius:6px;font-size:11px;color:var(--semantic-tag-label-yellow);line-height:18px;margin-top:10px">
+        ⚠ 단가 변경은 KPX 정산에 직접 반영됩니다. 감사 로그(SHA-256)에 변경자·일시가 기록되며, 5년간 영구 보관됩니다.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-con-price')">취소</button>
+      <button class="cb p" onclick="savePrice()">저장 (승인 요청)</button>
+    </div>
+  </div>
+</div>
+
+<!-- 갱신 알림 설정 모달 -->
+<div class="modal-backdrop" id="modal-con-renewal" style="display:none" onclick="closeModalBg(event,'modal-con-renewal')">
+  <div class="modal">
+    <div class="modal-hdr">
+      <span class="modal-title">갱신 알림 설정</span>
+      <button class="modal-close" onclick="closeModal('modal-con-renewal')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-section">자동 갱신</div>
+      <div class="form-row">
+        <div class="form-item"><label>자동 갱신 모드</label>
+          <select class="sel" id="conR-auto"><option>수동 갱신</option><option>자동 갱신 ON</option></select>
+        </div>
+        <div class="form-item"><label>갱신 협상 개시 (만료 N일 전)</label>
+          <select class="sel" id="conR-leadDays"><option>30</option><option selected>60</option><option>90</option></select>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">알림 시점 (D-Day, 다중 선택)</div>
+      <div class="form-row full">
+        <div class="form-item">
+          <div style="display:flex;gap:14px;flex-wrap:wrap;padding:6px 0">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-d90" checked> 90일 전</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-d60" checked> 60일 전</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-d30" checked> 30일 전</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-d7"> 7일 전</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-d1"> 1일 전 (긴급)</label>
+          </div>
+        </div>
+      </div>
+      <hr class="form-divider">
+      <div class="form-section">알림 채널</div>
+      <div class="form-row full">
+        <div class="form-item">
+          <div style="display:flex;gap:14px;flex-wrap:wrap;padding:6px 0">
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-mail" checked> 이메일</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-sms"> SMS</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:12px;cursor:pointer"><input type="checkbox" id="conR-sys" checked> 시스템 알림</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>수신자 (이메일, 콤마 구분)</label><input class="inp" placeholder="ops@60hz.kr, lee@ewp.co.kr" id="conR-to" value="ops@60hz.kr"></div>
+        <div class="form-item"></div>
+      </div>
+      <div style="padding:10px 12px;background:var(--semantic-background-2);border-radius:6px;font-size:11px;color:var(--semantic-label-alt);line-height:18px;margin-top:10px">
+        ℹ 자동 갱신 ON 선택 시 만료일 24시간 전 KPX에 자동 갱신 신청됩니다. 단가·조건 변경이 필요한 경우 협상 개시일에 운영자가 수동 검토 후 승인합니다.
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="cb n" onclick="closeModal('modal-con-renewal')">취소</button>
+      <button class="cb p" onclick="saveRenewal()">저장</button>
+    </div>
+  </div>
 </div>
 
 <!-- 자원 추가 모달 -->
@@ -348,7 +495,7 @@ window.saveCon=function(){
     '<td><span class="badge '+statusCls+'">'+_conEscHtml(state)+'</span></td>'+
     '<td><button class="cb n sm" type="button">편집</button></td>';
   const editBtn=tr.querySelector('button');
-  if(editBtn) editBtn.onclick=function(){toast(name+' 편집');};
+  if(editBtn) editBtn.onclick=function(){window.openConEdit(editBtn);};
   tbody.appendChild(tr);
 
   window.updateConKPI();
@@ -414,5 +561,195 @@ window.updateConKPI=function(){
 
   const cnt=document.getElementById('con-res-cnt');
   if(cnt) cnt.textContent=totalCnt+'개소';
+};
+
+// ===== 자원 편집 / 삭제 =====
+window._conEditTr=null;
+
+window.openConEdit=function(btn){
+  const tr=btn && btn.closest ? btn.closest('tr') : null;
+  if(!tr){toast('편집할 행을 찾을 수 없습니다.','err');return;}
+  window._conEditTr=tr;
+  const name=(tr.cells[1]?.textContent||'').trim();
+  const type=(tr.cells[2]?.textContent||'').trim();
+  const vpp=(tr.cells[3]?.textContent||'').trim();
+  const contract=(tr.cells[4]?.textContent||'').trim();
+  const cap=_conParseCapKw(tr);
+  const resp=(tr.cells[7]?.textContent||'').trim();
+  const period=(tr.cells[8]?.textContent||'').trim();
+  const remote=(tr.cells[9]?.textContent||'').trim();
+  const state=(tr.cells[10]?.textContent||'').trim();
+
+  const setVal=(id,v)=>{const el=document.getElementById(id); if(el) el.value=v;};
+  const setSel=(id,v)=>{
+    const el=document.getElementById(id);
+    if(!el) return;
+    for(let i=0;i<el.options.length;i++){ if(el.options[i].text===v){ el.selectedIndex=i; return; } }
+  };
+  setVal('conE-name',name);
+  setVal('conE-contract',contract);
+  setSel('conE-type',type);
+  setSel('conE-vpp',vpp);
+  setVal('conE-cap',cap);
+  setVal('conE-resp',resp);
+  setVal('conE-period',period);
+  setSel('conE-remote',remote);
+  setSel('conE-state',state);
+  const ttl=document.getElementById('con-edit-title');
+  if(ttl) ttl.textContent='계약 자원 편집 — '+name;
+  openModal('modal-con-edit');
+};
+
+window.updateCon=function(){
+  const tr=window._conEditTr;
+  if(!tr){toast('편집 대상이 없습니다.','err');closeModal('modal-con-edit');return;}
+  const type=document.getElementById('conE-type')?.value||'태양광';
+  const vpp=document.getElementById('conE-vpp')?.value||'VPP-전남권';
+  const capStr=document.getElementById('conE-cap')?.value||'';
+  const resp=(document.getElementById('conE-resp')?.value||'').trim();
+  const period=(document.getElementById('conE-period')?.value||'').trim()||'준비 단계';
+  const remote=document.getElementById('conE-remote')?.value||'동의';
+  const state=document.getElementById('conE-state')?.value||'활성';
+  const cap=parseInt(capStr,10);
+  if(!cap||cap<=0){toast('계약 용량(kW)은 1 이상의 정수여야 합니다.','warn');return;}
+  if(!resp){toast('응답 속도는 필수입니다.','warn');return;}
+
+  let typeStyle='';
+  if(type==='풍력') typeStyle='background:var(--semantic-tag-bg-blue);color:var(--semantic-tag-label-blue)';
+  else if(type==='ESS') typeStyle='background:var(--semantic-tag-bg-yellow);color:var(--semantic-tag-label-yellow)';
+  const typeBadgeCls=type==='태양광'?'inf':'';
+  const statusCls=state==='활성'?'ok':state==='만료 임박'?'warn':state==='만료'?'err':'off';
+  const periodColor=state==='만료 임박'?'var(--palette-yellow-40)':'';
+
+  // 가중치 셀은 보존(재계산 별도)
+  const oldWeight=tr.cells[6]?.innerHTML||'0.0%';
+
+  tr.dataset.type=type;
+  tr.dataset.vpp=vpp;
+  tr.dataset.state=state;
+  tr.dataset.remote=remote;
+
+  tr.cells[2].innerHTML='<span class="badge '+typeBadgeCls+'"'+(typeStyle?' style="'+typeStyle+'"':'')+'>'+_conEscHtml(type)+'</span>';
+  tr.cells[3].innerHTML=_conEscHtml(vpp);
+  tr.cells[5].innerHTML=(cap/1000).toFixed(2)+' MW<br><span style="font-size:10px;color:var(--semantic-label-alt)">'+cap.toLocaleString()+' kW</span>';
+  tr.cells[6].innerHTML=oldWeight;
+  tr.cells[7].innerHTML=_conEscHtml(resp);
+  tr.cells[8].setAttribute('style','font-size:12px'+(periodColor?';color:'+periodColor:''));
+  tr.cells[8].innerHTML=_conEscHtml(period);
+  tr.cells[9].innerHTML='<span class="badge '+(remote==='동의'?'ok':'off')+'">'+_conEscHtml(remote)+'</span>';
+  tr.cells[10].innerHTML='<span class="badge '+statusCls+'">'+_conEscHtml(state)+'</span>';
+
+  window.updateConKPI();
+  closeModal('modal-con-edit');
+  const name=(tr.cells[1]?.textContent||'').trim();
+  toast(name+' 변경 저장됨 — 용량 변경 시 가중치 재계산 권장');
+  window._conEditTr=null;
+};
+
+window.deleteCon=function(){
+  const tr=window._conEditTr;
+  if(!tr){closeModal('modal-con-edit');return;}
+  const name=(tr.cells[1]?.textContent||'').trim();
+  if(!confirm('자원 "'+name+'"을(를) 삭제하시겠습니까?\n계약 데이터가 즉시 제거되며 되돌릴 수 없습니다.')) return;
+  tr.remove();
+  window._conEditTr=null;
+  // 순번 재정렬
+  document.querySelectorAll('#con-res-tbody tr').forEach((r,i)=>{ if(r.cells[0]) r.cells[0].textContent=String(i+1); });
+  window.updateConKPI();
+  closeModal('modal-con-edit');
+  toast(name+' 삭제됨 — 가중치 재계산 권장','warn');
+};
+
+// ===== 단가 편집 =====
+function _conParsePrice(id,negative){
+  const el=document.getElementById(id);
+  if(!el) return 0;
+  const m=el.textContent.match(/[+-−]?([\d,]+\.?\d*)/);
+  if(!m) return 0;
+  return parseFloat(m[1].replace(/,/g,''))||0;
+}
+
+window.openPriceEdit=function(){
+  document.getElementById('conP-perf').value=_conParsePrice('con-price-perf');
+  document.getElementById('conP-stby').value=_conParsePrice('con-price-stby');
+  document.getElementById('conP-resp').value=_conParsePrice('con-price-resp');
+  document.getElementById('conP-cap').value=_conParsePrice('con-price-cap');
+  document.getElementById('conP-penOver').value=_conParsePrice('con-price-pen-over');
+  // 미이행률 감액률: "월 보상금 20% 감액"에서 20 추출
+  const noncomp=document.getElementById('con-price-pen-noncomp');
+  const mNon=noncomp?.textContent.match(/(\d+)\s*%/);
+  document.getElementById('conP-penNon').value=mNon?mNon[1]:20;
+  // 통신 장애: "−500천원/건"에서 500
+  document.getElementById('conP-penComm').value=_conParsePrice('con-price-pen-comm');
+  openModal('modal-con-price');
+};
+
+window.savePrice=function(){
+  const perf=parseFloat(document.getElementById('conP-perf').value)||0;
+  const stby=parseFloat(document.getElementById('conP-stby').value)||0;
+  const resp=parseFloat(document.getElementById('conP-resp').value)||0;
+  const cap=parseInt(document.getElementById('conP-cap').value,10)||0;
+  const penOver=parseFloat(document.getElementById('conP-penOver').value)||0;
+  const penNon=parseInt(document.getElementById('conP-penNon').value,10)||0;
+  const penComm=parseInt(document.getElementById('conP-penComm').value,10)||0;
+  if([perf,stby,resp,cap].some(v=>v<0)||[penOver,penNon,penComm].some(v=>v<0)){
+    toast('단가는 0 이상이어야 합니다.','warn');return;
+  }
+  if(penNon>100){ toast('감액률은 100% 이하로 입력하세요.','warn'); return; }
+
+  document.getElementById('con-price-perf').textContent='+'+perf.toFixed(2)+' 원/kWh';
+  document.getElementById('con-price-stby').textContent='+'+stby.toFixed(2)+' 원/kWh';
+  document.getElementById('con-price-resp').textContent='+'+resp.toFixed(2)+' 원/kWh';
+  document.getElementById('con-price-cap').textContent='+'+cap.toLocaleString()+' 원/kW·월';
+  document.getElementById('con-price-pen-over').textContent='−'+penOver.toFixed(2)+' 원/kWh';
+  document.getElementById('con-price-pen-noncomp').textContent='월 보상금 '+penNon+'% 감액';
+  document.getElementById('con-price-pen-comm').textContent='−'+penComm.toLocaleString()+'천원/건 (3회 초과)';
+
+  closeModal('modal-con-price');
+  toast('단가 변경 저장됨 — 감사 로그 기록(SHA-256), 승인 검토 대기');
+};
+
+// ===== 갱신 알림 =====
+window._conRenewal={auto:false,leadDays:60,dDays:[90,60,30],channels:['mail','sys'],to:'ops@60hz.kr'};
+
+window.openRenewalEdit=function(){
+  const r=window._conRenewal||{};
+  const setSel=(id,v)=>{const el=document.getElementById(id); if(!el) return; for(let i=0;i<el.options.length;i++){ if(el.options[i].text===String(v)){ el.selectedIndex=i; return; } }};
+  setSel('conR-auto', r.auto?'자동 갱신 ON':'수동 갱신');
+  setSel('conR-leadDays', r.leadDays||60);
+  ['90','60','30','7','1'].forEach(d=>{
+    const el=document.getElementById('conR-d'+d);
+    if(el) el.checked=(r.dDays||[]).map(String).includes(d);
+  });
+  ['mail','sms','sys'].forEach(c=>{
+    const el=document.getElementById('conR-'+c);
+    if(el) el.checked=(r.channels||[]).includes(c);
+  });
+  const to=document.getElementById('conR-to'); if(to) to.value=r.to||'ops@60hz.kr';
+  openModal('modal-con-renewal');
+};
+
+window.saveRenewal=function(){
+  const auto=(document.getElementById('conR-auto')?.value||'')==='자동 갱신 ON';
+  const leadDays=parseInt(document.getElementById('conR-leadDays')?.value,10)||60;
+  const dDays=['90','60','30','7','1'].filter(d=>document.getElementById('conR-d'+d)?.checked).map(Number);
+  const channels=['mail','sms','sys'].filter(c=>document.getElementById('conR-'+c)?.checked);
+  const to=(document.getElementById('conR-to')?.value||'').trim();
+  if(dDays.length===0){toast('알림 시점을 1개 이상 선택하세요.','warn');return;}
+  if(channels.length===0){toast('알림 채널을 1개 이상 선택하세요.','warn');return;}
+  if(channels.includes('mail') && !to){toast('이메일 채널 선택 시 수신자를 입력하세요.','warn');return;}
+
+  window._conRenewal={auto:auto,leadDays:leadDays,dDays:dDays,channels:channels,to:to};
+
+  const mv=document.getElementById('con-renew-mv');
+  if(mv){
+    if(auto){
+      mv.innerHTML='<span class="badge ok">자동 갱신 ON</span> <span style="font-size:10px;color:var(--semantic-label-alt);margin-left:4px">D-'+dDays.join('/')+'일</span>';
+    } else {
+      mv.innerHTML='<span class="badge off">수동 갱신</span> <span style="font-size:10px;color:var(--semantic-label-alt);margin-left:4px">알림 D-'+dDays.join('/')+'일</span>';
+    }
+  }
+  closeModal('modal-con-renewal');
+  toast('갱신 알림 설정 저장됨 — '+(auto?'자동':'수동')+' / D-'+dDays.join(',')+'일 / '+channels.join('+'));
 };
 
