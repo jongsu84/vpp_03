@@ -31,7 +31,7 @@ ${_mkBidFilter({prefix:'brd',onChange:'bidRtDualApply',rightInfo:'금일 합산 
   <div class="card mb"><div class="sh"><div class="st">시간대별 DA 낙찰 vs 실측 · 편차</div></div><div style="height:200px;position:relative"><canvas id="c-imb" role="img" aria-label="DA vs 실측"></canvas></div></div>
   <div class="card mb"><div class="sh"><div class="st">편차율 분포 (IMBP 구간)</div></div><div style="height:200px;position:relative"><canvas id="c-imbdist" role="img" aria-label="편차 분포"></canvas></div></div>
 </div>
-<div class="card"><div class="sh"><div class="st">이중정산 상세 · 오늘 <span style="font-size:11px;color:var(--semantic-label-alt);font-weight:400" id="brd-detail-ctx">전체</span></div><button class="cb p sm">상세 리포트</button></div>
+<div class="card"><div class="sh"><div class="st">이중정산 상세 · 오늘 <span style="font-size:11px;color:var(--semantic-label-alt);font-weight:400" id="brd-detail-ctx">전체</span></div><button class="cb p sm" onclick="brdDownloadReport()">상세 리포트 ↓</button></div>
 <table class="tbl"><thead><tr><th>시각</th><th>DA 낙찰(MW)</th><th>실측(MW)</th><th>편차(%)</th><th>DA SMP</th><th>RT SMP</th><th>DAES</th><th>RTES</th><th>IMBP</th></tr></thead><tbody id="brd-detail-tbody"></tbody></table></div>`;
 window['I_bidRT-dual']=function(){
   window._brdRender();
@@ -105,4 +105,68 @@ window._brdRender=function(){
   ],{});
 };
 window.bidRtDualApply=function(){ window._brdRender(); };
+
+// ===== 상세 리포트 CSV 다운로드 =====
+window.brdDownloadReport=function(){
+  var vpp=document.getElementById('brd-vpp')?.value||'전체';
+  var type=document.getElementById('brd-type')?.value||'all';
+  var vMul={'전체':1.0,'VPP-전남권':0.62,'VPP-제주권':0.18,'VPP-경북권':0.20}[vpp]||1.0;
+  var tMul={'all':1.0,'태양광':0.55,'풍력':0.30,'ESS':0.08,'바이오':0.05,'V2G':0.02}[type]||1.0;
+  var mul=vMul*tMul;
+  var k=window._BRD_BASE_KPI;
+  var daes=k.daes*mul, rtes=k.rtes*mul, imbp=k.imbp*mul, total=daes+rtes+imbp;
+  var now=new Date();
+  var pad=function(n){return String(n).padStart(2,'0');};
+  var dateStr=now.getFullYear()+'-'+pad(now.getMonth()+1)+'-'+pad(now.getDate());
+  var timeStr=pad(now.getHours())+':'+pad(now.getMinutes())+':'+pad(now.getSeconds());
+
+  var lines=[];
+  lines.push('=== 편차 관리 상세 리포트 (Dual Settlement Report) ===');
+  lines.push('생성일시,'+dateStr+' '+timeStr);
+  lines.push('VPP 그룹,'+vpp);
+  lines.push('자원 유형,'+(type==='all'?'전체':type));
+  lines.push('');
+  lines.push('=== KPI 요약 (백만원) ===');
+  lines.push('항목,금액');
+  lines.push('DAES (하루전 정산),'+(daes>=0?'+':'')+daes.toFixed(2));
+  lines.push('RTES (실시간 편차),'+(rtes>=0?'+':'')+rtes.toFixed(2));
+  lines.push('IMBP (페널티),'+imbp.toFixed(2));
+  lines.push('합산 순수익,'+(total>=0?'+':'')+total.toFixed(2));
+  lines.push('');
+  lines.push('=== 이중정산 상세 (시간대별) ===');
+  lines.push('시각,DA 낙찰(MW),실측(MW),편차(%),DA SMP(원),RT SMP(원),DAES(천원),RTES(천원),IMBP(천원)');
+  window._BRD_BASE_TABLE.forEach(function(r){
+    var da=r.da*mul, meas=r.meas*mul;
+    var dev=da>0?((meas-da)/da*100):0;
+    lines.push([
+      r.time,
+      da.toFixed(2),
+      meas.toFixed(2),
+      (dev>=0?'+':'')+dev.toFixed(1),
+      r.daSmp,
+      r.rtSmp,
+      Math.round(r.daes*mul),
+      Math.round(r.rtes*mul),
+      Math.round(r.imbp*mul)
+    ].join(','));
+  });
+  lines.push('');
+  lines.push('※ DAES/RTES/IMBP 값은 천원 단위 / KPI 요약은 백만원 단위');
+  lines.push('※ DA 입찰 → RT 영향 O · RT 입찰 → DA 영향 X');
+  lines.push('※ KPX 정산 확정은 익일 06:00 — 본 리포트는 시뮬레이션');
+
+  var csv=lines.join('\r\n');
+  var bom='﻿'; // Excel UTF-8 인식용
+  var blob=new Blob([bom+csv], {type:'text/csv;charset=utf-8;'});
+  var url=URL.createObjectURL(blob);
+  var a=document.createElement('a');
+  var fileName='dual_settlement_'+vpp.replace(/-/g,'')+(type==='all'?'':'_'+type)+'_'+dateStr+'.csv';
+  a.href=url;
+  a.download=fileName;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('상세 리포트 다운로드 완료 — '+fileName);
+};
 
