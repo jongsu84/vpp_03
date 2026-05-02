@@ -180,8 +180,8 @@ window.P['sdp-con']=()=>`
         <div class="form-item"><label>응답 속도 *</label><input class="inp" id="conE-resp"></div>
       </div>
       <div class="form-row">
-        <div class="form-item"><label>계약 기간</label><input class="inp" id="conE-period"></div>
-        <div class="form-item"></div>
+        <div class="form-item"><label>계약 시작일</label><input class="inp" type="month" id="conE-period-start"></div>
+        <div class="form-item"><label>계약 종료일</label><input class="inp" type="month" id="conE-period-end"></div>
       </div>
       <hr class="form-divider">
       <div class="form-section">운영 정보</div>
@@ -332,7 +332,11 @@ window.P['sdp-con']=()=>`
       </div>
       <div class="form-row">
         <div class="form-item"><label>응답 속도 *</label><input class="inp" placeholder="예: 3.0 MW/min" id="con-resp"></div>
-        <div class="form-item"><label>계약 기간</label><input class="inp" placeholder="2026.01~12" id="con-period"></div>
+        <div class="form-item"></div>
+      </div>
+      <div class="form-row">
+        <div class="form-item"><label>계약 시작일</label><input class="inp" type="month" id="con-period-start"></div>
+        <div class="form-item"><label>계약 종료일</label><input class="inp" type="month" id="con-period-end"></div>
       </div>
       <hr class="form-divider">
       <div class="form-section">운영 정보</div>
@@ -349,7 +353,7 @@ window.P['sdp-con']=()=>`
         </div>
       </div>
       <div style="padding:10px 12px;background:var(--semantic-background-2);border-radius:6px;font-size:11px;color:var(--semantic-label-alt);line-height:18px;margin-top:10px">
-        ℹ 가중치는 0%로 시작하며, 추가 후 [가중치 재계산] 버튼으로 활성 자원 합계 100%가 되도록 재분배됩니다. 등록 대기 자원은 0% 유지.
+        ℹ 시작일·종료일을 비워두면 "준비 단계"로 저장됩니다. 가중치는 0%로 시작하며, 추가 후 [가중치 재계산] 버튼으로 활성 자원 합계 100%가 되도록 재분배됩니다.
       </div>
     </div>
     <div class="modal-footer">
@@ -406,6 +410,28 @@ window.conReset=function(){
 // ===== 자원 추가 / 가중치 재계산 / KPI 갱신 =====
 function _conEscHtml(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
+// "YYYY-MM" 두 입력 → 표시 문자열로 포맷
+function _conFmtPeriod(startMonth,endMonth){
+  if(!startMonth||!endMonth) return '준비 단계';
+  const sp=startMonth.split('-'), ep=endMonth.split('-');
+  if(sp.length<2||ep.length<2) return '준비 단계';
+  const sy=sp[0], sm=sp[1].padStart(2,'0');
+  const ey=ep[0], em=ep[1].padStart(2,'0');
+  if(sy===ey) return sy+'.'+sm+'~'+em;
+  return sy+'.'+sm+'~'+ey+'.'+em;
+}
+// 표시 문자열 → "YYYY-MM" 두 값 (편집 모달 prefill용)
+function _conParsePeriod(text){
+  if(!text) return {start:'',end:''};
+  const t=text.trim();
+  if(t==='준비 단계'||t==='검증 중') return {start:'',end:''};
+  let m=t.match(/^(\d{4})\.(\d{1,2})~(\d{1,2})$/);
+  if(m) return {start:m[1]+'-'+m[2].padStart(2,'0'), end:m[1]+'-'+m[3].padStart(2,'0')};
+  m=t.match(/^(\d{4})\.(\d{1,2})~(\d{4})\.(\d{1,2})$/);
+  if(m) return {start:m[1]+'-'+m[2].padStart(2,'0'), end:m[3]+'-'+m[4].padStart(2,'0')};
+  return {start:'',end:''};
+}
+
 // 행 6번째 셀에서 kW 값 파싱
 function _conParseCapKw(tr){
   const cell=tr.cells[5];
@@ -431,7 +457,7 @@ window.conPrepareAdd=function(){
 };
 
 window.resetConForm=function(){
-  ['con-name','con-contract','con-cap','con-resp','con-period'].forEach(id=>{
+  ['con-name','con-contract','con-cap','con-resp','con-period-start','con-period-end'].forEach(id=>{
     const el=document.getElementById(id); if(el) el.value='';
   });
   const t=document.getElementById('con-type'); if(t) t.selectedIndex=0;
@@ -447,7 +473,8 @@ window.saveCon=function(){
   const contract=(document.getElementById('con-contract')?.value||'').trim();
   const capStr=(document.getElementById('con-cap')?.value||'').trim();
   const resp=(document.getElementById('con-resp')?.value||'').trim();
-  const period=(document.getElementById('con-period')?.value||'').trim()||'준비 단계';
+  const periodStart=(document.getElementById('con-period-start')?.value||'').trim();
+  const periodEnd=(document.getElementById('con-period-end')?.value||'').trim();
   const remote=document.getElementById('con-remote')?.value||'동의';
   const state=document.getElementById('con-state')?.value||'활성';
 
@@ -456,6 +483,9 @@ window.saveCon=function(){
   if(!resp){toast('응답 속도는 필수입니다.','warn');return;}
   const cap=parseInt(capStr,10);
   if(!cap||cap<=0){toast('계약 용량(kW)은 1 이상의 정수여야 합니다.','warn');return;}
+  if(periodStart && periodEnd && periodEnd<periodStart){toast('종료일이 시작일보다 빠릅니다.','warn');return;}
+  if((periodStart && !periodEnd)||(!periodStart && periodEnd)){toast('계약 시작일과 종료일은 함께 입력하거나 모두 비워주세요.','warn');return;}
+  const period=_conFmtPeriod(periodStart,periodEnd);
 
   const tbody=document.getElementById('con-res-tbody');
   if(!tbody){toast('테이블을 찾을 수 없습니다.','err');return;}
@@ -592,7 +622,9 @@ window.openConEdit=function(btn){
   setSel('conE-vpp',vpp);
   setVal('conE-cap',cap);
   setVal('conE-resp',resp);
-  setVal('conE-period',period);
+  const pp=_conParsePeriod(period);
+  setVal('conE-period-start',pp.start);
+  setVal('conE-period-end',pp.end);
   setSel('conE-remote',remote);
   setSel('conE-state',state);
   const ttl=document.getElementById('con-edit-title');
@@ -607,12 +639,16 @@ window.updateCon=function(){
   const vpp=document.getElementById('conE-vpp')?.value||'VPP-전남권';
   const capStr=document.getElementById('conE-cap')?.value||'';
   const resp=(document.getElementById('conE-resp')?.value||'').trim();
-  const period=(document.getElementById('conE-period')?.value||'').trim()||'준비 단계';
+  const periodStart=(document.getElementById('conE-period-start')?.value||'').trim();
+  const periodEnd=(document.getElementById('conE-period-end')?.value||'').trim();
   const remote=document.getElementById('conE-remote')?.value||'동의';
   const state=document.getElementById('conE-state')?.value||'활성';
   const cap=parseInt(capStr,10);
   if(!cap||cap<=0){toast('계약 용량(kW)은 1 이상의 정수여야 합니다.','warn');return;}
   if(!resp){toast('응답 속도는 필수입니다.','warn');return;}
+  if(periodStart && periodEnd && periodEnd<periodStart){toast('종료일이 시작일보다 빠릅니다.','warn');return;}
+  if((periodStart && !periodEnd)||(!periodStart && periodEnd)){toast('계약 시작일과 종료일은 함께 입력하거나 모두 비워주세요.','warn');return;}
+  const period=_conFmtPeriod(periodStart,periodEnd);
 
   let typeStyle='';
   if(type==='풍력') typeStyle='background:var(--semantic-tag-bg-blue);color:var(--semantic-tag-label-blue)';
