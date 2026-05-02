@@ -31,7 +31,7 @@ window.P['ctl-cfg']=()=>`
   </div>
   <div class="fbar-item"><label class="fbar-lbl">배분 정책</label>
     <select class="fbar-sel" id="cg-f-policy" onchange="cgFilterApply()">
-      <option value="">전체</option><option value="profit">수익 최적화</option><option value="equal">균등 배분</option><option value="manual">수동 순서</option>
+      <option value="">전체</option><option value="profit">수익 최적화</option><option value="equal">균등 배분</option><option value="sequential">순차 배분</option><option value="proportional">비례 배분</option>
     </select>
   </div>
   <div class="fbar-item"><label class="fbar-lbl">제어 허용</label>
@@ -59,18 +59,22 @@ window.P['ctl-cfg']=()=>`
 <div class="g2">
   <div class="card mb">
     <div class="sh"><div class="st">제어 배분 알고리즘 <span class="tip">ⓘ 감발 요구량을 자원별로 분배하는 방식</span></div></div>
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
+    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">
       <label style="border:2px solid #0059ff;border-radius:8px;padding:10px;cursor:pointer;background:#f0f6ff">
         <input type="radio" name="algo" value="profit" checked style="margin-right:6px"><b style="font-size:12px">수익 최적화</b>
-        <div style="font-size:10px;color:#666;margin-top:4px">한계수익 낮은 자원 우선 감발<br>손실 최소화 (권장)</div>
+        <div style="font-size:10px;color:#666;margin-top:4px">한계수익 낮은 자원 우선 감발 → 포트폴리오 손실 최소화 (권장)</div>
       </label>
       <label style="border:1px solid #d0d6e0;border-radius:8px;padding:10px;cursor:pointer">
         <input type="radio" name="algo" value="equal" style="margin-right:6px"><b style="font-size:12px">균등 배분</b>
-        <div style="font-size:10px;color:#666;margin-top:4px">전 자원 동일 비율 감발<br>공평·단순</div>
+        <div style="font-size:10px;color:#666;margin-top:4px">전 자원에 동일 MW씩 분배 → 공평·단순 (기준 알고리즘)</div>
       </label>
       <label style="border:1px solid #d0d6e0;border-radius:8px;padding:10px;cursor:pointer">
-        <input type="radio" name="algo" value="manual" style="margin-right:6px"><b style="font-size:12px">수동 순서</b>
-        <div style="font-size:10px;color:#666;margin-top:4px">운영자 지정 순서 사용<br>강제 제어</div>
+        <input type="radio" name="algo" value="sequential" style="margin-right:6px"><b style="font-size:12px">순차 배분</b>
+        <div style="font-size:10px;color:#666;margin-top:4px">우선순위 1번 자원부터 제어 하한까지 소진 후 다음 자원 (효율성)</div>
+      </label>
+      <label style="border:1px solid #d0d6e0;border-radius:8px;padding:10px;cursor:pointer">
+        <input type="radio" name="algo" value="proportional" style="margin-right:6px"><b style="font-size:12px">비례 배분</b>
+        <div style="font-size:10px;color:#666;margin-top:4px">현재 출력에 비례하여 감발 (대규모 자원 더 많이)</div>
       </label>
     </div>
     <div class="form-section" style="font-size:11px;color:#555;margin-top:10px">가중치 (합=1.0)</div>
@@ -137,26 +141,25 @@ window.P['ctl-cfg']=()=>`
 <!-- 시나리오 시뮬레이션 + 정책 변경 이력 -->
 <div class="g2">
   <div class="card mb">
-    <div class="sh"><div class="st">감발 시나리오 시뮬레이션 <span class="tip">ⓘ 감발 요구량 입력 시 예상 제어 배분 미리보기</span></div></div>
-    <div class="fg" style="display:flex;gap:8px;align-items:flex-end">
-      <div style="flex:1"><label class="fl">감발 요구량 (MW)</label><input class="inp" value="30" type="number" id="cg-sim-mw"></div>
-      <div style="flex:1"><label class="fl">알고리즘</label><select class="sel"><option>수익 최적화 (현재)</option><option>균등 배분</option></select></div>
-      <button class="cb p" style="font-size:11px">▶ 실행</button>
+    <div class="sh"><div class="st">감발 시나리오 시뮬레이션 <span class="tip">ⓘ 감발 요구량과 알고리즘 선택 후 ▶ 실행 — 운영자 Override 가능</span></div><div style="font-size:10px;color:var(--semantic-label-alt)" id="cg-sim-status">대기 중</div></div>
+    <div class="fg" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+      <div style="flex:1;min-width:140px"><label class="fl">감발 요구량 (MW)</label><input class="inp" value="30" type="number" min="0.1" step="0.1" id="cg-sim-mw"></div>
+      <div style="flex:1;min-width:160px"><label class="fl">알고리즘</label><select class="sel" id="cg-sim-algo">
+        <option value="profit">수익 최적화</option>
+        <option value="equal">균등 배분</option>
+        <option value="sequential">순차 배분</option>
+        <option value="proportional">비례 배분</option>
+      </select></div>
+      <button class="cb p" style="font-size:11px" onclick="cgRunSimulation()">▶ 실행</button>
     </div>
-    <table class="tbl" style="margin-top:10px">
-      <thead><tr><th>순위</th><th>자원</th><th>현재</th><th>감발량</th><th>감발 후</th><th>손실</th></tr></thead>
-      <tbody>
-        <tr><td>1</td><td>광양항태양광</td><td class="mono">18.2</td><td class="mono" style="color:#d32">-8.2</td><td class="mono">10.0</td><td class="mono">₩148k</td></tr>
-        <tr><td>2</td><td>광양항4단계</td><td class="mono">14.8</td><td class="mono" style="color:#d32">-6.7</td><td class="mono">8.1</td><td class="mono">₩127k</td></tr>
-        <tr><td>3</td><td>온누리</td><td class="mono">9.5</td><td class="mono" style="color:#d32">-4.3</td><td class="mono">5.2</td><td class="mono">₩86k</td></tr>
-        <tr><td>4</td><td>포항S1</td><td class="mono">7.3</td><td class="mono" style="color:#d32">-3.3</td><td class="mono">4.0</td><td class="mono">₩69k</td></tr>
-        <tr><td>5</td><td>김주풍력</td><td class="mono">8.1</td><td class="mono" style="color:#d32">-3.7</td><td class="mono">4.4</td><td class="mono">₩90k</td></tr>
-        <tr><td>6</td><td>신안풍력</td><td class="mono">11.4</td><td class="mono" style="color:#d32">-3.8</td><td class="mono">7.6</td><td class="mono">₩96k</td></tr>
-        <tr data-no-sort="1" style="background:#f0f6ff;font-weight:700"><td colspan="3" style="text-align:right">합계</td><td class="mono" style="color:#d32">-30.0 MW</td><td>—</td><td class="mono" style="color:#d32">₩616k</td></tr>
+    <table class="tbl" style="margin-top:10px" data-no-sort="1">
+      <thead><tr><th style="width:36px;text-align:center">제외</th><th style="width:32px">#</th><th>자원</th><th class="mono">현재 (MW)</th><th class="mono">감발량 (MW)</th><th class="mono">감발 후 (MW)</th><th class="mono">손실</th></tr></thead>
+      <tbody id="cg-sim-tbody">
+        <tr><td colspan="7" style="text-align:center;color:var(--semantic-label-alt);padding:18px;font-size:11px">감발 요구량과 알고리즘을 선택한 후 [▶ 실행]을 눌러주세요</td></tr>
       </tbody>
     </table>
-    <div style="margin-top:8px;padding:6px 10px;background:#e8f4ed;border-left:3px solid #0a7;border-radius:4px;font-size:11px">
-      <b style="color:#0a7">수익 보호 효과:</b> 균등 배분 대비 <b class="mono" style="color:#0a7">+₩ 284k</b> 손실 감소 (31.6% 절감)
+    <div id="cg-sim-summary" style="margin-top:8px;padding:8px 12px;background:var(--semantic-background-2);border-left:3px solid var(--semantic-line-strong);border-radius:4px;font-size:11px;line-height:18px">
+      ※ Override 체크박스를 해제하면 해당 자원을 제외하고 다른 자원으로 자동 재배분됩니다. 실제 감발 가용량 부족 시 경고 표시.
     </div>
   </div>
 
@@ -306,5 +309,236 @@ window.cgRecalcMerit=function(){
   var kpiRecalc=document.getElementById('cg-kpi-recalc');
   if(kpiRecalc) kpiRecalc.textContent='방금';
   toast('Merit Order 재계산 완료 — 한계수익 낮은 순 정렬 ('+allowed.length+'개 자원)');
+};
+
+// ===== 감발 시나리오 시뮬레이션 (Economic Dispatch + Override) =====
+window._cgSimState=null; // {resources, totalMW, algorithm}
+
+function _cgAlgoLabel(a){
+  return a==='profit'?'수익 최적화'
+       :a==='equal'?'균등 배분'
+       :a==='sequential'?'순차 배분'
+       :a==='proportional'?'비례 배분':'수익 최적화';
+}
+
+// Merit Order 테이블에서 허용 자원만 추출 (한계수익·현재출력·제어하한 포함)
+function _cgReadMeritResources(){
+  var rows=document.querySelectorAll('#cg-merit-tbody tr');
+  var list=[];
+  rows.forEach(function(tr){
+    if(tr.getAttribute('data-allow')==='block') return;
+    var name=(tr.cells[1]?tr.cells[1].textContent:'').trim();
+    var type=(tr.cells[2]?tr.cells[2].textContent:'').trim();
+    var vpp=(tr.cells[3]?tr.cells[3].textContent:'').trim();
+    var curM=(tr.cells[4]?tr.cells[4].textContent.match(/[\d.]+/):null);
+    var curMW=curM?parseFloat(curM[0]):0;
+    var marM=(tr.cells[8]?tr.cells[8].textContent.match(/(\d+)/):null);
+    var margin=marM?parseInt(marM[1],10):0;
+    var minM=(tr.cells[9]?tr.cells[9].textContent.match(/(\d+)/):null);
+    var minPct=minM?parseInt(minM[1],10):0;
+    list.push({name:name,type:type,vpp:vpp,curMW:curMW,margin:margin,minPct:minPct,excluded:false,curtail:0,loss:0,maxCurtail:0});
+  });
+  return list;
+}
+
+// 감발량 분배 (4개 알고리즘, 제외 자원 반영)
+function _cgDistribute(resources,totalMW,algorithm){
+  resources.forEach(function(r){
+    r.maxCurtail=r.curMW*(100-r.minPct)/100;
+    if(r.maxCurtail<0) r.maxCurtail=0;
+    r.curtail=0;
+    r.loss=0;
+  });
+  var active=resources.filter(function(r){return !r.excluded;});
+  var remaining=totalMW;
+
+  if(algorithm==='profit'){
+    var sorted=active.slice().sort(function(a,b){return a.margin-b.margin;});
+    sorted.forEach(function(r){
+      if(remaining<=0) return;
+      var take=Math.min(remaining,r.maxCurtail);
+      r.curtail=take; remaining-=take;
+    });
+  } else if(algorithm==='sequential'){
+    // Merit Order 표시 순서대로 (현재 순위) 소진
+    active.forEach(function(r){
+      if(remaining<=0) return;
+      var take=Math.min(remaining,r.maxCurtail);
+      r.curtail=take; remaining-=take;
+    });
+  } else if(algorithm==='equal'){
+    var perRes=totalMW/active.length;
+    active.forEach(function(r){
+      r.curtail=Math.min(perRes,r.maxCurtail);
+      remaining-=r.curtail;
+    });
+    // 캡 도달 자원이 있으면 잔여를 다른 자원에 재분배
+    var attempts=5;
+    while(remaining>0.01 && attempts-->0){
+      var flexible=active.filter(function(r){return r.curtail<r.maxCurtail-0.001;});
+      if(flexible.length===0) break;
+      var extra=remaining/flexible.length;
+      flexible.forEach(function(r){
+        var add=Math.min(extra,r.maxCurtail-r.curtail);
+        r.curtail+=add; remaining-=add;
+      });
+    }
+  } else if(algorithm==='proportional'){
+    var totalCur=active.reduce(function(s,r){return s+r.curMW;},0);
+    if(totalCur>0){
+      active.forEach(function(r){
+        var wanted=(r.curMW/totalCur)*totalMW;
+        r.curtail=Math.min(wanted,r.maxCurtail);
+        remaining-=r.curtail;
+      });
+      var attempts2=5;
+      while(remaining>0.01 && attempts2-->0){
+        var flexible2=active.filter(function(r){return r.curtail<r.maxCurtail-0.001;});
+        if(flexible2.length===0) break;
+        var totalCapLeft=flexible2.reduce(function(s,r){return s+r.curMW;},0);
+        if(totalCapLeft<=0) break;
+        flexible2.forEach(function(r){
+          var wanted2=(r.curMW/totalCapLeft)*remaining;
+          var add=Math.min(wanted2,r.maxCurtail-r.curtail);
+          r.curtail+=add; remaining-=add;
+        });
+      }
+    }
+  }
+
+  // 반올림 + 손실 계산 (공식: 감발MW × 한계수익(원/kWh) × 100)
+  resources.forEach(function(r){
+    r.curtail=Math.round(r.curtail*10)/10;
+    r.loss=Math.round(r.curtail*r.margin*100);
+  });
+}
+
+// 균등 배분 기준 baseline 계산 (제외 자원 무시 — 풀 셋 기준)
+function _cgComputeEqualBaseline(totalMW,resources){
+  var fullSet=resources.map(function(r){
+    return {name:r.name,curMW:r.curMW,margin:r.margin,minPct:r.minPct,excluded:false,curtail:0,loss:0,maxCurtail:0};
+  });
+  _cgDistribute(fullSet,totalMW,'equal');
+  return fullSet.reduce(function(s,r){return s+r.loss;},0);
+}
+
+window.cgRunSimulation=function(){
+  var mwEl=document.getElementById('cg-sim-mw');
+  var totalMW=parseFloat(mwEl?mwEl.value:'0');
+  if(!totalMW||totalMW<=0){toast('감발 요구량은 0보다 커야 합니다.','warn');return;}
+  var algoEl=document.getElementById('cg-sim-algo');
+  var algorithm=algoEl?algoEl.value:'profit';
+
+  // 신규 시뮬 (또는 알고리즘/MW 변경) — 자원 목록 새로 읽기
+  var prev=window._cgSimState;
+  if(!prev||prev.totalMW!==totalMW||prev.algorithm!==algorithm){
+    window._cgSimState={
+      resources:_cgReadMeritResources(),
+      totalMW:totalMW,
+      algorithm:algorithm
+    };
+  }
+  _cgDistribute(window._cgSimState.resources,totalMW,algorithm);
+  _cgRenderSimResults();
+  toast('시뮬레이션 실행 — '+totalMW+'MW 감발 / '+_cgAlgoLabel(algorithm));
+};
+
+window.cgToggleExclude=function(name,checked){
+  if(!window._cgSimState) return;
+  var r=window._cgSimState.resources.find(function(x){return x.name===name;});
+  if(!r) return;
+  r.excluded=!checked;
+  _cgDistribute(window._cgSimState.resources,window._cgSimState.totalMW,window._cgSimState.algorithm);
+  _cgRenderSimResults();
+};
+
+function _cgRenderSimResults(){
+  var state=window._cgSimState;
+  if(!state) return;
+  var resources=state.resources;
+  var tbody=document.getElementById('cg-sim-tbody');
+  if(!tbody) return;
+
+  // 표시 순서: 활성→감발량 desc, 그 다음 제외
+  var display=resources.slice().sort(function(a,b){
+    if(a.excluded!==b.excluded) return a.excluded?1:-1;
+    return b.curtail-a.curtail;
+  });
+
+  var totalCurtail=0, totalLoss=0;
+  var rowsHtml=display.map(function(r,i){
+    if(!r.excluded && r.curtail<=0.01) return '';
+    if(!r.excluded){ totalCurtail+=r.curtail; totalLoss+=r.loss; }
+    var after=(r.curMW-r.curtail).toFixed(1);
+    var grayStyle=r.excluded?'opacity:0.45':'';
+    var safeName=r.name.replace(/'/g,"\\'");
+    return '<tr style="'+grayStyle+'">'
+      +'<td style="text-align:center"><input type="checkbox" '+(r.excluded?'':'checked')+' onchange="cgToggleExclude(\''+safeName+'\',this.checked)" title="제외/포함"></td>'
+      +'<td>'+(i+1)+'</td>'
+      +'<td>'+r.name+'</td>'
+      +'<td class="mono">'+r.curMW.toFixed(1)+'</td>'
+      +'<td class="mono" style="color:'+(r.excluded?'var(--semantic-label-alt)':'#d32')+'">'+(r.excluded?'제외':'-'+r.curtail.toFixed(1))+'</td>'
+      +'<td class="mono">'+(r.excluded?r.curMW.toFixed(1):after)+'</td>'
+      +'<td class="mono" style="color:'+(r.excluded?'var(--semantic-label-alt)':'#d32')+'">'+(r.excluded?'—':'₩'+Math.round(r.loss/1000)+'k')+'</td>'
+      +'</tr>';
+  }).join('');
+
+  rowsHtml+='<tr data-no-sort="1" style="background:#f0f6ff;font-weight:700">'
+    +'<td colspan="4" style="text-align:right">합계</td>'
+    +'<td class="mono" style="color:#d32">-'+totalCurtail.toFixed(1)+' MW</td>'
+    +'<td>—</td>'
+    +'<td class="mono" style="color:#d32">₩'+Math.round(totalLoss/1000)+'k</td>'
+    +'</tr>';
+
+  tbody.innerHTML=rowsHtml;
+
+  // 상태 + 요약
+  var statusEl=document.getElementById('cg-sim-status');
+  if(statusEl) statusEl.textContent='실행 완료 · '+_cgAlgoLabel(state.algorithm)+' · '+state.totalMW+'MW';
+
+  var summaryEl=document.getElementById('cg-sim-summary');
+  if(!summaryEl) return;
+
+  var equalLoss=_cgComputeEqualBaseline(state.totalMW,resources);
+  var savings=equalLoss-totalLoss;
+  var savingsPct=equalLoss>0?(savings/equalLoss*100):0;
+
+  var html='';
+  if(state.algorithm==='equal'){
+    html='<b style="color:var(--semantic-label-alt)">균등 배분 기준 알고리즘:</b> 손실 <b class="mono">₩'+Math.round(totalLoss/1000)+'k</b> · 다른 알고리즘과의 절감 비교 기준입니다.';
+  } else if(savings>0){
+    html='<b style="color:#0a7">수익 보호 효과:</b> 균등 배분 대비 <b class="mono" style="color:#0a7">+₩'+Math.round(savings/1000)+'k</b> 손실 감소 ('+savingsPct.toFixed(1)+'% 절감)';
+  } else if(savings<-1){
+    html='<b style="color:#d32">⚠️ 균등 배분보다 손실이 큽니다 ('+Math.round(Math.abs(savings)/1000)+'k 증가) — 알고리즘 선택 재검토 필요</b>';
+  } else {
+    html='<b style="color:var(--semantic-label-alt)">균등 배분과 동등 수준 손실</b>';
+  }
+  // 감발 요구량 부족 경고
+  if(totalCurtail<state.totalMW-0.5){
+    html+='<br><b style="color:#d32">⚠️ 감발 요구량 부족: 요구 '+state.totalMW.toFixed(1)+'MW / 가용 '+totalCurtail.toFixed(1)+'MW — Override 해제 또는 정책 조정 필요</b>';
+  }
+  // 제외된 자원 표시
+  var excludedNames=resources.filter(function(r){return r.excluded;}).map(function(r){return r.name;});
+  if(excludedNames.length>0){
+    html+='<br><span style="color:var(--semantic-label-alt)">Override 제외: '+excludedNames.join(', ')+'</span>';
+  }
+  // 스타일 변경 (수익 효과는 녹색 배경, 경고는 연빨강)
+  if(state.algorithm==='equal'){
+    summaryEl.style.background='var(--semantic-background-2)';
+    summaryEl.style.borderLeftColor='var(--semantic-line-strong)';
+  } else if(savings>0){
+    summaryEl.style.background='#e8f4ed';
+    summaryEl.style.borderLeftColor='#0a7';
+  } else {
+    summaryEl.style.background='var(--semantic-tag-bg-red)';
+    summaryEl.style.borderLeftColor='var(--semantic-negative-normal)';
+  }
+  summaryEl.innerHTML=html;
+}
+
+// 페이지 진입 시 자동 1회 실행 (운영자에게 즉시 시각적 피드백)
+window['I_ctl-cfg']=function(){
+  if(typeof window.cgFilterApply==='function') window.cgFilterApply();
+  setTimeout(function(){ try{ window.cgRunSimulation(); }catch(e){} },50);
 };
 
