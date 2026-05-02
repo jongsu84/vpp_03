@@ -55,22 +55,34 @@ window.P['ctl-mon']=()=>`
   <div class="card"><div class="ct">제어 실패 (24h) ${window.tip('24시간 제어 실패 건수','3회 재전송에도 실패한 제어 명령 건수','COUNT(*) WHERE 최종 결과 = 실패','즉시 현장 점검 — 통신 단절·장비 오프라인·전원 장애 가능성')}</div><div class="kv" style="color:#d32">1<span class="ku">건</span></div><div class="kd down">CTL-0085 타임아웃</div></div>
 </div>
 
-<!-- 제어 세션 추적 (풀 폭) -->
+<!-- 제어 세션 추적 (풀 폭, 전체 데이터) -->
 <div class="card mb">
-  <div class="sh"><div class="st">제어 세션 추적 (최근 20건) ${window.tip('제어 세션 추적','운영자 제어 명령의 송신 → 응답 → ACK → 도달 전 과정을 세션 단위로 추적','상태(진행중/완료/지연/실패) · 응답시간(s) · CRC 무결성 · ACK 수신 · 도달 확인','세션당 SLA: 응답 ≤ 500ms / CRC 일치 / ACK 수신 / 도달 확인 — 4종 모두 OK 시 ✓ 도달')}</div>${window.csvBtn('cm2-sess-tbody','control_signal_sessions','제어 세션 추적 (최근 20건)')}</div>
+  <div class="sh"><div class="st">제어 세션 추적 <span id="cm2-sess-cnt" style="font-size:11px;font-weight:400;color:var(--semantic-label-alt);margin-left:8px">— 건</span> ${window.tip('제어 세션 추적','운영자 제어 명령의 송신 → 응답 → ACK → 도달 전 과정을 세션 단위로 추적 (오늘 전체)','상태(진행중/완료/지연/실패) · 응답시간(s) · CRC 무결성 · ACK 수신 · 도달 확인','세션당 SLA: 응답 ≤ 500ms / CRC 일치 / ACK 수신 / 도달 확인 — 4종 모두 OK 시 ✓ 도달')}</div>${window.csvBtn('cm2-sess-tbody','control_signal_sessions','제어 세션 추적 (전체)')}</div>
   <div style="overflow-x:auto"><table class="tbl" id="cm2-sess-tbl">
-    <thead><tr><th>세션 ID</th><th>자원</th><th>프로토콜</th><th>상태</th><th>응답</th><th>CRC</th><th>ACK</th><th>도달</th></tr></thead>
+    <thead><tr><th>세션 ID</th><th>시각</th><th>자원</th><th>프로토콜</th><th>상태</th><th>응답</th><th>CRC</th><th>ACK</th><th>도달</th></tr></thead>
     <tbody id="cm2-sess-tbody">
-      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0089</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">진행중</span></td><td class="mono">0.12s</td><td>✓</td><td>⏳</td><td>—</td></tr>
-      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0088</td><td>광양항4단계</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge warn">진행중</span></td><td class="mono">0.08s</td><td>✓</td><td>⏳</td><td>—</td></tr>
-      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0087</td><td>전체 VPP-전남</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.31s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0086</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.28s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="warn" data-lat="over" data-int="ok"><td class="mono" style="font-size:9px">CTL-0085</td><td>금능1호 ESS</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">지연</span></td><td class="mono" style="color:#e80">1.20s</td><td>✓</td><td>✓</td><td><span class="badge warn">△</span></td></tr>
-      <tr data-vpp="VPP-제주권" data-proto="OCPP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0084</td><td>제주V2G</td><td class="mono" style="font-size:10px">OCPP 1.6J</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.19s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0083</td><td>온누리</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.24s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="err" data-lat="over" data-int="err"><td class="mono" style="font-size:9px">CTL-0082</td><td>신안풍력</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge err">실패</span></td><td class="mono" style="color:#d32">Timeout</td><td><span style="color:#d32">✗</span></td><td><span style="color:#d32">✗</span></td><td><span class="badge err">✗</span></td></tr>
-      <tr data-vpp="VPP-경북권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0081</td><td>포항S1</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.22s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
-      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0080</td><td>무안바이오</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.35s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0089</td><td class="mono" style="font-size:10px">14:25:30</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">진행중</span></td><td class="mono">0.12s</td><td>✓</td><td>⏳</td><td>—</td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="prog" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0088</td><td class="mono" style="font-size:10px">14:25:00</td><td>광양항4단계</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge warn">진행중</span></td><td class="mono">0.08s</td><td>✓</td><td>⏳</td><td>—</td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0087</td><td class="mono" style="font-size:10px">14:23:05</td><td>전체 VPP-전남</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.31s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0086</td><td class="mono" style="font-size:10px">14:18:42</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.28s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="warn" data-lat="over" data-int="ok"><td class="mono" style="font-size:9px">CTL-0085</td><td class="mono" style="font-size:10px">14:12:08</td><td>금능1호 ESS</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">지연</span></td><td class="mono" style="color:#e80">1.20s</td><td>✓</td><td>✓</td><td><span class="badge warn">△</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="OCPP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0084</td><td class="mono" style="font-size:10px">13:48:15</td><td>제주V2G</td><td class="mono" style="font-size:10px">OCPP 1.6J</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.19s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0083</td><td class="mono" style="font-size:10px">13:30:12</td><td>온누리</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.24s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="err" data-lat="over" data-int="err"><td class="mono" style="font-size:9px">CTL-0082</td><td class="mono" style="font-size:10px">12:42:08</td><td>신안풍력</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge err">실패</span></td><td class="mono" style="color:#d32">Timeout</td><td><span style="color:#d32">✗</span></td><td><span style="color:#d32">✗</span></td><td><span class="badge err">✗</span></td></tr>
+      <tr data-vpp="VPP-경북권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0081</td><td class="mono" style="font-size:10px">12:15:44</td><td>포항S1</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.22s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0080</td><td class="mono" style="font-size:10px">11:48:30</td><td>무안바이오</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.35s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-경북권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0079</td><td class="mono" style="font-size:10px">11:22:18</td><td>영덕바이오</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.41s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-경북권" data-proto="IEC-104" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0078</td><td class="mono" style="font-size:10px">10:55:42</td><td>김주풍력</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.27s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="OCPP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0077</td><td class="mono" style="font-size:10px">10:30:55</td><td>광주V2G</td><td class="mono" style="font-size:10px">OCPP 1.6J</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.18s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0076</td><td class="mono" style="font-size:10px">10:08:21</td><td>금능1호 ESS</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.33s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0075</td><td class="mono" style="font-size:10px">09:42:08</td><td>광양항태양광</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.29s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="OCPP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0074</td><td class="mono" style="font-size:10px">09:15:33</td><td>제주V2G</td><td class="mono" style="font-size:10px">OCPP 1.6J</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.22s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="warn" data-lat="over" data-int="ok"><td class="mono" style="font-size:9px">CTL-0073</td><td class="mono" style="font-size:10px">08:42:18</td><td>금능1호 ESS</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge warn">지연</span></td><td class="mono" style="color:#e80">1.15s</td><td>✓</td><td>✓</td><td><span class="badge warn">△</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0072</td><td class="mono" style="font-size:10px">07:30:04</td><td>신안풍력</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.38s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0071</td><td class="mono" style="font-size:10px">06:15:20</td><td>무안바이오</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.31s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-제주권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0070</td><td class="mono" style="font-size:10px">04:48:11</td><td>온누리</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.26s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-경북권" data-proto="Modbus TCP" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0069</td><td class="mono" style="font-size:10px">04:28:19</td><td>김주풍력</td><td class="mono" style="font-size:10px">Modbus TCP</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.42s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
+      <tr data-vpp="VPP-전남권" data-proto="IEC-104" data-stat="ok" data-lat="sla" data-int="ok"><td class="mono" style="font-size:9px">CTL-0068</td><td class="mono" style="font-size:10px">02:00:08</td><td>광양항4단계</td><td class="mono" style="font-size:10px">IEC-104</td><td><span class="badge ok">완료</span></td><td class="mono" style="color:#0a7">0.34s</td><td>✓</td><td>✓</td><td><span class="badge ok">✓</span></td></tr>
     </tbody>
   </table></div>
 </div>
@@ -90,7 +102,9 @@ window.cmonFilterApply=function(){
   var lt=(document.getElementById('cm2-f-lat')||{}).value||'';
   var it=(document.getElementById('cm2-f-int')||{}).value||'';
   var tb=document.getElementById('cm2-sess-tbody'); if(!tb)return;
+  var visible=0, total=0, prog=0, ok_=0, warn=0, err=0;
   [].forEach.call(tb.querySelectorAll('tr'),function(tr){
+    total++;
     var ok=true;
     if(vpp && tr.getAttribute('data-vpp')!==vpp) ok=false;
     if(pr && tr.getAttribute('data-proto')!==pr) ok=false;
@@ -98,6 +112,22 @@ window.cmonFilterApply=function(){
     if(lt && tr.getAttribute('data-lat')!==lt) ok=false;
     if(it && tr.getAttribute('data-int')!==it) ok=false;
     tr.style.display=ok?'':'none';
+    if(ok){
+      visible++;
+      var s=tr.getAttribute('data-stat');
+      if(s==='prog') prog++;
+      else if(s==='ok') ok_++;
+      else if(s==='warn') warn++;
+      else if(s==='err') err++;
+    }
   });
+  var cnt=document.getElementById('cm2-sess-cnt');
+  if(cnt){
+    cnt.textContent='총 '+visible+'건 · 진행 '+prog+' / 완료 '+ok_+' / 지연 '+warn+' / 실패 '+err
+      +(visible<total?' (필터 '+total+'건 중)':'');
+  }
+};
+window['I_ctl-mon']=function(){
+  if(typeof window.cmonFilterApply==='function') window.cmonFilterApply();
 };
 
