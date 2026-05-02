@@ -322,15 +322,22 @@ ${_mkCross('bidDA-main')}
     </tr></thead>
     <tbody>
     ${[
-      ['광양항태양광 01단계','태양광',14.2,'4.2%','-','-','nwp-e_v3','성공',''],
-      ['광양항태양광 04단계','태양광',13.6,'5.1%','-','-','nwp-e_v3','성공',''],
-      ['해맞이 태양광','태양광',6.1,'6.8%','-','-','nwp-e_v2','성공',''],
-      ['온누리 태양광','태양광',5.9,'7.4%','-','-','nwp-e_v2','성공',''],
-      ['금능1호 태양광','태양광',5.2,'11.2%','-','-','nwp-e_v2','주의',''],
-      ['김주풍력 01단계','풍력',24.8,'9.1%','-','-','ecmwf-ifs','성공',''],
+      ['광양항태양광 01단계','태양광','VPP-전남권',14.2,'4.2%','-','-','nwp-e_v3','성공',''],
+      ['광양항태양광 04단계','태양광','VPP-전남권',13.6,'5.1%','-','-','nwp-e_v3','성공',''],
+      ['해맞이 태양광','태양광','VPP-전남권',6.1,'6.8%','-','-','nwp-e_v2','성공',''],
+      ['온누리 태양광','태양광','VPP-전남권',5.9,'7.4%','-','-','nwp-e_v2','성공',''],
+      ['순천 바이오가스','바이오','VPP-전남권',8.5,'2.1%','-','-','baseline-v1','성공',''],
+      ['여수 바이오매스','바이오','VPP-전남권',16.8,'2.8%','-','-','baseline-v1','성공',''],
+      ['광주 V2G 스테이션','V2G','VPP-전남권',4.3,'10.5%','-','-','ocpp-stat','성공',''],
+      ['전남 V2G 허브','V2G','VPP-전남권',8.1,'11.8%','-','-','ocpp-stat','주의',''],
+      ['금능1호 태양광','태양광','VPP-제주권',5.2,'11.2%','-','-','nwp-e_v2','주의',''],
+      ['금능1호 ESS','ESS','VPP-제주권',10.8,'5.5%','-','-','ess-cycle','성공',''],
+      ['제주 ESS허브','ESS','VPP-제주권',15.0,'6.2%','-','-','ess-cycle','성공',''],
+      ['김주풍력 01단계','풍력','VPP-경북권',24.8,'9.1%','-','-','ecmwf-ifs','성공',''],
+      ['김주풍력 02단계','풍력','VPP-경북권',57.0,'8.2%','-','-','ecmwf-ifs','성공',''],
     ].map(r=>{
-      const st=r[7]==='성공'?'ok':(r[7]==='주의'?'warn':'err');
-      return `<tr><td>${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]}</td><td class="mono" style="color:${r[3]==='-'?'var(--semantic-label-alt)':(parseFloat(r[3])<7?'var(--semantic-positive-normal)':(parseFloat(r[3])<10?'var(--palette-yellow-40)':'var(--semantic-negative-normal)'))}">${r[3]}</td><td class="mono" style="color:var(--semantic-label-alt)">${r[4]}</td><td class="mono" style="color:var(--semantic-label-alt)">${r[5]}</td><td class="mono" style="font-size:12px">${r[6]}</td><td><span class="badge ${st}">${r[7]}</span></td><td class="mono" style="font-size:12px;color:var(--semantic-label-alt)">${r[8]||'-'}</td></tr>`;
+      const st=r[8]==='성공'?'ok':(r[8]==='주의'?'warn':'err');
+      return `<tr class="da-fcst-row" data-vpp="${r[2]}" data-type="${r[1]}"><td>${r[0]}</td><td>${r[1]}</td><td class="mono">${r[3]}</td><td class="mono" style="color:${r[4]==='-'?'var(--semantic-label-alt)':(parseFloat(r[4])<7?'var(--semantic-positive-normal)':(parseFloat(r[4])<10?'var(--palette-yellow-40)':'var(--semantic-negative-normal)'))}">${r[4]}</td><td class="mono" style="color:var(--semantic-label-alt)">${r[5]}</td><td class="mono" style="color:var(--semantic-label-alt)">${r[6]}</td><td class="mono" style="font-size:12px">${r[7]}</td><td><span class="badge ${st}">${r[8]}</span></td><td class="mono" style="font-size:12px;color:var(--semantic-label-alt)">${r[9]||'-'}</td></tr>`;
     }).join('')}
     </tbody>
   </table>
@@ -362,14 +369,42 @@ ${_mkCross('bidDA-main')}
     <thead><tr><th>제출일시</th><th>차수</th><th>VPP 그룹</th><th>입찰용량</th><th>낙찰용량</th><th>낙찰률</th><th>평균가(원)</th><th>DAES</th><th>상태</th></tr></thead>
     <tbody id="da-recent-tbody">
     ${[
+      // 2026-04-22 (오늘 제출)
       ['2026-04-22 15:00','2차','VPP-전남권',142.7,138.5,97,128,'+18,240K','제출완료'],
+      ['2026-04-22 15:00','2차','VPP-제주권',22.5,21.0,93,110,'+2,310K','제출완료'],
+      ['2026-04-22 15:00','2차','VPP-경북권',30.2,28.2,93,122,'+3,440K','제출완료'],
       ['2026-04-22 11:00','1차','VPP-전남권',145.2,140.1,97,122,'+17,900K','제출완료'],
+      ['2026-04-22 11:00','1차','VPP-제주권',22.8,21.5,94,105,'+2,260K','제출완료'],
+      ['2026-04-22 11:00','1차','VPP-경북권',30.5,28.7,94,118,'+3,390K','제출완료'],
+      // 2026-04-21
       ['2026-04-21 15:00','2차','VPP-전남권',141.8,132.4,93,130,'+17,560K','제출완료'],
+      ['2026-04-21 15:00','2차','VPP-제주권',22.4,20.8,93,108,'+2,250K','제출완료'],
+      ['2026-04-21 15:00','2차','VPP-경북권',29.8,27.5,92,124,'+3,410K','제출완료'],
       ['2026-04-21 11:00','1차','VPP-전남권',144.5,135.8,94,120,'+17,080K','제출완료'],
+      ['2026-04-21 11:00','1차','VPP-제주권',22.6,21.0,93,103,'+2,180K','제출완료'],
+      ['2026-04-21 11:00','1차','VPP-경북권',30.0,28.0,93,116,'+3,250K','제출완료'],
+      // 2026-04-20
       ['2026-04-20 15:00','2차','VPP-전남권',143.2,128.9,90,132,'+17,310K','제출완료'],
+      ['2026-04-20 15:00','2차','VPP-제주권',22.1,19.2,87,112,'+2,150K','제출완료'],
+      ['2026-04-20 15:00','2차','VPP-경북권',29.5,26.8,91,126,'+3,380K','제출완료'],
       ['2026-04-20 11:00','1차','VPP-전남권',146.8,139.5,95,118,'+17,445K','제출완료'],
+      ['2026-04-20 11:00','1차','VPP-제주권',22.5,21.2,94,102,'+2,160K','제출완료'],
+      ['2026-04-20 11:00','1차','VPP-경북권',30.3,28.5,94,114,'+3,250K','제출완료'],
+      // 2026-04-19
       ['2026-04-19 15:00','2차','VPP-전남권',140.1,126.3,90,135,'+17,120K','제출완료'],
-    ].map(r=>`<tr data-vpp="${r[2]}"><td class="mono">${r[0]}</td><td><span class="badge ${r[1]==='1차'?'inf':''}" ${r[1]==='2차'?'style="background:var(--semantic-tag-bg-yellow);color:var(--semantic-tag-label-yellow)"':''}>${r[1]}</span></td><td>${r[2]}</td><td class="mono">${r[3]}MW</td><td class="mono" style="color:var(--semantic-brand-primary)">${r[4]}MW</td><td class="mono">${r[5]}%</td><td class="mono">${r[6]}</td><td class="mono" style="color:var(--semantic-positive-normal)">${r[7]}</td><td><span class="badge ok">${r[8]}</span></td></tr>`).join('')}
+      ['2026-04-19 15:00','2차','VPP-제주권',21.8,18.9,87,118,'+2,230K','제출완료'],
+      ['2026-04-19 15:00','2차','VPP-경북권',29.2,26.5,91,128,'+3,390K','제출완료'],
+      ['2026-04-19 11:00','1차','VPP-전남권',143.5,134.2,94,121,'+16,240K','제출완료'],
+      ['2026-04-19 11:00','1차','VPP-제주권',22.0,20.5,93,107,'+2,190K','제출완료'],
+      ['2026-04-19 11:00','1차','VPP-경북권',29.8,27.8,93,115,'+3,200K','제출완료'],
+      // 2026-04-18 (Fail-Safe 발동일)
+      ['2026-04-18 15:00','2차','VPP-전남권',139.5,123.8,89,138,'+17,090K','제출완료'],
+      ['2026-04-18 15:00','2차','VPP-제주권',21.5,18.5,86,120,'+2,220K','제출완료'],
+      ['2026-04-18 15:00','2차','VPP-경북권',29.0,26.0,90,130,'+3,380K','제출완료'],
+      ['2026-04-18 11:00','1차','VPP-전남권',142.0,131.5,93,119,'+15,650K','제출완료'],
+      ['2026-04-18 11:00','1차','VPP-제주권',21.7,20.0,92,105,'+2,100K','제출완료'],
+      ['2026-04-18 11:00','1차','VPP-경북권',29.5,27.5,93,113,'+3,110K','제출완료'],
+    ].map(r=>`<tr data-vpp="${r[2]}" data-round="${r[1]==='1차'?'1':'2'}"><td class="mono">${r[0]}</td><td><span class="badge ${r[1]==='1차'?'inf':''}" ${r[1]==='2차'?'style="background:var(--semantic-tag-bg-yellow);color:var(--semantic-tag-label-yellow)"':''}>${r[1]}</span></td><td>${r[2]}</td><td class="mono">${r[3]}MW</td><td class="mono" style="color:var(--semantic-brand-primary)">${r[4]}MW</td><td class="mono">${r[5]}%</td><td class="mono">${r[6]}</td><td class="mono" style="color:var(--semantic-positive-normal)">${r[7]}</td><td><span class="badge ok">${r[8]}</span></td></tr>`).join('')}
     </tbody>
   </table>
   </div>
@@ -547,6 +582,13 @@ window.bidDaMainApply=function(){
   });
   // 금일 입찰 도표 (VPP + 자원유형 보기 필터)
   document.querySelectorAll('.da-bid-row').forEach(tr=>{
+    let show=true;
+    if(vpp!=='전체' && tr.dataset.vpp!==vpp) show=false;
+    if(type!=='all' && tr.dataset.type!==type) show=false;
+    tr.style.display=show?'':'none';
+  });
+  // 예측 현황 자원별 테이블 (VPP + 자원유형)
+  document.querySelectorAll('.da-fcst-row').forEach(tr=>{
     let show=true;
     if(vpp!=='전체' && tr.dataset.vpp!==vpp) show=false;
     if(type!=='all' && tr.dataset.type!==type) show=false;
