@@ -306,10 +306,10 @@ ${_mkCross('bidDA-main')}
 <!-- ========== VIEW 2: 예측 현황 ========== -->
 <div id="pg-view-forecast" style="display:none">
   <div class="g4">
-    <div class="card acc"><div class="ct">1차 예측 상태</div><div class="kv" style="color:var(--semantic-positive-normal)">완료</div><div class="kd up">성공 6/6 · NMAE 6.8%</div></div>
-    <div class="card"><div class="ct">2차 예측 상태</div><div class="kv" style="color:var(--semantic-label-alt)">대기</div><div class="kd neu">14:00 생성 예정</div></div>
-    <div class="card"><div class="ct">Fail-Safe 발동</div><div class="kv">0<span class="ku">회</span></div><div class="kd up">금일 / 월누적 1회</div></div>
-    <div class="card"><div class="ct">정확도 Top 자원</div><div class="kv">광양항태양광</div><div class="kd up">NMAE 4.2%</div></div>
+    <div class="card acc"><div class="ct">1차 예측 상태 ${window.tip('1차 예측 상태','1차 입찰(09:00~12:00)에 사용된 예측 모델의 실행 결과','자원별 예측 성공/실패 집계 + NMAE 평균','완료: 모든 자원 OK / 진행: 일부 누락 / 오류: 모델 실패 → fallback 적용')}</div><div class="kv" style="color:var(--semantic-positive-normal)">완료</div><div class="kd up">성공 6/6 · NMAE 6.8%</div></div>
+    <div class="card"><div class="ct">2차 예측 상태 ${window.tip('2차 예측 상태','2차 입찰(14:00~17:00)에 사용될 예측 모델의 실행 결과','14:00 자동 생성 — 1차 대비 실측 데이터 4시간 추가 반영','대기: 생성 전 / 완료: 정상 생성 / 오류: 1차 결과 재사용')}</div><div class="kv" style="color:var(--semantic-label-alt)">대기</div><div class="kd neu">14:00 생성 예정</div></div>
+    <div class="card"><div class="ct">Fail-Safe 발동 ${window.tip('Fail-Safe 발동','예측 모델 실패 시 fallback(persistence) 모델로 자동 전환된 횟수','COUNT(*) FROM forecast_log WHERE fallback=true','발동 시 정확도 ~30% 하락 — 월 3회 초과 시 모델 점검 필요')}</div><div class="kv">0<span class="ku">회</span></div><div class="kd up">금일 / 월누적 1회</div></div>
+    <div class="card"><div class="ct">정확도 Top 자원 ${window.tip('정확도 Top 자원','금일 NMAE가 가장 낮은(=가장 정확한) 자원','MIN(NMAE) FROM forecast_today GROUP BY resource','NMAE 5% 이내 = 우수 / 8% 이내 = 양호 / 10% 초과 = 모델 재학습 권장')}</div><div class="kv">광양항태양광</div><div class="kd up">NMAE 4.2%</div></div>
   </div>
   <div class="card mb"><div class="sh"><div class="st">자원별 예측 현황 (금일 생성분)</div><div style="display:flex;gap:8px;align-items:center"><span class="kpi-pill" style="font-size:11px">1차 10:00 생성</span><button class="cb n sm" onclick="toast('실패 자원 재예측을 실행합니다.')">실패 자원 재예측</button></div></div>
   <div style="overflow-x:auto">
@@ -351,10 +351,10 @@ ${_mkCross('bidDA-main')}
 <!-- ========== VIEW 3: 입찰 내역 ========== -->
 <div id="pg-view-history" style="display:none">
   <div class="g4">
-    <div class="card acc"><div class="ct">최근 7일 제출</div><div class="kv">14<span class="ku">회</span></div><div class="kd up">1차 7 / 2차 7</div></div>
-    <div class="card"><div class="ct">평균 낙찰률</div><div class="kv" style="color:var(--semantic-positive-normal)">93<span class="ku">%</span></div><div class="kd up">▲ +2.1%p 전주</div></div>
-    <div class="card"><div class="ct">누적 DAES</div><div class="kv">128.4<span class="ku">백만원</span></div><div class="kd up">7일 누계</div></div>
-    <div class="card"><div class="ct">평균 NMAE</div><div class="kv">6.9<span class="ku">%</span></div><div class="kd up">목표 8% 내</div></div>
+    <div class="card acc"><div class="ct">최근 7일 제출 ${window.tip('최근 7일 제출','최근 7일간 KPX에 제출한 입찰 회차 수','COUNT(*) FROM bids WHERE submitted_at ≥ today-7','정상 운영 시 1차 7회 + 2차 7회 = 총 14회 / 마감 미준수 시 누락')}</div><div class="kv">14<span class="ku">회</span></div><div class="kd up">1차 7 / 2차 7</div></div>
+    <div class="card"><div class="ct">평균 낙찰률 ${window.tip('평균 낙찰률','제출 입찰량 대비 낙찰된 비율의 7일 평균','AVG(낙찰량 ÷ 제출량 × 100) [%]','90% 이상 = 우수 / 70~90% = 양호 / 70% 미만 = 가격 전략 재검토 필요')}</div><div class="kv" style="color:var(--semantic-positive-normal)">93<span class="ku">%</span></div><div class="kd up">▲ +2.1%p 전주</div></div>
+    <div class="card"><div class="ct">누적 DAES ${window.tip('누적 DAES (Day-Ahead Earned Settlement)','최근 7일간 하루전시장에서 확정된 정산 수익 누계','Σ(낙찰량 × 시간대별 SMP) [백만원]','SMP 변동 반영 / 실시간 편차정산(IBES)·페널티는 별도 차감')}</div><div class="kv">128.4<span class="ku">백만원</span></div><div class="kd up">7일 누계</div></div>
+    <div class="card"><div class="ct">평균 NMAE ${window.tip('평균 NMAE (Normalized Mean Absolute Error)','7일간 예측값과 실측값의 정규화 평균 절대 오차','AVG(|예측-실측| ÷ 정격용량) × 100 [%]','목표 8% 이내 — 8% 초과 시 정산 페널티 / 12% 초과 시 모델 재학습')}</div><div class="kv">6.9<span class="ku">%</span></div><div class="kd up">목표 8% 내</div></div>
   </div>
   <div class="card"><div class="sh"><div class="st">최근 입찰 내역</div>${window.csvBtn('da-recent-tbody','da_recent_bids','최근 입찰 내역')}</div>
   <div style="overflow-x:auto">
