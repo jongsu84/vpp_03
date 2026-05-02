@@ -191,7 +191,9 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
         const dNum=parseFloat(delta);
         const dColor=dNum>0?'var(--semantic-positive-normal)':(dNum<0?'var(--semantic-negative-normal)':'var(--semantic-label-alt)');
         const dSign=dNum>0?'+':'';
-        return `<tr class="rt-res-row" data-resource="${r[0]}"><td class="mono">${i+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="mono">${r[3].toFixed(2)} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[4].toFixed(2)} MW</td><td class="mono rt-bid-qty" style="color:var(--semantic-brand-primary)">${r[5].toFixed(2)} MW</td><td class="mono" style="color:${dColor}">${dSign}${delta} MW</td><td>${r[6]}</td><td class="rt-status-cell"><span class="badge ok">제출완료</span></td></tr>`;
+        const vppMap={'전남':'VPP-전남권','제주':'VPP-제주권','경북':'VPP-경북권'};
+        const vpp=vppMap[r[2]]||'';
+        return `<tr class="rt-res-row" data-resource="${r[0]}" data-vpp="${vpp}" data-type="${r[1]}"><td class="mono">${i+1}</td><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td class="mono">${r[3].toFixed(2)} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[4].toFixed(2)} MW</td><td class="mono rt-bid-qty" style="color:var(--semantic-brand-primary)">${r[5].toFixed(2)} MW</td><td class="mono" style="color:${dColor}">${dSign}${delta} MW</td><td>${r[6]}</td><td class="rt-status-cell"><span class="badge ok">제출완료</span></td></tr>`;
       }).join('')}
       </tbody>
     </table>
@@ -218,13 +220,13 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
   <div style="overflow-x:auto">
   <table class="tbl"><thead><tr><th>자원명</th><th>발전원</th><th>현재 출력</th><th>+15분 예측</th><th>+30분 예측</th><th>+60분 예측</th><th>사용 모델</th><th>신뢰도</th></tr></thead><tbody id="brm-fcst-tbody">
     ${[
-      ['광양항태양광 01단계','태양광',2.18,2.22,2.16,1.95,'hybrid-ensemble',96.8],
-      ['광양항태양광 04단계','태양광',2.09,2.14,2.08,1.88,'hybrid-ensemble',96.2],
-      ['해맞이 태양광','태양광',0.95,0.96,0.93,0.82,'nowcast-v2',95.1],
-      ['온누리 태양광','태양광',0.94,0.95,0.91,0.80,'nowcast-v2',94.8],
-      ['금능1호 태양광','태양광',0.88,0.85,0.82,0.72,'nowcast-v2',91.4],
-      ['김주풍력 01단계','풍력',3.80,3.95,4.10,4.25,'kma-ultrashort',93.6],
-    ].map(r=>`<tr data-type="${r[1]}"><td>${r[0]}</td><td>${r[1]}</td><td class="mono">${r[2]} MW</td><td class="mono" style="color:var(--semantic-brand-primary)">${r[3]} MW</td><td class="mono">${r[4]} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[5]} MW</td><td class="mono" style="font-size:12px">${r[6]}</td><td class="mono" style="color:${r[7]>=95?'var(--semantic-positive-normal)':(r[7]>=92?'var(--palette-yellow-40)':'var(--semantic-negative-normal)')}">${r[7]}%</td></tr>`).join('')}
+      ['광양항태양광 01단계','태양광','VPP-전남권',2.18,2.22,2.16,1.95,'hybrid-ensemble',96.8],
+      ['광양항태양광 04단계','태양광','VPP-전남권',2.09,2.14,2.08,1.88,'hybrid-ensemble',96.2],
+      ['해맞이 태양광','태양광','VPP-전남권',0.95,0.96,0.93,0.82,'nowcast-v2',95.1],
+      ['온누리 태양광','태양광','VPP-전남권',0.94,0.95,0.91,0.80,'nowcast-v2',94.8],
+      ['금능1호 태양광','태양광','VPP-제주권',0.88,0.85,0.82,0.72,'nowcast-v2',91.4],
+      ['김주풍력 01단계','풍력','VPP-경북권',3.80,3.95,4.10,4.25,'kma-ultrashort',93.6],
+    ].map(r=>`<tr data-vpp="${r[2]}" data-type="${r[1]}"><td>${r[0]}</td><td>${r[1]}</td><td class="mono">${r[3]} MW</td><td class="mono" style="color:var(--semantic-brand-primary)">${r[4]} MW</td><td class="mono">${r[5]} MW</td><td class="mono" style="color:var(--semantic-label-alt)">${r[6]} MW</td><td class="mono" style="font-size:12px">${r[7]}</td><td class="mono" style="color:${r[8]>=95?'var(--semantic-positive-normal)':(r[8]>=92?'var(--palette-yellow-40)':'var(--semantic-negative-normal)')}">${r[8]}%</td></tr>`).join('')}
   </tbody></table>
   </div>
   </div>
@@ -266,7 +268,8 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
     ].map(r=>{
       const over=r[6].includes('임계');
       const cur=r[0]==='15:15';
-      return `<tr${cur?' style="background:var(--semantic-brand-primary-assistive)"':''}><td class="mono">${r[0]}${cur?' <span class="badge inf" style="margin-left:4px">진행중</span>':''}</td><td class="mono">${r[1]}</td><td class="mono" style="color:${parseFloat(r[2])>0?'var(--semantic-positive-normal)':(parseFloat(r[2])<0?'var(--semantic-negative-normal)':'var(--semantic-label-alt)')}">${r[2]>0?'+':''}${r[2]} MW</td><td>${r[3]}</td><td class="mono" style="color:${parseFloat(r[4])>5?'var(--semantic-negative-normal)':(parseFloat(r[4])>3?'var(--palette-yellow-40)':'var(--semantic-positive-normal)')}">${r[4]}</td><td class="mono" style="font-size:12px">${r[5]}</td><td><span class="badge ${cur?'inf':(over?'warn':'ok')}">${r[6]}</span></td></tr>`;
+      // T-75 제출은 그룹 단위 — 현재 데이터는 VPP-전남권 기준으로 가정
+      return `<tr data-vpp="VPP-전남권"${cur?' style="background:var(--semantic-brand-primary-assistive)"':''}><td class="mono">${r[0]}${cur?' <span class="badge inf" style="margin-left:4px">진행중</span>':''}</td><td class="mono">${r[1]}</td><td class="mono" style="color:${parseFloat(r[2])>0?'var(--semantic-positive-normal)':(parseFloat(r[2])<0?'var(--semantic-negative-normal)':'var(--semantic-label-alt)')}">${r[2]>0?'+':''}${r[2]} MW</td><td>${r[3]}</td><td class="mono" style="color:${parseFloat(r[4])>5?'var(--semantic-negative-normal)':(parseFloat(r[4])>3?'var(--palette-yellow-40)':'var(--semantic-positive-normal)')}">${r[4]}</td><td class="mono" style="font-size:12px">${r[5]}</td><td><span class="badge ${cur?'inf':(over?'warn':'ok')}">${r[6]}</span></td></tr>`;
     }).join('')}
   </tbody></table>
   </div>
@@ -446,10 +449,27 @@ ${_mkBidFilter({prefix:'brm',onChange:'bidRtMainApply',rightInfo:'<span style="d
   </div>
 </div>`;
 window.bidRtMainApply=function(){
+  const vpp=document.getElementById('brm-vpp')?.value||'전체';
   const type=document.getElementById('brm-type')?.value||'all';
+  // VIEW 1: 실시간 현황 자원 표 (VPP + 유형)
+  document.querySelectorAll('.rt-res-row').forEach(tr=>{
+    let show=true;
+    if(vpp!=='전체' && tr.dataset.vpp!==vpp) show=false;
+    if(type!=='all' && tr.dataset.type!==type) show=false;
+    tr.style.display=show?'':'none';
+  });
+  // VIEW 2: 단기 예측 현황 (VPP + 유형) — data-vpp 추가 시 둘 다 적용
   document.querySelectorAll('#brm-fcst-tbody tr').forEach(tr=>{
-    const cType=tr.dataset.type;
-    tr.style.display=(type==='all'||cType===type)?'':'none';
+    let show=true;
+    if(vpp!=='전체' && tr.dataset.vpp && tr.dataset.vpp!==vpp) show=false;
+    if(type!=='all' && tr.dataset.type!==type) show=false;
+    tr.style.display=show?'':'none';
+  });
+  // VIEW 3: T-75 제출 이력 (그룹 단위 — VPP 필터만)
+  document.querySelectorAll('#rt-t75-tbody tr').forEach(tr=>{
+    let show=true;
+    if(vpp!=='전체' && tr.dataset.vpp && tr.dataset.vpp!==vpp) show=false;
+    tr.style.display=show?'':'none';
   });
 };
 window['I_bidRT-main']=function(){
