@@ -136,12 +136,15 @@ window.hisGenApply=function(){
     if(to && r.date>to) return false;
     return true;
   });
-  var tb=document.getElementById('his-gen-tbody');
-  if(tb){
-    tb.innerHTML=data.map(function(r){
-      return '<tr><td>'+r.date+'</td><td>'+r.vpp+'</td><td class="mono">'+r.sol.toFixed(1)+'</td><td class="mono">'+r.win.toFixed(1)+'</td><td class="mono">'+r.ess.toFixed(1)+'</td><td class="mono">'+r.sum.toFixed(1)+'</td><td class="mono">'+r.smp+'</td><td class="mono">'+r.rev.toLocaleString()+'</td></tr>';
-    }).join('');
-  }
+  window.paginate({
+    tbodyId:'his-gen-tbody',data:data,pageSize:20,
+    render:function(slice){
+      var tb=document.getElementById('his-gen-tbody');
+      if(tb) tb.innerHTML=slice.map(function(r){
+        return '<tr><td>'+r.date+'</td><td>'+r.vpp+'</td><td class="mono">'+r.sol.toFixed(1)+'</td><td class="mono">'+r.win.toFixed(1)+'</td><td class="mono">'+r.ess.toFixed(1)+'</td><td class="mono">'+r.sum.toFixed(1)+'</td><td class="mono">'+r.smp+'</td><td class="mono">'+r.rev.toLocaleString()+'</td></tr>';
+      }).join('');
+    }
+  });
   var cnt=document.getElementById('hg-cnt'); if(cnt) cnt.textContent=data.length+' 건';
   // KPI 재계산
   var totalSum=data.reduce(function(s,r){return s+r.sum;},0);

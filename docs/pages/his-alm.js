@@ -59,14 +59,17 @@ window.hisAlmApply=function(){
     if(stat!=='전체' && r.status!==stat) return false;
     return true;
   });
-  var tb=document.getElementById('his-alm-tbody');
-  if(tb){
-    tb.innerHTML=data.map(function(r){
-      var lvlCls=r.level==='Critical'?'err':(r.level==='Major'?'warn':(r.level==='Minor'?'inf':'off'));
-      var stCls=r.status==='완료'?'ok':(r.status==='조치중'?'warn':'err');
-      return '<tr><td class="mono" style="font-size:9px;color:var(--acc2)">'+r.code+'</td><td>'+r.name+'</td><td>'+r.vpp+'</td><td>'+r.res+'</td><td class="mono" style="font-size:11px">'+r.date+'</td><td class="mono" style="font-size:11px">'+r.start+'</td><td class="mono" style="font-size:11px">'+(r.end||'미해제')+'</td><td class="mono" style="font-size:11px">'+r.duration+'</td><td><span class="badge '+lvlCls+'">'+r.level+'</span></td><td><span class="badge '+stCls+'">'+r.status+'</span></td></tr>';
-    }).join('');
-  }
+  window.paginate({
+    tbodyId:'his-alm-tbody',data:data,pageSize:20,
+    render:function(slice){
+      var tb=document.getElementById('his-alm-tbody');
+      if(tb) tb.innerHTML=slice.map(function(r){
+        var lvlCls=r.level==='Critical'?'err':(r.level==='Major'?'warn':(r.level==='Minor'?'inf':'off'));
+        var stCls=r.status==='완료'?'ok':(r.status==='조치중'?'warn':'err');
+        return '<tr><td class="mono" style="font-size:9px;color:var(--acc2)">'+r.code+'</td><td>'+r.name+'</td><td>'+r.vpp+'</td><td>'+r.res+'</td><td class="mono" style="font-size:11px">'+r.date+'</td><td class="mono" style="font-size:11px">'+r.start+'</td><td class="mono" style="font-size:11px">'+(r.end||'미해제')+'</td><td class="mono" style="font-size:11px">'+r.duration+'</td><td><span class="badge '+lvlCls+'">'+r.level+'</span></td><td><span class="badge '+stCls+'">'+r.status+'</span></td></tr>';
+      }).join('');
+    }
+  });
   var cnt=document.getElementById('ha-cnt'); if(cnt) cnt.textContent=data.length+' 건';
   var crit=data.filter(r=>r.level==='Critical').length;
   var done=data.filter(r=>r.status==='완료').length;

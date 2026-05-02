@@ -66,13 +66,16 @@ window.hisDisApply=function(){
     if(dod==='80+' && !(r.dod>80)) return false;
     return true;
   });
-  var tb=document.getElementById('his-dis-tbody');
-  if(tb){
-    tb.innerHTML=data.map(function(r){
-      var typBadge=r.type==='방전'?'<span class="badge ok">방전</span>':'<span class="badge inf">충전</span>';
-      return '<tr><td class="mono" style="font-size:11px">'+r.date+'</td><td>'+typBadge+'</td><td>'+r.name+'</td><td>'+r.vpp+'</td><td class="mono">'+r.st+'</td><td class="mono">'+r.en+'</td><td class="mono">'+r.amt+'</td><td class="mono">'+r.ssoc+'%</td><td class="mono">'+r.esoc+'%</td><td class="mono">'+r.dod+'%</td><td class="mono">'+r.rte+'%</td><td class="mono">'+(r.rev?r.rev.toLocaleString():'—')+'</td></tr>';
-    }).join('');
-  }
+  window.paginate({
+    tbodyId:'his-dis-tbody',data:data,pageSize:20,
+    render:function(slice){
+      var tb=document.getElementById('his-dis-tbody');
+      if(tb) tb.innerHTML=slice.map(function(r){
+        var typBadge=r.type==='방전'?'<span class="badge ok">방전</span>':'<span class="badge inf">충전</span>';
+        return '<tr><td class="mono" style="font-size:11px">'+r.date+'</td><td>'+typBadge+'</td><td>'+r.name+'</td><td>'+r.vpp+'</td><td class="mono">'+r.st+'</td><td class="mono">'+r.en+'</td><td class="mono">'+r.amt+'</td><td class="mono">'+r.ssoc+'%</td><td class="mono">'+r.esoc+'%</td><td class="mono">'+r.dod+'%</td><td class="mono">'+r.rte+'%</td><td class="mono">'+(r.rev?r.rev.toLocaleString():'—')+'</td></tr>';
+      }).join('');
+    }
+  });
   var cnt=document.getElementById('hd-cnt'); if(cnt) cnt.textContent=data.length+' 건';
   var dis=data.filter(r=>r.type==='방전');
   var chg=data.filter(r=>r.type==='충전');

@@ -54,13 +54,16 @@ window.hisOutApply=function(){
     if(paid!=='전체' && r.paid!==paid) return false;
     return true;
   });
-  var tb=document.getElementById('his-out-tbody');
-  if(tb){
-    tb.innerHTML=data.map(function(r){
-      var paidBadge=r.paid==='유상'?'<span class="badge ok">유상</span>':'<span class="badge off">무상</span>';
-      return '<tr><td class="mono" style="font-size:11px">'+r.date+'</td><td class="mono" style="font-size:11px">'+r.start+'</td><td class="mono" style="font-size:11px">'+r.end+'</td><td>'+r.org+'</td><td>'+r.type+'</td><td>'+r.vpp+'</td><td class="mono">'+r.amt+'</td><td class="mono">'+r.perf+'%</td><td>'+paidBadge+'</td><td class="mono">'+r.loss.toFixed(2)+'</td></tr>';
-    }).join('');
-  }
+  window.paginate({
+    tbodyId:'his-out-tbody',data:data,pageSize:20,
+    render:function(slice){
+      var tb=document.getElementById('his-out-tbody');
+      if(tb) tb.innerHTML=slice.map(function(r){
+        var paidBadge=r.paid==='유상'?'<span class="badge ok">유상</span>':'<span class="badge off">무상</span>';
+        return '<tr><td class="mono" style="font-size:11px">'+r.date+'</td><td class="mono" style="font-size:11px">'+r.start+'</td><td class="mono" style="font-size:11px">'+r.end+'</td><td>'+r.org+'</td><td>'+r.type+'</td><td>'+r.vpp+'</td><td class="mono">'+r.amt+'</td><td class="mono">'+r.perf+'%</td><td>'+paidBadge+'</td><td class="mono">'+r.loss.toFixed(2)+'</td></tr>';
+      }).join('');
+    }
+  });
   var cnt=document.getElementById('ho-cnt'); if(cnt) cnt.textContent=data.length+' 건';
   var totalAmt=data.reduce(function(s,r){return s+r.amt;},0);
   var avgPerf=data.length?data.reduce(function(s,r){return s+r.perf;},0)/data.length:0;

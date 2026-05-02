@@ -2705,6 +2705,86 @@ function toast(msg,type='ok'){
   setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity 0.3s';setTimeout(()=>t.remove(),300);},2800);
 }
 
+// === 전역 페이지네이션 유틸 (테이블 표준 적용) ===
+window._pgState=window._pgState||{};
+window._pgPrev=window._pgPrev||{};
+window._pgApplier=window._pgApplier||{};
+
+window.paginate=function(opts){
+  // opts: {tbodyId, data, pageSize=20, render(slice)}
+  const id=opts.tbodyId;
+  const pageSize=opts.pageSize||20;
+  const total=opts.data.length;
+  const totalPages=Math.max(1,Math.ceil(total/pageSize));
+
+  // 데이터 건수가 바뀌면 (필터 적용 등) → 1페이지로 리셋
+  if(window._pgPrev[id]!==total){
+    window._pgState[id]=1;
+    window._pgPrev[id]=total;
+  }
+  let page=window._pgState[id]||1;
+  page=Math.max(1,Math.min(totalPages,page));
+  window._pgState[id]=page;
+
+  const start=(page-1)*pageSize;
+  const slice=opts.data.slice(start,start+pageSize);
+  opts.render(slice);
+
+  const tbody=document.getElementById(id);
+  if(!tbody) return;
+  const tbl=tbody.closest('table');
+  if(!tbl) return;
+
+  const ctrlId=id+'-pg';
+  let ctrl=document.getElementById(ctrlId);
+  if(!ctrl){
+    ctrl=document.createElement('div');
+    ctrl.id=ctrlId;
+    ctrl.style.cssText='display:flex;gap:4px;align-items:center;justify-content:flex-end;padding:10px 4px 0;font-size:11px;flex-wrap:wrap;border-top:1px solid var(--semantic-line-alt);margin-top:8px';
+    const wrap=(tbl.parentElement && tbl.parentElement.style.overflowX==='auto')?tbl.parentElement:null;
+    const target=wrap||tbl;
+    target.parentNode.insertBefore(ctrl,target.nextSibling);
+  }
+
+  if(totalPages<=1){
+    ctrl.style.display='none';
+    window._pgApplier[id]=opts;
+    return;
+  }
+  ctrl.style.display='flex';
+
+  const range=2;
+  let lo=Math.max(1,page-range);
+  let hi=Math.min(totalPages,page+range);
+  if(hi-lo<4){
+    if(lo===1) hi=Math.min(totalPages,5);
+    else if(hi===totalPages) lo=Math.max(1,totalPages-4);
+  }
+
+  const baseBtn='padding:4px 9px;font-size:11px;border:1px solid var(--semantic-line-normal);background:var(--semantic-background-1);border-radius:4px;cursor:pointer;color:var(--semantic-label-normal);min-width:28px';
+  const dis=';opacity:0.4;cursor:not-allowed;pointer-events:none';
+  const act=';background:var(--semantic-brand-primary);color:#fff;border-color:var(--semantic-brand-primary);font-weight:600';
+
+  let h='<span style="color:var(--semantic-label-alt);margin-right:auto">총 '+total+'건 · '+page+'/'+totalPages+'</span>';
+  const prevD=page<=1, nextD=page>=totalPages;
+  h+='<button onclick="paginateGo(\''+id+'\',1)" style="'+baseBtn+(prevD?dis:'')+'" title="처음">«</button>';
+  h+='<button onclick="paginateGo(\''+id+'\','+(page-1)+')" style="'+baseBtn+(prevD?dis:'')+'" title="이전">‹</button>';
+  for(let p=lo;p<=hi;p++){
+    h+='<button onclick="paginateGo(\''+id+'\','+p+')" style="'+baseBtn+(p===page?act:'')+'">'+p+'</button>';
+  }
+  h+='<button onclick="paginateGo(\''+id+'\','+(page+1)+')" style="'+baseBtn+(nextD?dis:'')+'" title="다음">›</button>';
+  h+='<button onclick="paginateGo(\''+id+'\','+totalPages+')" style="'+baseBtn+(nextD?dis:'')+'" title="끝">»</button>';
+
+  ctrl.innerHTML=h;
+  window._pgApplier[id]=opts;
+};
+
+window.paginateGo=function(id,page){
+  if(!window._pgApplier[id]) return;
+  window._pgState[id]=page;
+  window._pgPrev[id]=window._pgApplier[id].data.length; // 페이지 이동 시 리셋 방지
+  window.paginate(window._pgApplier[id]);
+};
 
 
 function getChartColors(){

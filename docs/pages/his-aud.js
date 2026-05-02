@@ -150,32 +150,33 @@ window.hisAudApply=function(){
     return true;
   });
 
-  var tb=document.getElementById('his-aud-tbody');
-  if(tb){
-    tb.innerHTML=data.map(function(r){
-      var resCls=r.result==='성공'?'ok':(r.result==='의심'?'warn':'err');
-      var actLabel=window.AUD_LABEL[r.action]||r.action;
-      // 행위 유형별 배지 색상
-      var actCls='inf';
-      if(r.action==='LOGIN_FAIL'||r.action==='ACCT_DEL'||r.action==='ACCT_LOCK') actCls='err';
-      else if(r.action==='ROLE_CHG'||r.action==='ACL_CHG'||r.action==='ACCT_CR'||r.action==='ACCT_UNLOCK') actCls='warn';
-      else if(r.action==='LOGIN'||r.action==='LOGOUT') actCls='ok';
-      // 카테고리 배지
-      var catCls=r.cat==='인증'?'inf':(r.cat==='권한'?'warn':'ok');
-      return '<tr>'
-        +'<td class="mono" style="font-size:9px;color:var(--acc2)">'+r.code+'</td>'
-        +'<td class="mono" style="font-size:11px">'+r.date+' '+r.time+'</td>'
-        +'<td>'+r.user+'<span style="color:var(--semantic-label-alt);font-size:10px;margin-left:4px">('+r.userId+')</span></td>'
-        +'<td>'+r.org+'</td>'
-        +'<td><span class="badge '+catCls+'">'+r.cat+'</span></td>'
-        +'<td><span class="badge '+actCls+'">'+actLabel+'</span><div style="font-size:10px;color:var(--semantic-label-alt);margin-top:2px">'+r.detail+'</div></td>'
-        +'<td class="mono" style="font-size:11px">'+r.target+'</td>'
-        +'<td class="mono" style="font-size:11px">'+r.ip+'</td>'
-        +'<td><span class="badge '+resCls+'">'+r.result+'</span></td>'
-        +'<td class="mono" style="font-size:9px;color:var(--semantic-label-alt)">'+r.hash+'…</td>'
-        +'</tr>';
-    }).join('');
-  }
+  window.paginate({
+    tbodyId:'his-aud-tbody',data:data,pageSize:20,
+    render:function(slice){
+      var tb=document.getElementById('his-aud-tbody');
+      if(tb) tb.innerHTML=slice.map(function(r){
+        var resCls=r.result==='성공'?'ok':(r.result==='의심'?'warn':'err');
+        var actLabel=window.AUD_LABEL[r.action]||r.action;
+        var actCls='inf';
+        if(r.action==='LOGIN_FAIL'||r.action==='ACCT_DEL'||r.action==='ACCT_LOCK') actCls='err';
+        else if(r.action==='ROLE_CHG'||r.action==='ACL_CHG'||r.action==='ACCT_CR'||r.action==='ACCT_UNLOCK') actCls='warn';
+        else if(r.action==='LOGIN'||r.action==='LOGOUT') actCls='ok';
+        var catCls=r.cat==='인증'?'inf':(r.cat==='권한'?'warn':'ok');
+        return '<tr>'
+          +'<td class="mono" style="font-size:9px;color:var(--acc2)">'+r.code+'</td>'
+          +'<td class="mono" style="font-size:11px">'+r.date+' '+r.time+'</td>'
+          +'<td>'+r.user+'<span style="color:var(--semantic-label-alt);font-size:10px;margin-left:4px">('+r.userId+')</span></td>'
+          +'<td>'+r.org+'</td>'
+          +'<td><span class="badge '+catCls+'">'+r.cat+'</span></td>'
+          +'<td><span class="badge '+actCls+'">'+actLabel+'</span><div style="font-size:10px;color:var(--semantic-label-alt);margin-top:2px">'+r.detail+'</div></td>'
+          +'<td class="mono" style="font-size:11px">'+r.target+'</td>'
+          +'<td class="mono" style="font-size:11px">'+r.ip+'</td>'
+          +'<td><span class="badge '+resCls+'">'+r.result+'</span></td>'
+          +'<td class="mono" style="font-size:9px;color:var(--semantic-label-alt)">'+r.hash+'…</td>'
+          +'</tr>';
+      }).join('');
+    }
+  });
   var cnt=document.getElementById('hu-cnt'); if(cnt) cnt.textContent=data.length+' 건';
 
   // KPI

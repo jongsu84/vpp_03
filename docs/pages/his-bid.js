@@ -68,16 +68,19 @@ window.hisBidApply=function(){
     if(rd!=='전체' && r.round!==rd) return false;
     return true;
   });
-  var tb=document.getElementById('his-bid-tbody');
-  if(tb){
-    tb.innerHTML=data.map(function(r){
-      var typBadge=r.type==='DA 입찰'?'<span class="badge inf">DA 입찰</span>':(r.type==='RT 입찰'?'<span class="badge inf">RT 입찰</span>':'<span class="badge warn">제어명령</span>');
-      var resBadge=r.result==='낙찰'||r.result==='성공'?'<span class="badge ok">'+r.result+'</span>':'<span class="badge off">'+r.result+'</span>';
-      var bidTxt=typeof r.bid==='string'?r.bid:r.bid+'MW';
-      var actTxt=typeof r.act==='string'?r.act:r.act+'MW';
-      return '<tr><td class="mono" style="font-size:11px">'+r.date+'</td><td class="mono" style="font-size:11px">'+r.time+'</td><td>'+typBadge+'</td><td class="mono">'+r.round+'</td><td>'+r.vpp+'</td><td class="mono">'+bidTxt+'</td><td class="mono">'+actTxt+'</td><td class="mono">'+r.err+'%</td><td>'+resBadge+'</td></tr>';
-    }).join('');
-  }
+  window.paginate({
+    tbodyId:'his-bid-tbody',data:data,pageSize:20,
+    render:function(slice){
+      var tb=document.getElementById('his-bid-tbody');
+      if(tb) tb.innerHTML=slice.map(function(r){
+        var typBadge=r.type==='DA 입찰'?'<span class="badge inf">DA 입찰</span>':(r.type==='RT 입찰'?'<span class="badge inf">RT 입찰</span>':'<span class="badge warn">제어명령</span>');
+        var resBadge=r.result==='낙찰'||r.result==='성공'?'<span class="badge ok">'+r.result+'</span>':'<span class="badge off">'+r.result+'</span>';
+        var bidTxt=typeof r.bid==='string'?r.bid:r.bid+'MW';
+        var actTxt=typeof r.act==='string'?r.act:r.act+'MW';
+        return '<tr><td class="mono" style="font-size:11px">'+r.date+'</td><td class="mono" style="font-size:11px">'+r.time+'</td><td>'+typBadge+'</td><td class="mono">'+r.round+'</td><td>'+r.vpp+'</td><td class="mono">'+bidTxt+'</td><td class="mono">'+actTxt+'</td><td class="mono">'+r.err+'%</td><td>'+resBadge+'</td></tr>';
+      }).join('');
+    }
+  });
   var cnt=document.getElementById('hb-cnt'); if(cnt) cnt.textContent=data.length+' 건';
   var bids=data.filter(r=>r.type!=='제어명령');
   var ctrls=data.filter(r=>r.type==='제어명령');
