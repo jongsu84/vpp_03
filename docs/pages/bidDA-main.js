@@ -358,10 +358,10 @@ ${_mkCross('bidDA-main')}
 <!-- ========== VIEW 3: 입찰 내역 ========== -->
 <div id="pg-view-history" style="display:none">
   <div class="g4">
-    <div class="card acc"><div class="ct">최근 7일 제출 ${window.tip('최근 7일 제출','최근 7일간 KPX에 제출한 입찰 회차 수','COUNT(*) FROM bids WHERE submitted_at ≥ today-7','정상 운영 시 1차 7회 + 2차 7회 = 총 14회 / 마감 미준수 시 누락')}</div><div class="kv">14<span class="ku">회</span></div><div class="kd up">1차 7 / 2차 7</div></div>
-    <div class="card"><div class="ct">평균 낙찰률 ${window.tip('평균 낙찰률','제출 입찰량 대비 낙찰된 비율의 7일 평균','AVG(낙찰량 ÷ 제출량 × 100) [%]','90% 이상 = 우수 / 70~90% = 양호 / 70% 미만 = 가격 전략 재검토 필요')}</div><div class="kv" style="color:var(--semantic-positive-normal)">93<span class="ku">%</span></div><div class="kd up">▲ +2.1%p 전주</div></div>
-    <div class="card"><div class="ct">누적 DAES ${window.tip('누적 DAES (Day-Ahead Earned Settlement)','최근 7일간 하루전시장에서 확정된 정산 수익 누계','Σ(낙찰량 × 시간대별 SMP) [백만원]','SMP 변동 반영 / 실시간 편차정산(IBES)·페널티는 별도 차감')}</div><div class="kv">128.4<span class="ku">백만원</span></div><div class="kd up">7일 누계</div></div>
-    <div class="card"><div class="ct">평균 NMAE ${window.tip('평균 NMAE (Normalized Mean Absolute Error)','7일간 예측값과 실측값의 정규화 평균 절대 오차','AVG(|예측-실측| ÷ 정격용량) × 100 [%]','목표 8% 이내 — 8% 초과 시 정산 페널티 / 12% 초과 시 모델 재학습')}</div><div class="kv">6.9<span class="ku">%</span></div><div class="kd up">목표 8% 내</div></div>
+    <div class="card acc"><div class="ct">최근 7일 제출 ${window.tip('최근 7일 제출','최근 7일간 KPX에 제출한 입찰 회차 수','COUNT(*) FROM bids WHERE submitted_at ≥ today-7','정상 운영 시 1차 7회 + 2차 7회 = 총 14회 / 마감 미준수 시 누락')}</div><div class="kv" id="bdm-kpi-count">14<span class="ku">회</span></div><div class="kd up" id="bdm-kpi-count-sub">1차 7 / 2차 7</div></div>
+    <div class="card"><div class="ct">평균 낙찰률 ${window.tip('평균 낙찰률','제출 입찰량 대비 낙찰된 비율의 7일 평균','AVG(낙찰량 ÷ 제출량 × 100) [%]','90% 이상 = 우수 / 70~90% = 양호 / 70% 미만 = 가격 전략 재검토 필요')}</div><div class="kv" style="color:var(--semantic-positive-normal)" id="bdm-kpi-rate">93<span class="ku">%</span></div><div class="kd up" id="bdm-kpi-rate-sub">전체 평균</div></div>
+    <div class="card"><div class="ct">누적 DAES ${window.tip('누적 DAES (Day-Ahead Earned Settlement)','최근 7일간 하루전시장에서 확정된 정산 수익 누계','Σ(낙찰량 × 시간대별 SMP) [백만원]','SMP 변동 반영 / 실시간 편차정산(IBES)·페널티는 별도 차감')}</div><div class="kv" id="bdm-kpi-daes">128.4<span class="ku">백만원</span></div><div class="kd up" id="bdm-kpi-daes-sub">7일 누계</div></div>
+    <div class="card"><div class="ct">평균 NMAE ${window.tip('평균 NMAE (Normalized Mean Absolute Error)','7일간 예측값과 실측값의 정규화 평균 절대 오차','AVG(|예측-실측| ÷ 정격용량) × 100 [%]','목표 8% 이내 — 8% 초과 시 정산 페널티 / 12% 초과 시 모델 재학습')}</div><div class="kv" id="bdm-kpi-nmae">6.9<span class="ku">%</span></div><div class="kd up" id="bdm-kpi-nmae-sub">목표 8% 내</div></div>
   </div>
   <div class="card"><div class="sh"><div class="st">최근 입찰 내역</div>${window.csvBtn('da-recent-tbody','da_recent_bids','최근 입찰 내역')}</div>
   <div style="overflow-x:auto">
@@ -594,6 +594,53 @@ window.bidDaMainApply=function(){
     if(type!=='all' && tr.dataset.type!==type) show=false;
     tr.style.display=show?'':'none';
   });
+  // 입찰 내역 KPI 4종 동적 계산 (VPP 필터 기준)
+  window.bdmUpdateLogKpi();
+};
+
+// ===== 입찰 내역 탭 KPI 동적 갱신 =====
+window.bdmUpdateLogKpi=function(){
+  var vpp=document.getElementById('bdm-vpp')?.value||'전체';
+  var rows=Array.from(document.querySelectorAll('#da-recent-tbody tr'));
+  // 필터 적용된 행만 (display !== 'none')
+  var visible=rows.filter(function(tr){return tr.style.display!=='none';});
+  // KPI 1: 제출 횟수 + 1/2차 분리
+  var count=visible.length;
+  var round1=visible.filter(function(tr){return tr.dataset.round==='1';}).length;
+  var round2=visible.filter(function(tr){return tr.dataset.round==='2';}).length;
+  // KPI 2: 평균 낙찰률 (cells[5] = "97%")
+  var rates=visible.map(function(tr){
+    var t=tr.cells[5]?tr.cells[5].textContent:'0';
+    return parseFloat(t)||0;
+  });
+  var avgRate=rates.length?rates.reduce(function(a,b){return a+b;},0)/rates.length:0;
+  // KPI 3: 누적 DAES (cells[7] = "+18,240K" → 천원)
+  var totalDaesK=visible.reduce(function(s,tr){
+    var t=tr.cells[7]?tr.cells[7].textContent:'';
+    var n=parseFloat(t.replace(/[^\d.\-]/g,''))||0;
+    return s+n;
+  },0);
+  var totalDaesM=totalDaesK/1000; // 백만원 단위
+  // KPI 4: 평균 NMAE — 그룹별 매핑 (데이터에 없어 표준 추정)
+  var nmaeMap={'전체':6.9,'VPP-전남권':6.5,'VPP-제주권':8.4,'VPP-경북권':7.8};
+  var nmae=nmaeMap[vpp]||6.9;
+  // KPI 갱신
+  var elC=document.getElementById('bdm-kpi-count');
+  if(elC) elC.innerHTML=count+'<span class="ku">회</span>';
+  var elCs=document.getElementById('bdm-kpi-count-sub');
+  if(elCs) elCs.textContent=vpp==='전체'?('1차 '+round1+' / 2차 '+round2):(vpp+' · 1차 '+round1+' / 2차 '+round2);
+  var elR=document.getElementById('bdm-kpi-rate');
+  if(elR) elR.innerHTML=avgRate.toFixed(1)+'<span class="ku">%</span>';
+  var elRs=document.getElementById('bdm-kpi-rate-sub');
+  if(elRs) elRs.textContent=vpp==='전체'?'전체 평균':(vpp+' 평균');
+  var elD=document.getElementById('bdm-kpi-daes');
+  if(elD) elD.innerHTML=totalDaesM.toFixed(1)+'<span class="ku">백만원</span>';
+  var elDs=document.getElementById('bdm-kpi-daes-sub');
+  if(elDs) elDs.textContent=count>0?('5일 누계 ('+count+'회)'):'데이터 없음';
+  var elN=document.getElementById('bdm-kpi-nmae');
+  if(elN) elN.innerHTML=nmae.toFixed(1)+'<span class="ku">%</span>';
+  var elNs=document.getElementById('bdm-kpi-nmae-sub');
+  if(elNs) elNs.textContent=nmae<8?'목표 8% 내':'⚠ 목표 초과';
 };
 window['I_bidDA-main']=function(){
   const list=document.getElementById('bid-sch-list');
@@ -619,6 +666,8 @@ window['I_bidDA-main']=function(){
   if(typeof window.startDaCountdown==='function') window.startDaCountdown();
   if(typeof window.syncDaChips==='function') window.syncDaChips();
   if(typeof window.updateDaResCount==='function') window.updateDaResCount();
+  // 입찰 내역 KPI 동적 갱신 (필터 + 초기 진입 시 모두)
+  if(typeof window.bidDaMainApply==='function') window.bidDaMainApply();
 };
 window.selRound=function(n,el){
   // 기존 .rd-tab 버튼 호환 (다른 페이지에서 사용 중이면 유지) + select 호출(el null) 모두 지원
