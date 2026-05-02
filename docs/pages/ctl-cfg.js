@@ -48,11 +48,11 @@ window.P['ctl-cfg']=()=>`
 
 <!-- KPI 5종 -->
 <div class="g5" style="margin-bottom:12px">
-  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘','감발 요구량을 자원에 분배하는 방식','수익 최적화: 한계수익 낮은 자원 우선 / 균등: 공평 / 수동: 운영자 지정','수익 최적화 권장 — 일반 균등 배분 대비 30% 손실 절감 가능')}</div><div class="kv">수익 최적화<span class="ku">v2.3</span></div></div>
-  <div class="card"><div class="ct">제어 우선순위 모드 ${window.tip('제어 우선순위 모드','KPX 급전지시와 운영자 수동 제어 간 우선순위','자동 우선: KPX → VPP 알고리즘 / 수동 우선: 운영자 → 알고리즘','자동 우선 기본 — 비상시(설비 이상)는 수동 우선으로 일시 변경')}</div><div class="kv">자동 우선</div></div>
+  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘','감발 요구량을 자원에 분배하는 방식','수익 최적화: 한계수익 낮은 자원 우선 / 균등: 공평 / 수동: 운영자 지정','수익 최적화 권장 — 일반 균등 배분 대비 30% 손실 절감 가능')}</div><div class="kv" id="cg-kpi-algo">수익 최적화<span class="ku">v2.3</span></div></div>
+  <div class="card"><div class="ct">제어 우선순위 모드 ${window.tip('제어 우선순위 모드','KPX 급전지시와 운영자 수동 제어 간 우선순위','자동 우선: KPX → VPP 알고리즘 / 수동 우선: 운영자 → 알고리즘','자동 우선 기본 — 비상시(설비 이상)는 수동 우선으로 일시 변경')}</div><div class="kv" id="cg-kpi-mode">자동 우선</div></div>
   <div class="card"><div class="ct">제어 가능 자원 ${window.tip('제어 가능 자원','현재 알고리즘에 포함된 자원 수','자원 동의 + 통신 OK + 운전 정상','정비/차단 자원은 자동 제외 — 그 자원의 감발량은 다른 자원으로 재분배')}</div><div class="kv">11<span class="ku">/13</span></div></div>
-  <div class="card"><div class="ct">배분 정책 버전 ${window.tip('배분 정책 버전','현재 적용 중인 가중치·정책 버전','SMP·CP·AS·REC·마모비용 가중치 + 제약 조건','정책 변경 시 자동 버전업 — 감사 로그에 변경자/사유 기록')}</div><div class="kv">v2.3<span class="ku">2026-04-20</span></div></div>
-  <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 알고리즘 재계산 시각','Merit Order(제어 순서) 재계산 시각','SMP·CP·AS 변경 시 또는 정해진 주기마다 자동 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv">2분 전</div></div>
+  <div class="card"><div class="ct">배분 정책 버전 ${window.tip('배분 정책 버전','현재 적용 중인 가중치·정책 버전','SMP·CP·AS·REC·마모비용 가중치 + 제약 조건','정책 변경 시 자동 버전업 — 감사 로그에 변경자/사유 기록')}</div><div class="kv" id="cg-kpi-pol">v2.3<span class="ku">2026-04-20</span></div></div>
+  <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 알고리즘 재계산 시각','Merit Order(제어 순서) 재계산 시각','SMP·CP·AS 변경 시 또는 정해진 주기마다 자동 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv" id="cg-kpi-recalc">2분 전</div></div>
 </div>
 
 <!-- 제어 배분 알고리즘 & 가중치 -->
@@ -61,38 +61,38 @@ window.P['ctl-cfg']=()=>`
     <div class="sh"><div class="st">제어 배분 알고리즘 <span class="tip">ⓘ 감발 요구량을 자원별로 분배하는 방식</span></div></div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px">
       <label style="border:2px solid #0059ff;border-radius:8px;padding:10px;cursor:pointer;background:#f0f6ff">
-        <input type="radio" name="algo" checked style="margin-right:6px"><b style="font-size:12px">수익 최적화</b>
+        <input type="radio" name="algo" value="profit" checked style="margin-right:6px"><b style="font-size:12px">수익 최적화</b>
         <div style="font-size:10px;color:#666;margin-top:4px">한계수익 낮은 자원 우선 감발<br>손실 최소화 (권장)</div>
       </label>
       <label style="border:1px solid #d0d6e0;border-radius:8px;padding:10px;cursor:pointer">
-        <input type="radio" name="algo" style="margin-right:6px"><b style="font-size:12px">균등 배분</b>
+        <input type="radio" name="algo" value="equal" style="margin-right:6px"><b style="font-size:12px">균등 배분</b>
         <div style="font-size:10px;color:#666;margin-top:4px">전 자원 동일 비율 감발<br>공평·단순</div>
       </label>
       <label style="border:1px solid #d0d6e0;border-radius:8px;padding:10px;cursor:pointer">
-        <input type="radio" name="algo" style="margin-right:6px"><b style="font-size:12px">수동 순서</b>
+        <input type="radio" name="algo" value="manual" style="margin-right:6px"><b style="font-size:12px">수동 순서</b>
         <div style="font-size:10px;color:#666;margin-top:4px">운영자 지정 순서 사용<br>강제 제어</div>
       </label>
     </div>
     <div class="form-section" style="font-size:11px;color:#555;margin-top:10px">가중치 (합=1.0)</div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">SMP 한계수익</label><input type="range" min="0" max="100" value="45" style="flex:1"><span class="mono" style="min-width:40px;text-align:right">0.45</span></div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">용량정산금 (CP)</label><input type="range" min="0" max="100" value="25" style="flex:1"><span class="mono" style="min-width:40px;text-align:right">0.25</span></div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">부가서비스 (AS)</label><input type="range" min="0" max="100" value="15" style="flex:1"><span class="mono" style="min-width:40px;text-align:right">0.15</span></div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">REC·인센티브</label><input type="range" min="0" max="100" value="10" style="flex:1"><span class="mono" style="min-width:40px;text-align:right">0.10</span></div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">설비 마모 비용</label><input type="range" min="0" max="100" value="5" style="flex:1"><span class="mono" style="min-width:40px;text-align:right">0.05</span></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">SMP 한계수익</label><input type="range" min="0" max="100" value="45" style="flex:1" id="cg-w-smp"><span class="mono" style="min-width:40px;text-align:right">0.45</span></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">용량정산금 (CP)</label><input type="range" min="0" max="100" value="25" style="flex:1" id="cg-w-cp"><span class="mono" style="min-width:40px;text-align:right">0.25</span></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">부가서비스 (AS)</label><input type="range" min="0" max="100" value="15" style="flex:1" id="cg-w-as"><span class="mono" style="min-width:40px;text-align:right">0.15</span></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">REC·인센티브</label><input type="range" min="0" max="100" value="10" style="flex:1" id="cg-w-rec"><span class="mono" style="min-width:40px;text-align:right">0.10</span></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">설비 마모 비용</label><input type="range" min="0" max="100" value="5" style="flex:1" id="cg-w-wear"><span class="mono" style="min-width:40px;text-align:right">0.05</span></div>
   </div>
 
   <div class="card mb">
     <div class="sh"><div class="st">제약 조건 & 정책 파라미터</div></div>
-    <div class="fg"><label class="fl">제어 우선순위 모드</label><select class="sel"><option>자동 우선 (KPX → VPP 알고리즘)</option><option>수동 우선 (운영자 → 알고리즘)</option><option>혼합 (비상시 수동)</option></select></div>
-    <div class="fg"><label class="fl">최소 감발률 (자원 단위) %</label><input class="inp" value="10" type="number"></div>
-    <div class="fg"><label class="fl">최대 감발률 (자원 단위) %</label><input class="inp" value="90" type="number"></div>
-    <div class="fg"><label class="fl">ESS 배터리 SoC 하한 %</label><input class="inp" value="20" type="number"></div>
-    <div class="fg"><label class="fl">수동 제어 복귀 시간 (분)</label><input class="inp" value="30" type="number"></div>
-    <div class="fg"><label class="fl">피드백 확인 주기 (초)</label><input class="inp" value="5" type="number"></div>
-    <div class="fg"><label class="fl">재계산 주기 (분)</label><input class="inp" value="15" type="number"></div>
-    <div class="fg"><label class="fl">비상 정지 온도 임계치 (°C)</label><input class="inp" value="70" type="number"></div>
-    <div class="fg"><label class="fl">통신 단절 허용 시간 (초)</label><input class="inp" value="30" type="number"></div>
-    <button class="cb p" style="width:100%;font-size:11px;margin-top:8px">정책 저장 · 재배포</button>
+    <div class="fg"><label class="fl">제어 우선순위 모드</label><select class="sel" id="cg-mode"><option>자동 우선 (KPX → VPP 알고리즘)</option><option>수동 우선 (운영자 → 알고리즘)</option><option>혼합 (비상시 수동)</option></select></div>
+    <div class="fg"><label class="fl">최소 감발률 (자원 단위) %</label><input class="inp" value="10" type="number" id="cg-min"></div>
+    <div class="fg"><label class="fl">최대 감발률 (자원 단위) %</label><input class="inp" value="90" type="number" id="cg-max"></div>
+    <div class="fg"><label class="fl">ESS 배터리 SoC 하한 %</label><input class="inp" value="20" type="number" id="cg-soc"></div>
+    <div class="fg"><label class="fl">수동 제어 복귀 시간 (분)</label><input class="inp" value="30" type="number" id="cg-restore"></div>
+    <div class="fg"><label class="fl">피드백 확인 주기 (초)</label><input class="inp" value="5" type="number" id="cg-feedback"></div>
+    <div class="fg"><label class="fl">재계산 주기 (분)</label><input class="inp" value="15" type="number" id="cg-recalc-cycle"></div>
+    <div class="fg"><label class="fl">비상 정지 온도 임계치 (°C)</label><input class="inp" value="70" type="number" id="cg-temp"></div>
+    <div class="fg"><label class="fl">통신 단절 허용 시간 (초)</label><input class="inp" value="30" type="number" id="cg-commloss"></div>
+    <button class="cb p" style="width:100%;font-size:11px;margin-top:8px" onclick="cgSavePolicy()">정책 저장 · 재배포</button>
   </div>
 </div>
 
@@ -102,8 +102,8 @@ window.P['ctl-cfg']=()=>`
     <div class="st">수익성 기반 제어 순서 (Merit Order) <span class="tip">ⓘ 한계수익이 낮은 순으로 먼저 감발</span></div>
     <div style="display:flex;gap:8px;align-items:center">
       ${window.csvBtn('cg-merit-tbody','merit_order_curtailment','수익성 기반 제어 순서')}
-      <button class="cb" style="font-size:10px">시뮬레이션 ▶</button>
-      <button class="cb p" style="font-size:10px">순위 재계산</button>
+      <button class="cb" style="font-size:10px" onclick="cgScrollToSim()">시뮬레이션 ▶</button>
+      <button class="cb p" style="font-size:10px" onclick="cgRecalcMerit()">순위 재계산</button>
     </div>
   </div>
   <table class="tbl" id="cg-merit-tbl" data-no-sort="1">
@@ -164,7 +164,7 @@ window.P['ctl-cfg']=()=>`
     <div class="sh"><div class="st">정책 변경 이력</div></div>
     <table class="tbl" data-no-sort="1">
       <thead><tr><th>시각</th><th>버전</th><th>변경자</th><th>항목</th><th>사유</th></tr></thead>
-      <tbody>
+      <tbody id="cg-history-tbody">
         <tr><td class="mono">04-24 14:32</td><td><span class="badge ok">v2.3</span></td><td>김운영</td><td>CP 가중치 0.20→0.25</td><td>Q2 CP 단가 상승 반영</td></tr>
         <tr><td class="mono">04-20 09:15</td><td>v2.2</td><td>박정책</td><td>ESS SoC 하한 15→20%</td><td>배터리 수명 보호</td></tr>
         <tr><td class="mono">04-15 16:48</td><td>v2.1</td><td>김운영</td><td>알고리즘: 수익 최적화 전환</td><td>균등→수익 (P&amp;L 개선)</td></tr>
@@ -188,5 +188,123 @@ window.cgFilterApply=function(){
     if(pr && tr.getAttribute('data-pri')!==pr) ok=false;
     tr.style.display=ok?'':'none';
   });
+};
+
+// ===== 정책 저장·재배포 / 시뮬레이션 스크롤 / Merit Order 재계산 =====
+function _cgReadWeights(){
+  return {
+    smp:(parseInt(document.getElementById('cg-w-smp')?.value,10)||0)/100,
+    cp:(parseInt(document.getElementById('cg-w-cp')?.value,10)||0)/100,
+    as:(parseInt(document.getElementById('cg-w-as')?.value,10)||0)/100,
+    rec:(parseInt(document.getElementById('cg-w-rec')?.value,10)||0)/100,
+    wear:(parseInt(document.getElementById('cg-w-wear')?.value,10)||0)/100
+  };
+}
+function _cgPad2(n){return String(n).padStart(2,'0');}
+function _cgFmtTime(d){return _cgPad2(d.getMonth()+1)+'-'+_cgPad2(d.getDate())+' '+_cgPad2(d.getHours())+':'+_cgPad2(d.getMinutes());}
+
+window.cgSavePolicy=function(){
+  // 1) 가중치 합 검증 (1.0 ± 0.05 허용)
+  var w=_cgReadWeights();
+  var sum=w.smp+w.cp+w.as+w.rec+w.wear;
+  if(Math.abs(sum-1.0)>0.05){
+    toast('가중치 합계가 1.0이 아닙니다 (현재 '+sum.toFixed(2)+'). 슬라이더를 조정하세요.','warn');
+    return;
+  }
+  // 2) min/max 검증
+  var minR=parseInt(document.getElementById('cg-min')?.value,10);
+  var maxR=parseInt(document.getElementById('cg-max')?.value,10);
+  if(isNaN(minR)||isNaN(maxR)||minR<0||maxR>100){toast('감발률은 0~100 범위여야 합니다.','warn');return;}
+  if(minR>=maxR){toast('최소 감발률은 최대 감발률보다 작아야 합니다.','warn');return;}
+  // 3) 보조 검증
+  var soc=parseInt(document.getElementById('cg-soc')?.value,10);
+  if(isNaN(soc)||soc<0||soc>100){toast('ESS SoC 하한은 0~100% 범위여야 합니다.','warn');return;}
+  // 4) 사용자 확인
+  if(!confirm('정책을 저장하고 즉시 재배포하시겠습니까?\n변경 사항이 11개 자원에 즉시 적용되며, 변경 이력이 영구 보관됩니다.')) return;
+  // 5) 다음 버전 산정 (현재 KPI에서 v2.3 → v2.4)
+  var kpiPol=document.getElementById('cg-kpi-pol');
+  var ver={major:2,minor:4};
+  if(kpiPol){
+    var m=kpiPol.textContent.match(/v(\d+)\.(\d+)/);
+    if(m){ver.major=parseInt(m[1],10); ver.minor=parseInt(m[2],10)+1;}
+  }
+  var newVer='v'+ver.major+'.'+ver.minor;
+  // 6) 알고리즘 라벨
+  var algoEl=document.querySelector('input[name="algo"]:checked');
+  var algoLabel=(algoEl && algoEl.parentElement && algoEl.parentElement.querySelector('b'))
+    ? algoEl.parentElement.querySelector('b').textContent : '수익 최적화';
+  var modeLabel=(document.getElementById('cg-mode')?.value||'자동 우선').split(' (')[0];
+  // 7) 변경 이력 행 추가
+  var now=new Date();
+  var tbody=document.getElementById('cg-history-tbody');
+  if(tbody){
+    var tr=document.createElement('tr');
+    var detail='알고리즘='+algoLabel+' / 가중치(SMP·CP·AS·REC·마모)='
+      +w.smp.toFixed(2)+'·'+w.cp.toFixed(2)+'·'+w.as.toFixed(2)+'·'+w.rec.toFixed(2)+'·'+w.wear.toFixed(2)
+      +' / 감발 '+minR+'~'+maxR+'%';
+    tr.innerHTML='<td class="mono">'+_cgFmtTime(now)+'</td>'
+      +'<td><span class="badge ok">'+newVer+'</span></td>'
+      +'<td>김운영</td>'
+      +'<td style="font-size:11px">'+detail+'</td>'
+      +'<td>운영자 정책 갱신 · 재배포</td>';
+    tbody.insertBefore(tr,tbody.firstChild);
+  }
+  // 8) KPI 갱신
+  if(kpiPol){
+    var dateStr=now.getFullYear()+'-'+_cgPad2(now.getMonth()+1)+'-'+_cgPad2(now.getDate());
+    kpiPol.innerHTML=newVer+'<span class="ku">'+dateStr+'</span>';
+  }
+  var kpiAlgo=document.getElementById('cg-kpi-algo');
+  if(kpiAlgo) kpiAlgo.innerHTML=algoLabel+'<span class="ku">'+newVer+'</span>';
+  var kpiMode=document.getElementById('cg-kpi-mode');
+  if(kpiMode) kpiMode.textContent=modeLabel;
+  toast('정책 '+newVer+' 저장·재배포 완료 — 11개 자원에 즉시 적용');
+};
+
+window.cgScrollToSim=function(){
+  var target=document.getElementById('cg-sim-mw');
+  if(!target){toast('시뮬레이션 영역을 찾을 수 없습니다.','err');return;}
+  var card=target.closest('.card');
+  if(card) card.scrollIntoView({behavior:'smooth',block:'start'});
+  setTimeout(function(){ try{target.focus(); target.select();}catch(e){} },350);
+  toast('감발 시나리오 시뮬레이션 영역으로 이동');
+};
+
+window.cgRecalcMerit=function(){
+  var tbody=document.getElementById('cg-merit-tbody');
+  if(!tbody){toast('Merit Order 테이블을 찾을 수 없습니다.','err');return;}
+  var rows=Array.prototype.slice.call(tbody.querySelectorAll('tr'));
+  var allowed=[], blocked=[];
+  rows.forEach(function(tr){
+    if(tr.getAttribute('data-allow')==='block'){ blocked.push(tr); return; }
+    var cell=tr.cells[8];
+    var m=cell?cell.textContent.match(/(\d+)/):null;
+    var margin=m?parseInt(m[1],10):0;
+    allowed.push({tr:tr,margin:margin});
+  });
+  // 한계수익 오름차순 (낮을수록 우선 감발)
+  allowed.sort(function(a,b){return a.margin-b.margin;});
+  // 재구성
+  tbody.innerHTML='';
+  allowed.forEach(function(item,i){
+    var rank=i+1;
+    var color=rank<=2?'#d32':(rank===3?'#e80':(rank>=9?'#0a7':''));
+    var rankCell=item.tr.cells[0];
+    if(rankCell) rankCell.innerHTML=color?('<b style="color:'+color+'">'+rank+'</b>'):String(rank);
+    var marginCell=item.tr.cells[8];
+    if(marginCell){
+      if(color){
+        marginCell.innerHTML='<b style="color:'+color+'">₩'+item.margin+'</b>';
+      } else {
+        marginCell.innerHTML='₩'+item.margin;
+      }
+    }
+    tbody.appendChild(item.tr);
+  });
+  blocked.forEach(function(tr){ tbody.appendChild(tr); });
+  // KPI 갱신
+  var kpiRecalc=document.getElementById('cg-kpi-recalc');
+  if(kpiRecalc) kpiRecalc.textContent='방금';
+  toast('Merit Order 재계산 완료 — 한계수익 낮은 순 정렬 ('+allowed.length+'개 자원)');
 };
 
