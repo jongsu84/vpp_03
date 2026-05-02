@@ -46,11 +46,10 @@ window.P['ctl-mon']=()=>`
   </div>
 </div>
 
-<!-- KPI 6종 -->
-<div class="g6" style="display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:12px">
-  <div class="card acc"><div class="ct">활성 세션 ${window.tip('활성 제어 세션','현재 처리 중인 제어 명령 세션 수','진행중 + 완료 미확인 세션 합계','동시 다중 세션 정상 — 평균 1~3개 / 5개 이상은 부하 점검 필요')}</div><div class="kv">3<span class="ku">개</span></div></div>
-  <div class="card"><div class="ct">평균 응답 지연 ${window.tip('평균 응답 지연','SCADA 명령 송신 → ACK 수신까지의 평균 왕복 시간','Σ(ACK 시각 - 송신 시각) ÷ N [s] · 24시간 기준','중앙값(p50): 0.28s / p95: 0.42s / p99: 0.85s — 이상 시 RTU 통신 점검')}</div><div class="kv" style="color:#0a7">0.31<span class="ku">s</span></div><div class="kd neu">중앙값 0.28s</div></div>
-  <div class="card"><div class="ct">500ms SLA 준수율 ${window.tip('500ms SLA 준수율','응답 지연이 500ms 이내인 비율','COUNT(지연 ≤ 500ms) ÷ COUNT(*) × 100 [%]','준중앙급전 SLA: 99% 이상 / 미달 시 보상금 차감 대상')}</div><div class="kv" style="color:#0a7">99.4<span class="ku">%</span></div><div class="kd up">24h</div></div>
+<!-- KPI 5종 -->
+<div class="g5" style="margin-bottom:12px">
+  <div class="card acc"><div class="ct">활성 세션 ${window.tip('활성 제어 세션','현재 처리 중인 제어 명령 세션 수','진행중 + 완료 미확인 세션 합계','동시 다중 세션 정상 — 평균 1~3개 / 5개 이상은 부하 점검 필요')}</div><div class="kv">3<span class="ku">개</span></div><div class="kd neu">진행중 2 · 미확인 1</div></div>
+  <div class="card"><div class="ct">평균 응답 지연 ${window.tip('평균 응답 지연 + 500ms SLA 준수율','SCADA 명령 송신 → ACK 수신까지의 평균 왕복 시간 + SLA 준수 비율','평균 = Σ(ACK 시각 - 송신 시각) ÷ N · SLA = COUNT(지연 ≤ 500ms) ÷ COUNT(*)','중앙값(p50): 0.28s / p95: 0.42s / p99: 0.85s · 준중앙급전 SLA 99% 이상 필수 (미달 시 보상금 차감)')}</div><div class="kv" style="color:#0a7">0.31<span class="ku">s</span></div><div class="kd up">SLA 99.4% · p50 0.28s</div></div>
   <div class="card"><div class="ct">패킷 무결성 (CRC) ${window.tip('패킷 무결성 (CRC)','CRC 검증을 통과한 패킷 비율','CRC 일치 패킷 ÷ 전체 패킷 × 100 [%]','100% 정상 / 99% 미만 시 통신 라인 노이즈 또는 RTU 펌웨어 점검')}</div><div class="kv" style="color:#0a7">100<span class="ku">%</span></div><div class="kd neu">3,842 / 3,842</div></div>
   <div class="card"><div class="ct">ACK 응답률 ${window.tip('ACK 응답률','명령 송신 후 정상 ACK를 받은 비율','ACK 수신 ÷ 송신 패킷 × 100 [%]','99.5% 이상 정상 / 미수신 시 자동 재전송 (최대 3회)')}</div><div class="kv" style="color:#0a7">99.7<span class="ku">%</span></div><div class="kd neu">재전송 2건</div></div>
   <div class="card"><div class="ct">제어 실패 (24h) ${window.tip('24시간 제어 실패 건수','3회 재전송에도 실패한 제어 명령 건수','COUNT(*) WHERE 최종 결과 = 실패','즉시 현장 점검 — 통신 단절·장비 오프라인·전원 장애 가능성')}</div><div class="kv" style="color:#d32">1<span class="ku">건</span></div><div class="kd down">CTL-0085 타임아웃</div></div>
