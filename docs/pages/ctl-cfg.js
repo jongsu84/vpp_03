@@ -37,10 +37,9 @@ window.P['ctl-cfg']=()=>`
   </div>
 </div></div>
 
-<!-- KPI 4종 -->
-<div class="g4" style="margin-bottom:12px">
-  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘 + 정책 버전','감발 요구량을 자원에 분배하는 방식과 정책 버전을 함께 표시','정책 변경 시 버전 자동 증가 (v2.3 → v2.4)','권장: 수익 최적화 — 균등 대비 약 30% 손실 절감')}</div><div class="kv" id="cg-kpi-algo">수익 최적화<span class="ku">v2.3</span></div></div>
-  <div class="card"><div class="ct">제어 가능 자원 ${window.tip('제어 가능 자원','현재 알고리즘에 포함된 자원 수','자원 동의 + 통신 OK + 운전 정상','정비/차단 자원은 자동 제외 — 그 자원의 감발량은 다른 자원으로 재분배')}</div><div class="kv" id="cg-kpi-allowed">11<span class="ku">/13</span></div></div>
+<!-- KPI 3종 -->
+<div class="g3" style="margin-bottom:12px">
+  <div class="card acc"><div class="ct">제어 가능 자원 ${window.tip('제어 가능 자원','현재 알고리즘에 포함된 자원 수','자원 동의 + 통신 OK + 운전 정상','정비/차단 자원은 자동 제외 — 그 자원의 감발량은 다른 자원으로 재분배')}</div><div class="kv" id="cg-kpi-allowed">11<span class="ku">/13</span></div></div>
   <div class="card"><div class="ct">총 감발 가용 ${window.tip('총 감발 가용 용량','허용 자원이 즉시 감발할 수 있는 최대 MW','Σ(자원 현재출력 × (1 - 제어하한))','감발 요구량이 이 값을 초과하면 시뮬레이션에서 부족 경고 표시')}</div><div class="kv" id="cg-kpi-cap">—<span class="ku">MW</span></div></div>
   <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 Merit Order 재계산 시각','한계수익 기준 정렬을 다시 수행한 시각','SMP·CP·AS 변경 또는 정해진 주기마다 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv" id="cg-kpi-recalc">2분 전</div></div>
 </div>
@@ -48,7 +47,7 @@ window.P['ctl-cfg']=()=>`
 <!-- 제어 배분 알고리즘 & 가중치 -->
 <div class="g2">
   <div class="card mb">
-    <div class="sh"><div class="st">제어 배분 알고리즘 <span class="tip">ⓘ 감발 요구량을 자원별로 분배하는 방식</span></div></div>
+    <div class="sh"><div class="st">제어 배분 알고리즘 ${window.tip('제어 배분 알고리즘','감발 요구량을 자원별로 분배하는 방식','수익 최적화 / 균등 / 순차 / 비례 4종 — 라디오로 선택','권장: 수익 최적화 — 균등 배분 대비 약 30% 손실 절감')}</div></div>
     <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-bottom:12px">
       <label style="border:2px solid #0059ff;border-radius:8px;padding:10px;cursor:pointer;background:#f0f6ff">
         <input type="radio" name="algo" value="profit" checked style="margin-right:6px"><b style="font-size:12px">수익 최적화</b>
@@ -202,21 +201,15 @@ window.cgSavePolicy=function(){
   if(isNaN(soc)||soc<0||soc>100){toast('ESS SoC 하한은 0~100% 범위여야 합니다.','warn');return;}
   // 4) 사용자 확인
   if(!confirm('정책을 저장하고 즉시 재배포하시겠습니까?\n변경 사항이 허용 자원에 즉시 적용되며, 감사이력에 영구 보관됩니다.')) return;
-  // 5) 다음 버전 산정 (cg-kpi-algo 안에 v2.3 형태로 저장됨)
-  var kpiAlgo=document.getElementById('cg-kpi-algo');
-  var ver={major:2,minor:4};
-  if(kpiAlgo){
-    var m=kpiAlgo.textContent.match(/v(\d+)\.(\d+)/);
-    if(m){ver.major=parseInt(m[1],10); ver.minor=parseInt(m[2],10)+1;}
-  }
-  var newVer='v'+ver.major+'.'+ver.minor;
+  // 5) 다음 버전 산정 (in-memory 상태 유지 — KPI 카드에서 분리됨)
+  if(!window._cgPolicyVer) window._cgPolicyVer={major:2,minor:3};
+  window._cgPolicyVer.minor+=1;
+  var newVer='v'+window._cgPolicyVer.major+'.'+window._cgPolicyVer.minor;
   // 6) 알고리즘 라벨
   var algoEl=document.querySelector('input[name="algo"]:checked');
   var algoLabel=(algoEl && algoEl.parentElement && algoEl.parentElement.querySelector('b'))
     ? algoEl.parentElement.querySelector('b').textContent : '수익 최적화';
-  // 7) KPI 갱신 (현재 알고리즘 + 버전을 한 카드에 통합 표시)
-  if(kpiAlgo) kpiAlgo.innerHTML=algoLabel+'<span class="ku">'+newVer+'</span>';
-  // 8) 토스트로 변경 요약 (이력은 감사이력 페이지에 통합)
+  // 7) 토스트로 변경 요약 (이력은 감사이력 페이지에 통합)
   var detail='알고리즘 '+algoLabel+' · 가중치(SMP·CP·AS·기타) '+w.smp.toFixed(2)+'·'+w.cp.toFixed(2)+'·'+w.as.toFixed(2)+'·'+w.other.toFixed(2);
   toast('정책 '+newVer+' 저장·재배포 — '+detail);
 };
