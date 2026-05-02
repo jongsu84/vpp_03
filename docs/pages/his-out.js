@@ -25,7 +25,7 @@ window.P['his-out']=()=>`
 ${_mkFilterBar({periodStart:'2026-04-15',periodEnd:'2026-04-23',interval:'일',prefix:'ho-f',onChange:'hisOutApply',extras:`
   <div class="fbar-item">
     <span class="fbar-lbl">제어 유형</span>
-    <select class="fbar-sel" id="ho-f-type" onchange="hisOutApply()"><option>전체</option><option>KPX 급전지시</option><option>한전 계통제약</option><option>수동 제어</option><option>자동 제어</option></select>
+    <select class="fbar-sel" id="ho-f-ctype" onchange="hisOutApply()"><option>전체</option><option>KPX 급전지시</option><option>한전 계통제약</option><option>수동 제어</option><option>자동 제어</option></select>
   </div>
   <div class="fbar-item">
     <span class="fbar-lbl">보상 여부</span>
@@ -44,7 +44,7 @@ window.hisOutApply=function(){
   var grp=(document.getElementById('ho-f-grp')||{}).value||'전체';
   var from=(document.getElementById('ho-f-from')||{}).value||'';
   var to=(document.getElementById('ho-f-to')||{}).value||'';
-  var typ=(document.getElementById('ho-f-type')||{}).value||'전체';
+  var typ=(document.getElementById('ho-f-ctype')||{}).value||'전체';
   var paid=(document.getElementById('ho-f-paid')||{}).value||'전체';
   var data=(window.HIS_OUT_DATA||[]).filter(function(r){
     if(grp!=='전체' && r.vpp!==grp && r.vpp!=='전체') return false;

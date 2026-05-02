@@ -40,7 +40,7 @@ window.P['his-bid']=()=>`
 ${_mkFilterBar({periodStart:'2026-04-19',periodEnd:'2026-04-23',interval:'일',prefix:'hb-f',onChange:'hisBidApply',extras:`
   <div class="fbar-item">
     <span class="fbar-lbl">구분</span>
-    <select class="fbar-sel" id="hb-f-type" onchange="hisBidApply()"><option>전체</option><option>DA 입찰</option><option>RT 입찰</option><option>제어명령</option></select>
+    <select class="fbar-sel" id="hb-f-bidtype" onchange="hisBidApply()"><option>전체</option><option>DA 입찰</option><option>RT 입찰</option><option>제어명령</option></select>
   </div>
   <div class="fbar-item">
     <span class="fbar-lbl">차수 (DA)</span>
@@ -58,7 +58,7 @@ window.hisBidApply=function(){
   var grp=(document.getElementById('hb-f-grp')||{}).value||'전체';
   var from=(document.getElementById('hb-f-from')||{}).value||'';
   var to=(document.getElementById('hb-f-to')||{}).value||'';
-  var typ=(document.getElementById('hb-f-type')||{}).value||'전체';
+  var typ=(document.getElementById('hb-f-bidtype')||{}).value||'전체';
   var rd=(document.getElementById('hb-f-round')||{}).value||'전체';
   var data=(window.HIS_BID_DATA||[]).filter(function(r){
     if(grp!=='전체' && r.vpp!==grp && r.vpp!=='전체') return false;
