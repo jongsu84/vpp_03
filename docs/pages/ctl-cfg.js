@@ -8,11 +8,7 @@ window.P['ctl-cfg']=()=>`
     <div style="font-size:22px">🎯</div>
     <div style="flex:1">
       <div style="font-size:13px;font-weight:700;color:#0b2a5b">최적 급전 알고리즘 (Merit-Order Curtailment) 가동 중</div>
-      <div style="font-size:11px;color:#1b3c7a;margin-top:2px">SMP · CP · AS 기여도를 종합해 한계수익이 낮은 자원부터 우선 감발 → 포트폴리오 수익 손실 최소화</div>
-    </div>
-    <div style="text-align:right">
-      <div style="font-size:10px;color:#5a7cc4">예상 수익 보호</div>
-      <div style="font-size:16px;font-weight:800;color:#0059ff">₩ 3.42M<span style="font-size:10px;color:#5a7cc4">/일</span></div>
+      <div style="font-size:11px;color:#1b3c7a;margin-top:2px">한계수익이 낮은 자원부터 우선 감발 → 포트폴리오 수익 손실 최소화 · 운영자 Override 지원</div>
     </div>
   </div>
 </div>
@@ -29,11 +25,6 @@ window.P['ctl-cfg']=()=>`
       <option value="">전체</option><option>태양광</option><option>풍력</option><option>ESS</option><option>바이오</option><option>V2G</option>
     </select>
   </div>
-  <div class="fbar-item"><label class="fbar-lbl">배분 정책</label>
-    <select class="fbar-sel" id="cg-f-policy" onchange="cgFilterApply()">
-      <option value="">전체</option><option value="profit">수익 최적화</option><option value="equal">균등 배분</option><option value="sequential">순차 배분</option><option value="proportional">비례 배분</option>
-    </select>
-  </div>
   <div class="fbar-item"><label class="fbar-lbl">제어 허용</label>
     <select class="fbar-sel" id="cg-f-allow" onchange="cgFilterApply()">
       <option value="">전체</option><option value="ok">허용</option><option value="block">차단</option>
@@ -46,13 +37,12 @@ window.P['ctl-cfg']=()=>`
   </div>
 </div></div>
 
-<!-- KPI 5종 -->
-<div class="g5" style="margin-bottom:12px">
-  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘','감발 요구량을 자원에 분배하는 방식','수익 최적화: 한계수익 낮은 자원 우선 / 균등: 공평 / 수동: 운영자 지정','수익 최적화 권장 — 일반 균등 배분 대비 30% 손실 절감 가능')}</div><div class="kv" id="cg-kpi-algo">수익 최적화<span class="ku">v2.3</span></div></div>
-  <div class="card"><div class="ct">제어 우선순위 모드 ${window.tip('제어 우선순위 모드','KPX 급전지시와 운영자 수동 제어 간 우선순위','자동 우선: KPX → VPP 알고리즘 / 수동 우선: 운영자 → 알고리즘','자동 우선 기본 — 비상시(설비 이상)는 수동 우선으로 일시 변경')}</div><div class="kv" id="cg-kpi-mode">자동 우선</div></div>
-  <div class="card"><div class="ct">제어 가능 자원 ${window.tip('제어 가능 자원','현재 알고리즘에 포함된 자원 수','자원 동의 + 통신 OK + 운전 정상','정비/차단 자원은 자동 제외 — 그 자원의 감발량은 다른 자원으로 재분배')}</div><div class="kv">11<span class="ku">/13</span></div></div>
-  <div class="card"><div class="ct">배분 정책 버전 ${window.tip('배분 정책 버전','현재 적용 중인 가중치·정책 버전','SMP·CP·AS·REC·마모비용 가중치 + 제약 조건','정책 변경 시 자동 버전업 — 감사 로그에 변경자/사유 기록')}</div><div class="kv" id="cg-kpi-pol">v2.3<span class="ku">2026-04-20</span></div></div>
-  <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 알고리즘 재계산 시각','Merit Order(제어 순서) 재계산 시각','SMP·CP·AS 변경 시 또는 정해진 주기마다 자동 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv" id="cg-kpi-recalc">2분 전</div></div>
+<!-- KPI 4종 -->
+<div class="g4" style="margin-bottom:12px">
+  <div class="card acc"><div class="ct">현재 알고리즘 ${window.tip('현재 적용 알고리즘 + 정책 버전','감발 요구량을 자원에 분배하는 방식과 정책 버전을 함께 표시','정책 변경 시 버전 자동 증가 (v2.3 → v2.4)','권장: 수익 최적화 — 균등 대비 약 30% 손실 절감')}</div><div class="kv" id="cg-kpi-algo">수익 최적화<span class="ku">v2.3</span></div></div>
+  <div class="card"><div class="ct">제어 가능 자원 ${window.tip('제어 가능 자원','현재 알고리즘에 포함된 자원 수','자원 동의 + 통신 OK + 운전 정상','정비/차단 자원은 자동 제외 — 그 자원의 감발량은 다른 자원으로 재분배')}</div><div class="kv" id="cg-kpi-allowed">11<span class="ku">/13</span></div></div>
+  <div class="card"><div class="ct">총 감발 가용 ${window.tip('총 감발 가용 용량','허용 자원이 즉시 감발할 수 있는 최대 MW','Σ(자원 현재출력 × (1 - 제어하한))','감발 요구량이 이 값을 초과하면 시뮬레이션에서 부족 경고 표시')}</div><div class="kv" id="cg-kpi-cap">—<span class="ku">MW</span></div></div>
+  <div class="card"><div class="ct">최근 재계산 ${window.tip('최근 Merit Order 재계산 시각','한계수익 기준 정렬을 다시 수행한 시각','SMP·CP·AS 변경 또는 정해진 주기마다 실행','15분 주기 권장 — 자주 재계산 시 부하 증가, 너무 길면 시장 반응 늦음')}</div><div class="kv" id="cg-kpi-recalc">2분 전</div></div>
 </div>
 
 <!-- 제어 배분 알고리즘 & 가중치 -->
@@ -81,22 +71,19 @@ window.P['ctl-cfg']=()=>`
     <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">SMP 한계수익</label><input type="range" min="0" max="100" value="45" style="flex:1" id="cg-w-smp"><span class="mono" style="min-width:40px;text-align:right">0.45</span></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">용량정산금 (CP)</label><input type="range" min="0" max="100" value="25" style="flex:1" id="cg-w-cp"><span class="mono" style="min-width:40px;text-align:right">0.25</span></div>
     <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">부가서비스 (AS)</label><input type="range" min="0" max="100" value="15" style="flex:1" id="cg-w-as"><span class="mono" style="min-width:40px;text-align:right">0.15</span></div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">REC·인센티브</label><input type="range" min="0" max="100" value="10" style="flex:1" id="cg-w-rec"><span class="mono" style="min-width:40px;text-align:right">0.10</span></div>
-    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">설비 마모 비용</label><input type="range" min="0" max="100" value="5" style="flex:1" id="cg-w-wear"><span class="mono" style="min-width:40px;text-align:right">0.05</span></div>
+    <div class="fg" style="display:flex;align-items:center;gap:8px"><label class="fl" style="min-width:120px">기타 (REC·마모)</label><input type="range" min="0" max="100" value="15" style="flex:1" id="cg-w-other"><span class="mono" style="min-width:40px;text-align:right">0.15</span></div>
   </div>
 
   <div class="card mb">
-    <div class="sh"><div class="st">제약 조건 & 정책 파라미터</div></div>
+    <div class="sh"><div class="st">제약 조건 & 정책 파라미터 <span class="tip">ⓘ 운영자 결정 항목만 표시 — 시스템 파라미터(피드백·통신단절 등)는 시스템 관리자 영역</span></div></div>
     <div class="fg"><label class="fl">제어 우선순위 모드</label><select class="sel" id="cg-mode"><option>자동 우선 (KPX → VPP 알고리즘)</option><option>수동 우선 (운영자 → 알고리즘)</option><option>혼합 (비상시 수동)</option></select></div>
-    <div class="fg"><label class="fl">최소 감발률 (자원 단위) %</label><input class="inp" value="10" type="number" id="cg-min"></div>
-    <div class="fg"><label class="fl">최대 감발률 (자원 단위) %</label><input class="inp" value="90" type="number" id="cg-max"></div>
+    <div class="fg" style="display:flex;gap:8px">
+      <div style="flex:1"><label class="fl">최소 감발률 %</label><input class="inp" value="10" type="number" id="cg-min"></div>
+      <div style="flex:1"><label class="fl">최대 감발률 %</label><input class="inp" value="90" type="number" id="cg-max"></div>
+    </div>
     <div class="fg"><label class="fl">ESS 배터리 SoC 하한 %</label><input class="inp" value="20" type="number" id="cg-soc"></div>
-    <div class="fg"><label class="fl">수동 제어 복귀 시간 (분)</label><input class="inp" value="30" type="number" id="cg-restore"></div>
-    <div class="fg"><label class="fl">피드백 확인 주기 (초)</label><input class="inp" value="5" type="number" id="cg-feedback"></div>
     <div class="fg"><label class="fl">재계산 주기 (분)</label><input class="inp" value="15" type="number" id="cg-recalc-cycle"></div>
-    <div class="fg"><label class="fl">비상 정지 온도 임계치 (°C)</label><input class="inp" value="70" type="number" id="cg-temp"></div>
-    <div class="fg"><label class="fl">통신 단절 허용 시간 (초)</label><input class="inp" value="30" type="number" id="cg-commloss"></div>
-    <button class="cb p" style="width:100%;font-size:11px;margin-top:8px" onclick="cgSavePolicy()">정책 저장 · 재배포</button>
+    <button class="cb p" style="width:100%;font-size:11px;margin-top:14px" onclick="cgSavePolicy()">정책 저장 · 재배포</button>
   </div>
 </div>
 
@@ -113,23 +100,22 @@ window.P['ctl-cfg']=()=>`
   <table class="tbl" id="cg-merit-tbl" data-no-sort="1">
     <thead><tr>
       <th>순위</th><th>자원명</th><th>유형</th><th>VPP</th>
-      <th>현재 출력</th><th>SMP 수익</th><th>CP 수익</th><th>AS 수익</th>
-      <th>한계수익<br>(원/kWh)</th><th>제어 하한</th><th>Ramp Rate</th><th>허용</th>
+      <th>현재 출력</th><th>한계수익<br>(원/kWh)</th><th>제어 하한</th><th>허용</th>
     </tr></thead>
     <tbody id="cg-merit-tbody">
-      <tr data-type="태양광" data-vpp="VPP-전남권" data-allow="ok" data-pri="high"><td><b style="color:#d32">1</b></td><td>광양항태양광</td><td>태양광</td><td>전남권</td><td class="mono">18.2 MW</td><td class="mono">₩142</td><td class="mono">₩38</td><td class="mono">₩0</td><td class="mono"><b style="color:#d32">₩180</b></td><td class="mono">10%</td><td class="mono">5MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="태양광" data-vpp="VPP-전남권" data-allow="ok" data-pri="high"><td><b style="color:#d32">2</b></td><td>광양항4단계</td><td>태양광</td><td>전남권</td><td class="mono">14.8 MW</td><td class="mono">₩148</td><td class="mono">₩42</td><td class="mono">₩0</td><td class="mono"><b style="color:#d32">₩190</b></td><td class="mono">10%</td><td class="mono">5MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="태양광" data-vpp="VPP-제주권" data-allow="ok" data-pri="high"><td><b style="color:#e80">3</b></td><td>온누리</td><td>태양광</td><td>제주권</td><td class="mono">9.5 MW</td><td class="mono">₩155</td><td class="mono">₩45</td><td class="mono">₩0</td><td class="mono"><b style="color:#e80">₩200</b></td><td class="mono">15%</td><td class="mono">3MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="태양광" data-vpp="VPP-경북권" data-allow="ok" data-pri="mid"><td>4</td><td>포항S1</td><td>태양광</td><td>경북권</td><td class="mono">7.3 MW</td><td class="mono">₩162</td><td class="mono">₩48</td><td class="mono">₩0</td><td class="mono">₩210</td><td class="mono">10%</td><td class="mono">4MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="풍력" data-vpp="VPP-제주권" data-allow="ok" data-pri="mid"><td>5</td><td>김주풍력</td><td>풍력</td><td>제주권</td><td class="mono">8.1 MW</td><td class="mono">₩175</td><td class="mono">₩55</td><td class="mono">₩12</td><td class="mono">₩242</td><td class="mono">20%</td><td class="mono">4MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="풍력" data-vpp="VPP-전남권" data-allow="ok" data-pri="mid"><td>6</td><td>신안풍력</td><td>풍력</td><td>전남권</td><td class="mono">11.4 MW</td><td class="mono">₩180</td><td class="mono">₩58</td><td class="mono">₩15</td><td class="mono">₩253</td><td class="mono">20%</td><td class="mono">5MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="V2G" data-vpp="VPP-전남권" data-allow="ok" data-pri="mid"><td>7</td><td>광양V2G 허브</td><td>V2G</td><td>전남권</td><td class="mono">1.8 MW</td><td class="mono">₩185</td><td class="mono">₩0</td><td class="mono">₩82</td><td class="mono">₩267</td><td class="mono">0%</td><td class="mono">즉시</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="V2G" data-vpp="VPP-제주권" data-allow="ok" data-pri="mid"><td>8</td><td>제주V2G 스테이션</td><td>V2G</td><td>제주권</td><td class="mono">0.9 MW</td><td class="mono">₩190</td><td class="mono">₩0</td><td class="mono">₩85</td><td class="mono">₩275</td><td class="mono">0%</td><td class="mono">즉시</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="바이오" data-vpp="VPP-전남권" data-allow="ok" data-pri="low"><td>9</td><td>무안바이오</td><td>바이오</td><td>전남권</td><td class="mono">4.2 MW</td><td class="mono">₩195</td><td class="mono">₩72</td><td class="mono">₩28</td><td class="mono"><b style="color:#0a7">₩295</b></td><td class="mono">30%</td><td class="mono">2MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="바이오" data-vpp="VPP-경북권" data-allow="ok" data-pri="low"><td>10</td><td>영덕바이오</td><td>바이오</td><td>경북권</td><td class="mono">3.8 MW</td><td class="mono">₩198</td><td class="mono">₩75</td><td class="mono">₩30</td><td class="mono"><b style="color:#0a7">₩303</b></td><td class="mono">30%</td><td class="mono">2MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="ESS" data-vpp="VPP-제주권" data-allow="ok" data-pri="low"><td>11</td><td>금능1호 ESS</td><td>ESS</td><td>제주권</td><td class="mono">12.0 MW</td><td class="mono">₩210</td><td class="mono">₩85</td><td class="mono">₩95</td><td class="mono"><b style="color:#0a7">₩390</b></td><td class="mono">0%</td><td class="mono">10MW/min</td><td><span class="badge ok">허용</span></td></tr>
-      <tr data-type="ESS" data-vpp="VPP-전남권" data-allow="block" data-pri="low"><td>—</td><td>광양2호 ESS</td><td>ESS</td><td>전남권</td><td class="mono">0 MW</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">0%</td><td class="mono">10MW/min</td><td><span class="badge err">정비중</span></td></tr>
-      <tr data-type="태양광" data-vpp="VPP-전남권" data-allow="block" data-pri="low"><td>—</td><td>여수태양광</td><td>태양광</td><td>전남권</td><td class="mono">0 MW</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">—</td><td class="mono">10%</td><td class="mono">5MW/min</td><td><span class="badge err">차단</span></td></tr>
+      <tr data-type="태양광" data-vpp="VPP-전남권" data-allow="ok" data-pri="high"><td><b style="color:#d32">1</b></td><td>광양항태양광</td><td>태양광</td><td>전남권</td><td class="mono">18.2 MW</td><td class="mono"><b style="color:#d32">₩180</b></td><td class="mono">10%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="태양광" data-vpp="VPP-전남권" data-allow="ok" data-pri="high"><td><b style="color:#d32">2</b></td><td>광양항4단계</td><td>태양광</td><td>전남권</td><td class="mono">14.8 MW</td><td class="mono"><b style="color:#d32">₩190</b></td><td class="mono">10%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="태양광" data-vpp="VPP-제주권" data-allow="ok" data-pri="high"><td><b style="color:#e80">3</b></td><td>온누리</td><td>태양광</td><td>제주권</td><td class="mono">9.5 MW</td><td class="mono"><b style="color:#e80">₩200</b></td><td class="mono">15%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="태양광" data-vpp="VPP-경북권" data-allow="ok" data-pri="mid"><td>4</td><td>포항S1</td><td>태양광</td><td>경북권</td><td class="mono">7.3 MW</td><td class="mono">₩210</td><td class="mono">10%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="풍력" data-vpp="VPP-제주권" data-allow="ok" data-pri="mid"><td>5</td><td>김주풍력</td><td>풍력</td><td>제주권</td><td class="mono">8.1 MW</td><td class="mono">₩242</td><td class="mono">20%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="풍력" data-vpp="VPP-전남권" data-allow="ok" data-pri="mid"><td>6</td><td>신안풍력</td><td>풍력</td><td>전남권</td><td class="mono">11.4 MW</td><td class="mono">₩253</td><td class="mono">20%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="V2G" data-vpp="VPP-전남권" data-allow="ok" data-pri="mid"><td>7</td><td>광양V2G 허브</td><td>V2G</td><td>전남권</td><td class="mono">1.8 MW</td><td class="mono">₩267</td><td class="mono">0%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="V2G" data-vpp="VPP-제주권" data-allow="ok" data-pri="mid"><td>8</td><td>제주V2G 스테이션</td><td>V2G</td><td>제주권</td><td class="mono">0.9 MW</td><td class="mono">₩275</td><td class="mono">0%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="바이오" data-vpp="VPP-전남권" data-allow="ok" data-pri="low"><td>9</td><td>무안바이오</td><td>바이오</td><td>전남권</td><td class="mono">4.2 MW</td><td class="mono"><b style="color:#0a7">₩295</b></td><td class="mono">30%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="바이오" data-vpp="VPP-경북권" data-allow="ok" data-pri="low"><td>10</td><td>영덕바이오</td><td>바이오</td><td>경북권</td><td class="mono">3.8 MW</td><td class="mono"><b style="color:#0a7">₩303</b></td><td class="mono">30%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="ESS" data-vpp="VPP-제주권" data-allow="ok" data-pri="low"><td>11</td><td>금능1호 ESS</td><td>ESS</td><td>제주권</td><td class="mono">12.0 MW</td><td class="mono"><b style="color:#0a7">₩390</b></td><td class="mono">0%</td><td><span class="badge ok">허용</span></td></tr>
+      <tr data-type="ESS" data-vpp="VPP-전남권" data-allow="block" data-pri="low"><td>—</td><td>광양2호 ESS</td><td>ESS</td><td>전남권</td><td class="mono">0 MW</td><td class="mono">—</td><td class="mono">0%</td><td><span class="badge err">정비중</span></td></tr>
+      <tr data-type="태양광" data-vpp="VPP-전남권" data-allow="block" data-pri="low"><td>—</td><td>여수태양광</td><td>태양광</td><td>전남권</td><td class="mono">0 MW</td><td class="mono">—</td><td class="mono">10%</td><td><span class="badge err">차단</span></td></tr>
     </tbody>
   </table>
   <div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding:8px 10px;background:#f6f8fb;border-radius:6px;font-size:11px">
@@ -138,44 +124,37 @@ window.P['ctl-cfg']=()=>`
   </div>
 </div>
 
-<!-- 시나리오 시뮬레이션 + 정책 변경 이력 -->
-<div class="g2">
-  <div class="card mb">
-    <div class="sh"><div class="st">감발 시나리오 시뮬레이션 <span class="tip">ⓘ 감발 요구량과 알고리즘 선택 후 ▶ 실행 — 운영자 Override 가능</span></div><div style="font-size:10px;color:var(--semantic-label-alt)" id="cg-sim-status">대기 중</div></div>
-    <div class="fg" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
-      <div style="flex:1;min-width:140px"><label class="fl">감발 요구량 (MW)</label><input class="inp" value="30" type="number" min="0.1" step="0.1" id="cg-sim-mw"></div>
-      <div style="flex:1;min-width:160px"><label class="fl">알고리즘</label><select class="sel" id="cg-sim-algo">
-        <option value="profit">수익 최적화</option>
-        <option value="equal">균등 배분</option>
-        <option value="sequential">순차 배분</option>
-        <option value="proportional">비례 배분</option>
-      </select></div>
-      <button class="cb p" style="font-size:11px" onclick="cgRunSimulation()">▶ 실행</button>
-    </div>
-    <table class="tbl" style="margin-top:10px" data-no-sort="1">
-      <thead><tr><th style="width:36px;text-align:center">제외</th><th style="width:32px">#</th><th>자원</th><th class="mono">현재 (MW)</th><th class="mono">감발량 (MW)</th><th class="mono">감발 후 (MW)</th><th class="mono">손실</th></tr></thead>
-      <tbody id="cg-sim-tbody">
-        <tr><td colspan="7" style="text-align:center;color:var(--semantic-label-alt);padding:18px;font-size:11px">감발 요구량과 알고리즘을 선택한 후 [▶ 실행]을 눌러주세요</td></tr>
-      </tbody>
-    </table>
-    <div id="cg-sim-summary" style="margin-top:8px;padding:8px 12px;background:var(--semantic-background-2);border-left:3px solid var(--semantic-line-strong);border-radius:4px;font-size:11px;line-height:18px">
-      ※ Override 체크박스를 해제하면 해당 자원을 제외하고 다른 자원으로 자동 재배분됩니다. 실제 감발 가용량 부족 시 경고 표시.
-    </div>
+<!-- 감발 시나리오 시뮬레이션 -->
+<div class="card mb">
+  <div class="sh"><div class="st">감발 시나리오 시뮬레이션 <span class="tip">ⓘ 감발 요구량과 알고리즘 선택 후 ▶ 실행 — 운영자 Override 가능</span></div><div style="font-size:10px;color:var(--semantic-label-alt)" id="cg-sim-status">대기 중</div></div>
+  <div class="fg" style="display:flex;gap:8px;align-items:flex-end;flex-wrap:wrap">
+    <div style="flex:1;min-width:140px"><label class="fl">감발 요구량 (MW)</label><input class="inp" value="30" type="number" min="0.1" step="0.1" id="cg-sim-mw"></div>
+    <div style="flex:1;min-width:160px"><label class="fl">알고리즘</label><select class="sel" id="cg-sim-algo">
+      <option value="profit">수익 최적화</option>
+      <option value="equal">균등 배분</option>
+      <option value="sequential">순차 배분</option>
+      <option value="proportional">비례 배분</option>
+    </select></div>
+    <button class="cb p" style="font-size:11px" onclick="cgRunSimulation()">▶ 실행</button>
   </div>
+  <table class="tbl" style="margin-top:10px" data-no-sort="1">
+    <thead><tr><th style="width:36px;text-align:center">제외</th><th style="width:32px">#</th><th>자원</th><th class="mono">현재 (MW)</th><th class="mono">감발량 (MW)</th><th class="mono">감발 후 (MW)</th><th class="mono">손실</th></tr></thead>
+    <tbody id="cg-sim-tbody">
+      <tr><td colspan="7" style="text-align:center;color:var(--semantic-label-alt);padding:18px;font-size:11px">감발 요구량과 알고리즘을 선택한 후 [▶ 실행]을 눌러주세요</td></tr>
+    </tbody>
+  </table>
+  <div id="cg-sim-summary" style="margin-top:8px;padding:8px 12px;background:var(--semantic-background-2);border-left:3px solid var(--semantic-line-strong);border-radius:4px;font-size:11px;line-height:18px">
+    ※ Override 체크박스를 해제하면 해당 자원을 제외하고 다른 자원으로 자동 재배분됩니다. 실제 감발 가용량 부족 시 경고 표시.
+  </div>
+</div>
 
-  <div class="card mb">
-    <div class="sh"><div class="st">정책 변경 이력</div></div>
-    <table class="tbl" data-no-sort="1">
-      <thead><tr><th>시각</th><th>버전</th><th>변경자</th><th>항목</th><th>사유</th></tr></thead>
-      <tbody id="cg-history-tbody">
-        <tr><td class="mono">04-24 14:32</td><td><span class="badge ok">v2.3</span></td><td>김운영</td><td>CP 가중치 0.20→0.25</td><td>Q2 CP 단가 상승 반영</td></tr>
-        <tr><td class="mono">04-20 09:15</td><td>v2.2</td><td>박정책</td><td>ESS SoC 하한 15→20%</td><td>배터리 수명 보호</td></tr>
-        <tr><td class="mono">04-15 16:48</td><td>v2.1</td><td>김운영</td><td>알고리즘: 수익 최적화 전환</td><td>균등→수익 (P&amp;L 개선)</td></tr>
-        <tr><td class="mono">04-10 11:03</td><td>v2.0</td><td>이기획</td><td>AS 가중치 신설 (0.15)</td><td>보조서비스 시장 진입</td></tr>
-        <tr><td class="mono">04-05 08:22</td><td>v1.9</td><td>박정책</td><td>Ramp Rate 상한 조정</td><td>풍력 급변 대응</td></tr>
-      </tbody>
-    </table>
+<!-- 감사이력 페이지 안내 -->
+<div class="card mb" style="border-left:3px solid var(--semantic-brand-primary);background:var(--semantic-brand-primary-assistive);padding:14px 18px;display:flex;align-items:center;justify-content:space-between;gap:12px">
+  <div>
+    <div style="font-size:13px;font-weight:600;margin-bottom:2px">정책 변경 이력은 감사이력 페이지에서 확인할 수 있습니다</div>
+    <div style="font-size:12px;color:var(--semantic-label-alt);line-height:18px">알고리즘·가중치·제약 조건 변경은 SHA-256 무결성 해시로 5년간 영구 보관됩니다. 변경자·시각·항목·사유를 통합 추적합니다.</div>
   </div>
+  <button class="cb p sm" onclick="activate('his-aud')" style="white-space:nowrap;flex-shrink:0">감사이력 ↗</button>
 </div>`;
 window.cgFilterApply=function(){
   var vpp=(document.getElementById('cg-f-vpp')||{}).value||'';
@@ -199,8 +178,7 @@ function _cgReadWeights(){
     smp:(parseInt(document.getElementById('cg-w-smp')?.value,10)||0)/100,
     cp:(parseInt(document.getElementById('cg-w-cp')?.value,10)||0)/100,
     as:(parseInt(document.getElementById('cg-w-as')?.value,10)||0)/100,
-    rec:(parseInt(document.getElementById('cg-w-rec')?.value,10)||0)/100,
-    wear:(parseInt(document.getElementById('cg-w-wear')?.value,10)||0)/100
+    other:(parseInt(document.getElementById('cg-w-other')?.value,10)||0)/100
   };
 }
 function _cgPad2(n){return String(n).padStart(2,'0');}
@@ -209,7 +187,7 @@ function _cgFmtTime(d){return _cgPad2(d.getMonth()+1)+'-'+_cgPad2(d.getDate())+'
 window.cgSavePolicy=function(){
   // 1) 가중치 합 검증 (1.0 ± 0.05 허용)
   var w=_cgReadWeights();
-  var sum=w.smp+w.cp+w.as+w.rec+w.wear;
+  var sum=w.smp+w.cp+w.as+w.other;
   if(Math.abs(sum-1.0)>0.05){
     toast('가중치 합계가 1.0이 아닙니다 (현재 '+sum.toFixed(2)+'). 슬라이더를 조정하세요.','warn');
     return;
@@ -219,16 +197,16 @@ window.cgSavePolicy=function(){
   var maxR=parseInt(document.getElementById('cg-max')?.value,10);
   if(isNaN(minR)||isNaN(maxR)||minR<0||maxR>100){toast('감발률은 0~100 범위여야 합니다.','warn');return;}
   if(minR>=maxR){toast('최소 감발률은 최대 감발률보다 작아야 합니다.','warn');return;}
-  // 3) 보조 검증
+  // 3) ESS SoC 검증
   var soc=parseInt(document.getElementById('cg-soc')?.value,10);
   if(isNaN(soc)||soc<0||soc>100){toast('ESS SoC 하한은 0~100% 범위여야 합니다.','warn');return;}
   // 4) 사용자 확인
-  if(!confirm('정책을 저장하고 즉시 재배포하시겠습니까?\n변경 사항이 11개 자원에 즉시 적용되며, 변경 이력이 영구 보관됩니다.')) return;
-  // 5) 다음 버전 산정 (현재 KPI에서 v2.3 → v2.4)
-  var kpiPol=document.getElementById('cg-kpi-pol');
+  if(!confirm('정책을 저장하고 즉시 재배포하시겠습니까?\n변경 사항이 허용 자원에 즉시 적용되며, 감사이력에 영구 보관됩니다.')) return;
+  // 5) 다음 버전 산정 (cg-kpi-algo 안에 v2.3 형태로 저장됨)
+  var kpiAlgo=document.getElementById('cg-kpi-algo');
   var ver={major:2,minor:4};
-  if(kpiPol){
-    var m=kpiPol.textContent.match(/v(\d+)\.(\d+)/);
+  if(kpiAlgo){
+    var m=kpiAlgo.textContent.match(/v(\d+)\.(\d+)/);
     if(m){ver.major=parseInt(m[1],10); ver.minor=parseInt(m[2],10)+1;}
   }
   var newVer='v'+ver.major+'.'+ver.minor;
@@ -236,32 +214,11 @@ window.cgSavePolicy=function(){
   var algoEl=document.querySelector('input[name="algo"]:checked');
   var algoLabel=(algoEl && algoEl.parentElement && algoEl.parentElement.querySelector('b'))
     ? algoEl.parentElement.querySelector('b').textContent : '수익 최적화';
-  var modeLabel=(document.getElementById('cg-mode')?.value||'자동 우선').split(' (')[0];
-  // 7) 변경 이력 행 추가
-  var now=new Date();
-  var tbody=document.getElementById('cg-history-tbody');
-  if(tbody){
-    var tr=document.createElement('tr');
-    var detail='알고리즘='+algoLabel+' / 가중치(SMP·CP·AS·REC·마모)='
-      +w.smp.toFixed(2)+'·'+w.cp.toFixed(2)+'·'+w.as.toFixed(2)+'·'+w.rec.toFixed(2)+'·'+w.wear.toFixed(2)
-      +' / 감발 '+minR+'~'+maxR+'%';
-    tr.innerHTML='<td class="mono">'+_cgFmtTime(now)+'</td>'
-      +'<td><span class="badge ok">'+newVer+'</span></td>'
-      +'<td>김운영</td>'
-      +'<td style="font-size:11px">'+detail+'</td>'
-      +'<td>운영자 정책 갱신 · 재배포</td>';
-    tbody.insertBefore(tr,tbody.firstChild);
-  }
-  // 8) KPI 갱신
-  if(kpiPol){
-    var dateStr=now.getFullYear()+'-'+_cgPad2(now.getMonth()+1)+'-'+_cgPad2(now.getDate());
-    kpiPol.innerHTML=newVer+'<span class="ku">'+dateStr+'</span>';
-  }
-  var kpiAlgo=document.getElementById('cg-kpi-algo');
+  // 7) KPI 갱신 (현재 알고리즘 + 버전을 한 카드에 통합 표시)
   if(kpiAlgo) kpiAlgo.innerHTML=algoLabel+'<span class="ku">'+newVer+'</span>';
-  var kpiMode=document.getElementById('cg-kpi-mode');
-  if(kpiMode) kpiMode.textContent=modeLabel;
-  toast('정책 '+newVer+' 저장·재배포 완료 — 11개 자원에 즉시 적용');
+  // 8) 토스트로 변경 요약 (이력은 감사이력 페이지에 통합)
+  var detail='알고리즘 '+algoLabel+' · 가중치(SMP·CP·AS·기타) '+w.smp.toFixed(2)+'·'+w.cp.toFixed(2)+'·'+w.as.toFixed(2)+'·'+w.other.toFixed(2);
+  toast('정책 '+newVer+' 저장·재배포 — '+detail);
 };
 
 window.cgScrollToSim=function(){
@@ -280,7 +237,7 @@ window.cgRecalcMerit=function(){
   var allowed=[], blocked=[];
   rows.forEach(function(tr){
     if(tr.getAttribute('data-allow')==='block'){ blocked.push(tr); return; }
-    var cell=tr.cells[8];
+    var cell=tr.cells[5];
     var m=cell?cell.textContent.match(/(\d+)/):null;
     var margin=m?parseInt(m[1],10):0;
     allowed.push({tr:tr,margin:margin});
@@ -294,7 +251,7 @@ window.cgRecalcMerit=function(){
     var color=rank<=2?'#d32':(rank===3?'#e80':(rank>=9?'#0a7':''));
     var rankCell=item.tr.cells[0];
     if(rankCell) rankCell.innerHTML=color?('<b style="color:'+color+'">'+rank+'</b>'):String(rank);
-    var marginCell=item.tr.cells[8];
+    var marginCell=item.tr.cells[5];
     if(marginCell){
       if(color){
         marginCell.innerHTML='<b style="color:'+color+'">₩'+item.margin+'</b>';
@@ -332,9 +289,9 @@ function _cgReadMeritResources(){
     var vpp=(tr.cells[3]?tr.cells[3].textContent:'').trim();
     var curM=(tr.cells[4]?tr.cells[4].textContent.match(/[\d.]+/):null);
     var curMW=curM?parseFloat(curM[0]):0;
-    var marM=(tr.cells[8]?tr.cells[8].textContent.match(/(\d+)/):null);
+    var marM=(tr.cells[5]?tr.cells[5].textContent.match(/(\d+)/):null);
     var margin=marM?parseInt(marM[1],10):0;
-    var minM=(tr.cells[9]?tr.cells[9].textContent.match(/(\d+)/):null);
+    var minM=(tr.cells[6]?tr.cells[6].textContent.match(/(\d+)/):null);
     var minPct=minM?parseInt(minM[1],10):0;
     list.push({name:name,type:type,vpp:vpp,curMW:curMW,margin:margin,minPct:minPct,excluded:false,curtail:0,loss:0,maxCurtail:0});
   });
@@ -536,9 +493,27 @@ function _cgRenderSimResults(){
   summaryEl.innerHTML=html;
 }
 
+// 총 감발 가용 KPI 갱신 (Σ 자원 현재출력 × (1 - 제어하한))
+window.cgUpdateCapKPI=function(){
+  var resources=_cgReadMeritResources();
+  var totalCap=resources.reduce(function(s,r){
+    var avail=r.curMW*(100-r.minPct)/100;
+    return s+(avail>0?avail:0);
+  },0);
+  var elCap=document.getElementById('cg-kpi-cap');
+  if(elCap) elCap.innerHTML=totalCap.toFixed(1)+'<span class="ku">MW</span>';
+  var elAllowed=document.getElementById('cg-kpi-allowed');
+  if(elAllowed){
+    var total=document.querySelectorAll('#cg-merit-tbody tr').length;
+    var allowed=document.querySelectorAll('#cg-merit-tbody tr[data-allow="ok"]').length;
+    elAllowed.innerHTML=allowed+'<span class="ku">/'+total+'</span>';
+  }
+};
+
 // 페이지 진입 시 자동 1회 실행 (운영자에게 즉시 시각적 피드백)
 window['I_ctl-cfg']=function(){
   if(typeof window.cgFilterApply==='function') window.cgFilterApply();
+  if(typeof window.cgUpdateCapKPI==='function') window.cgUpdateCapKPI();
   setTimeout(function(){ try{ window.cgRunSimulation(); }catch(e){} },50);
 };
 
